@@ -7,7 +7,7 @@ app.get("/", (c) => c.json<RootResponse>({ ok: true, service: "booking-mate-serv
 
 app.get("/health", (c) => c.json<HealthResponse>({ status: "ok" }));
 
-const port = Number(Bun.env.PORT ?? 3000);
+const port = Number(Bun.env.SERVER_PORT ?? 3456);
 
 Bun.serve({
   port,

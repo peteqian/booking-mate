@@ -4,13 +4,17 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "setup": "bun scripts/setup.ts",
     "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
     "lint:fix": "turbo lint:fix",
     "format": "turbo format",
     "format:check": "turbo format:check",
-    "typecheck": "turbo typecheck"
+    "typecheck": "turbo typecheck",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f db"
   },
   "devDependencies": {
     "oxfmt": "^0.47.0",
