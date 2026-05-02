@@ -1,6 +1,11 @@
+import { createFileRoute } from "@tanstack/react-router";
 import { Button } from "@/components/button";
 
-export function App() {
+export const Route = createFileRoute("/")({
+  component: Index,
+});
+
+function Index() {
   return (
     <div className="flex min-h-svh p-6">
       <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
