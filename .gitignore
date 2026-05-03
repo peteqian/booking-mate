@@ -28,3 +28,9 @@ npm-debug.log*
 # Misc
 .DS_Store
 *.pem
+
+# Playwright MCP artifacts
+.playwright-mcp/
+current-ui.png
+events-list.png
+logged-in-dashboard.png

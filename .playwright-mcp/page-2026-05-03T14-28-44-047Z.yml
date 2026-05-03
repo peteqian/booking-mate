@@ -1,5 +1,0 @@
-- generic [ref=e5]:
-  - heading "Dashboard" [level=1] [ref=e7]
-  - link "Sign in" [ref=e9] [cursor=pointer]:
-    - /url: /login
-    - button "Sign in" [ref=e10]
