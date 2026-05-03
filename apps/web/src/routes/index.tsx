@@ -4,6 +4,17 @@ import { useEffect, useState } from "react";
 import type { EventDto } from "@workspace/contracts";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ApiError } from "@/lib/api";
 import { createEvent, emptyEventForm, formToEventRequest, listEvents } from "@/lib/events";
 import type { EventFormState } from "@/lib/events";
@@ -134,9 +145,9 @@ function Index() {
         </div>
 
         {error && (
-          <div className="rounded-md bg-red-50 p-4">
-            <p className="text-sm text-red-600">{error}</p>
-          </div>
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
 
         {!session && !loading && (
@@ -200,114 +211,119 @@ function Index() {
             <section className="rounded-lg border p-6">
               <h2 className="text-lg font-semibold">New Event</h2>
               <form onSubmit={handleCreateEvent} className="mt-4 space-y-4">
-                <Field label="Title" id="title">
-                  <input
+                <div className="space-y-2">
+                  <Label htmlFor="title">Title</Label>
+                  <Input
                     id="title"
                     value={eventForm.title}
                     onChange={(e) => updateEventForm("title", e.target.value)}
-                    className="w-full rounded-md border px-3 py-2"
                     required
                   />
-                </Field>
+                </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Date" id="date">
-                    <input
+                  <div className="space-y-2">
+                    <Label htmlFor="date">Date</Label>
+                    <Input
                       id="date"
                       type="date"
                       value={eventForm.date}
                       onChange={(e) => updateEventForm("date", e.target.value)}
-                      className="w-full rounded-md border px-3 py-2"
                       required
                     />
-                  </Field>
-                  <Field label="Time" id="time">
-                    <input
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="time">Time</Label>
+                    <Input
                       id="time"
                       type="time"
                       value={eventForm.time}
                       onChange={(e) => updateEventForm("time", e.target.value)}
-                      className="w-full rounded-md border px-3 py-2"
                       required
                     />
-                  </Field>
+                  </div>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Duration" id="duration">
-                    <input
+                  <div className="space-y-2">
+                    <Label htmlFor="duration">Duration</Label>
+                    <Input
                       id="duration"
                       type="number"
                       min="1"
                       value={eventForm.duration}
                       onChange={(e) => updateEventForm("duration", e.target.value)}
-                      className="w-full rounded-md border px-3 py-2"
                       required
                     />
-                  </Field>
-                  <Field label="Capacity" id="maxCapacity">
-                    <input
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="maxCapacity">Capacity</Label>
+                    <Input
                       id="maxCapacity"
                       type="number"
                       min="1"
                       value={eventForm.maxCapacity}
                       onChange={(e) => updateEventForm("maxCapacity", e.target.value)}
-                      className="w-full rounded-md border px-3 py-2"
                     />
-                  </Field>
+                  </div>
                 </div>
 
-                <Field label="Category" id="category">
-                  <input
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Input
                     id="category"
                     value={eventForm.category}
                     onChange={(e) => updateEventForm("category", e.target.value)}
-                    className="w-full rounded-md border px-3 py-2"
                     placeholder="Workshop"
                   />
-                </Field>
+                </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Visibility" id="visibility">
-                    <select
-                      id="visibility"
+                  <div className="space-y-2">
+                    <Label htmlFor="visibility">Visibility</Label>
+                    <Select
                       value={eventForm.visibility}
-                      onChange={(e) => updateEventForm("visibility", e.target.value)}
-                      className="w-full rounded-md border bg-background px-3 py-2"
+                      onValueChange={(value) => value && updateEventForm("visibility", value)}
                     >
-                      <option value="unpublished">Unpublished</option>
-                      <option value="published">Published</option>
-                      <option value="archived">Archived</option>
-                    </select>
-                  </Field>
-                  <Field label="Price" id="price">
-                    <input
+                      <SelectTrigger id="visibility">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unpublished">Unpublished</SelectItem>
+                        <SelectItem value="published">Published</SelectItem>
+                        <SelectItem value="archived">Archived</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="price">Price</Label>
+                    <Input
                       id="price"
                       value={eventForm.price}
                       onChange={(e) => updateEventForm("price", e.target.value)}
-                      className="w-full rounded-md border px-3 py-2"
                       required
                     />
-                  </Field>
+                  </div>
                 </div>
 
-                <Field label="Location" id="location">
-                  <input
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location</Label>
+                  <Input
                     id="location"
                     value={eventForm.location}
                     onChange={(e) => updateEventForm("location", e.target.value)}
-                    className="w-full rounded-md border px-3 py-2"
                   />
-                </Field>
+                </div>
 
-                <Field label="Description" id="description">
-                  <textarea
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
                     id="description"
                     value={eventForm.description}
                     onChange={(e) => updateEventForm("description", e.target.value)}
-                    className="min-h-24 w-full rounded-md border px-3 py-2"
+                    className="min-h-24"
                   />
-                </Field>
+                </div>
 
                 <Button type="submit" className="w-full" disabled={createEventMutation.isPending}>
                   {createEventMutation.isPending ? "Creating..." : "Create event"}
@@ -317,17 +333,6 @@ function Index() {
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-function Field({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-2">
-      <label htmlFor={id} className="text-sm font-medium">
-        {label}
-      </label>
-      {children}
     </div>
   );
 }

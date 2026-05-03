@@ -2,6 +2,17 @@ import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-ro
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { authClient } from "@/lib/auth-client";
 import { ApiError } from "@/lib/api";
 import { getCurrentOrg } from "@/lib/org";
@@ -119,9 +130,9 @@ function EventDetail() {
         </header>
 
         {(error || queryError) && (
-          <div className="rounded-md bg-red-50 p-4">
-            <p className="text-sm text-red-600">{error || queryError?.message}</p>
-          </div>
+          <Alert variant="destructive">
+            <AlertDescription>{error || queryError?.message}</AlertDescription>
+          </Alert>
         )}
 
         {eventQuery.isPending || !form ? (
@@ -129,119 +140,125 @@ function EventDetail() {
         ) : (
           <form onSubmit={handleSave} className="space-y-6 rounded-lg border p-6">
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Title" id="title" className="sm:col-span-2">
-                <input
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
                   id="title"
                   value={form.title}
                   onChange={(e) => updateForm("title", e.target.value)}
-                  className="w-full rounded-md border px-3 py-2"
                   required
                 />
-              </Field>
+              </div>
 
-              <Field label="Date" id="date">
-                <input
+              <div className="space-y-2">
+                <Label htmlFor="date">Date</Label>
+                <Input
                   id="date"
                   type="date"
                   value={form.date}
                   onChange={(e) => updateForm("date", e.target.value)}
-                  className="w-full rounded-md border px-3 py-2"
                   required
                 />
-              </Field>
-              <Field label="Time" id="time">
-                <input
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="time">Time</Label>
+                <Input
                   id="time"
                   type="time"
                   value={form.time}
                   onChange={(e) => updateForm("time", e.target.value)}
-                  className="w-full rounded-md border px-3 py-2"
                   required
                 />
-              </Field>
+              </div>
 
-              <Field label="Duration" id="duration">
-                <input
+              <div className="space-y-2">
+                <Label htmlFor="duration">Duration</Label>
+                <Input
                   id="duration"
                   type="number"
                   min="1"
                   value={form.duration}
                   onChange={(e) => updateForm("duration", e.target.value)}
-                  className="w-full rounded-md border px-3 py-2"
                   required
                 />
-              </Field>
-              <Field label="Capacity" id="maxCapacity">
-                <input
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="maxCapacity">Capacity</Label>
+                <Input
                   id="maxCapacity"
                   type="number"
                   min="1"
                   value={form.maxCapacity}
                   onChange={(e) => updateForm("maxCapacity", e.target.value)}
-                  className="w-full rounded-md border px-3 py-2"
                 />
-              </Field>
+              </div>
 
-              <Field label="Status" id="status">
-                <select
-                  id="status"
-                  value={form.status}
-                  onChange={(e) => updateForm("status", e.target.value)}
-                  className="w-full rounded-md border bg-background px-3 py-2"
-                >
-                  <option value="upcoming">Upcoming</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </Field>
-              <Field label="Visibility" id="visibility">
-                <select
-                  id="visibility"
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select value={form.status} onValueChange={(value) => value && updateForm("status", value)}>
+                  <SelectTrigger id="status">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="upcoming">Upcoming</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="visibility">Visibility</Label>
+                <Select
                   value={form.visibility}
-                  onChange={(e) => updateForm("visibility", e.target.value)}
-                  className="w-full rounded-md border bg-background px-3 py-2"
+                  onValueChange={(value) => value && updateForm("visibility", value)}
                 >
-                  <option value="unpublished">Unpublished</option>
-                  <option value="published">Published</option>
-                  <option value="archived">Archived</option>
-                </select>
-              </Field>
+                  <SelectTrigger id="visibility">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unpublished">Unpublished</SelectItem>
+                    <SelectItem value="published">Published</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-              <Field label="Category" id="category">
-                <input
+              <div className="space-y-2">
+                <Label htmlFor="category">Category</Label>
+                <Input
                   id="category"
                   value={form.category}
                   onChange={(e) => updateForm("category", e.target.value)}
-                  className="w-full rounded-md border px-3 py-2"
                 />
-              </Field>
-              <Field label="Price" id="price">
-                <input
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="price">Price</Label>
+                <Input
                   id="price"
                   value={form.price}
                   onChange={(e) => updateForm("price", e.target.value)}
-                  className="w-full rounded-md border px-3 py-2"
                   required
                 />
-              </Field>
+              </div>
 
-              <Field label="Location" id="location" className="sm:col-span-2">
-                <input
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="location">Location</Label>
+                <Input
                   id="location"
                   value={form.location}
                   onChange={(e) => updateForm("location", e.target.value)}
-                  className="w-full rounded-md border px-3 py-2"
                 />
-              </Field>
+              </div>
 
-              <Field label="Description" id="description" className="sm:col-span-2">
-                <textarea
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
                   id="description"
                   value={form.description}
                   onChange={(e) => updateForm("description", e.target.value)}
-                  className="min-h-28 w-full rounded-md border px-3 py-2"
+                  className="min-h-28"
                 />
-              </Field>
+              </div>
             </div>
 
             <Button type="submit" disabled={saveMutation.isPending}>
@@ -250,27 +267,6 @@ function EventDetail() {
           </form>
         )}
       </div>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  id,
-  className,
-  children,
-}: {
-  label: string;
-  id: string;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className={className ? `space-y-2 ${className}` : "space-y-2"}>
-      <label htmlFor={id} className="text-sm font-medium">
-        {label}
-      </label>
-      {children}
     </div>
   );
 }

@@ -2,6 +2,16 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ApiError } from "@/lib/api";
 import { getCurrentOrg, updateOrgSettings } from "@/lib/org";
 
@@ -95,70 +105,63 @@ function Onboarding() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="name" className="text-sm font-medium">
-              Organization Name
-            </label>
-            <input
+            <Label htmlFor="name">Organization Name</Label>
+            <Input
               id="name"
               type="text"
               value={name}
               onChange={handleNameChange}
               placeholder="Acme Inc"
-              className="w-full rounded-md border px-3 py-2"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="slug" className="text-sm font-medium">
-              Organization Slug
-            </label>
-            <input
+            <Label htmlFor="slug">Organization Slug</Label>
+            <Input
               id="slug"
               type="text"
               value={slug}
               onChange={handleSlugChange}
               placeholder="acme-inc"
-              className="w-full rounded-md border px-3 py-2"
               required
             />
             <p className="text-xs text-muted-foreground">Used in URLs: /{slug}</p>
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="contactEmail" className="text-sm font-medium">
-              Contact Email
-            </label>
-            <input
+            <Label htmlFor="contactEmail">Contact Email</Label>
+            <Input
               id="contactEmail"
               type="email"
               value={contactEmail}
               onChange={(e) => setContactEmail(e.target.value)}
               placeholder="hello@example.com"
-              className="w-full rounded-md border px-3 py-2"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="currency" className="text-sm font-medium">
-              Currency
-            </label>
-            <select
-              id="currency"
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2"
-            >
-              <option value="USD">USD</option>
-              <option value="CAD">CAD</option>
-              <option value="EUR">EUR</option>
-              <option value="GBP">GBP</option>
-              <option value="AUD">AUD</option>
-            </select>
+            <Label htmlFor="currency">Currency</Label>
+            <Select value={currency} onValueChange={(value) => value && setCurrency(value)}>
+              <SelectTrigger id="currency">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="USD">USD</SelectItem>
+                <SelectItem value="CAD">CAD</SelectItem>
+                <SelectItem value="EUR">EUR</SelectItem>
+                <SelectItem value="GBP">GBP</SelectItem>
+                <SelectItem value="AUD">AUD</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Creating..." : "Create Organization"}

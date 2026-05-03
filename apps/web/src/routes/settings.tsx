@@ -2,6 +2,10 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const Route = createFileRoute("/settings")({
   component: Settings,
@@ -138,121 +142,131 @@ function Settings() {
         </div>
 
         {error && (
-          <div className="rounded-md bg-red-50 p-4">
-            <p className="text-sm text-red-600">{error}</p>
-          </div>
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
 
-        <div className="space-y-4 rounded-lg border p-6">
-          <h2 className="text-lg font-semibold">Organization Details</h2>
-          <div className="grid gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Organization Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Name</label>
+              <Label>Name</Label>
               <p className="text-muted-foreground">{org.name}</p>
             </div>
             <div>
-              <label className="text-sm font-medium">Slug</label>
+              <Label>Slug</Label>
               <p className="text-muted-foreground">{org.slug}</p>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <div className="space-y-4 rounded-lg border p-6">
-          <h2 className="text-lg font-semibold">Members</h2>
-
-          <div className="space-y-2">
-            {members.map((member) => (
-              <div
-                key={member.id}
-                className="flex items-center justify-between rounded-md border p-3"
-              >
-                <div>
-                  <p className="font-medium">{member.user.name || member.user.email}</p>
-                  <p className="text-sm text-muted-foreground">{member.user.email}</p>
+        <Card>
+          <CardHeader>
+            <CardTitle>Members</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              {members.map((member) => (
+                <div
+                  key={member.id}
+                  className="flex items-center justify-between rounded-md border p-3"
+                >
+                  <div>
+                    <p className="font-medium">{member.user.name || member.user.email}</p>
+                    <p className="text-sm text-muted-foreground">{member.user.email}</p>
+                  </div>
+                  <span className="rounded-full bg-secondary px-2 py-1 text-xs">{member.role}</span>
                 </div>
-                <span className="rounded-full bg-secondary px-2 py-1 text-xs">{member.role}</span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          <form onSubmit={handleInvite} className="space-y-2">
-            <label className="text-sm font-medium">Invite Member</label>
-            <div className="flex gap-2">
-              <input
-                type="email"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                placeholder="colleague@example.com"
-                className="flex-1 rounded-md border px-3 py-2"
-                required
-              />
-              <Button type="submit" disabled={loading}>
+            <form onSubmit={handleInvite} className="flex gap-2">
+              <div className="flex-1 space-y-2">
+                <Label>Invite Member</Label>
+                <Input
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  placeholder="colleague@example.com"
+                  required
+                />
+              </div>
+              <Button type="submit" disabled={loading} className="mt-8">
                 {loading ? "Inviting..." : "Invite"}
               </Button>
-            </div>
-          </form>
-        </div>
+            </form>
+          </CardContent>
+        </Card>
 
-        <div className="space-y-4 rounded-lg border p-6">
-          <h2 className="text-lg font-semibold">Billing</h2>
-          <p className="text-sm text-muted-foreground">
-            Polar billing is ready for configuration. Add your Polar product ID to enable seat
-            checkout.
-          </p>
-          <Button
-            variant="outline"
-            onClick={() => {
-              window.open("/api/auth/polar/portal", "_blank");
-            }}
-          >
-            Manage Billing
-          </Button>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Billing</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <CardDescription>
+              Polar billing is ready for configuration. Add your Polar product ID to enable seat
+              checkout.
+            </CardDescription>
+            <Button
+              variant="outline"
+              onClick={() => {
+                window.open("/api/auth/polar/portal", "_blank");
+              }}
+            >
+              Manage Billing
+            </Button>
+          </CardContent>
+        </Card>
 
-        <div className="space-y-4 rounded-lg border border-red-200 p-6">
-          <h2 className="text-lg font-semibold text-red-600">Danger Zone</h2>
-          <Button
-            variant="outline"
-            className="border-red-300 text-red-600 hover:bg-red-50"
-            onClick={() => setShowDeleteModal(true)}
-          >
-            Delete Organization
-          </Button>
+        <Card className="border-destructive">
+          <CardHeader>
+            <CardTitle className="text-destructive">Danger Zone</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button
+              variant="outline"
+              className="border-destructive text-destructive hover:bg-destructive/10"
+              onClick={() => setShowDeleteModal(true)}
+            >
+              Delete Organization
+            </Button>
 
-          {showDeleteModal && (
-            <div className="mt-4 space-y-4 rounded-md bg-red-50 p-4">
-              <p className="text-sm text-red-800">
-                This will permanently delete your organization and all associated data. This action
-                cannot be undone.
-              </p>
-              <p className="text-sm font-medium text-red-800">Type "{org.name}" to confirm:</p>
-              <input
-                type="text"
-                value={deleteConfirm}
-                onChange={(e) => setDeleteConfirm(e.target.value)}
-                className="w-full rounded-md border border-red-300 px-3 py-2"
-              />
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowDeleteModal(false);
-                    setDeleteConfirm("");
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="bg-red-600 text-white hover:bg-red-700"
-                  onClick={handleDeleteOrg}
-                  disabled={loading}
-                >
-                  {loading ? "Deleting..." : "Delete Organization"}
-                </Button>
+            {showDeleteModal && (
+              <div className="space-y-4 rounded-md bg-destructive/10 p-4">
+                <p className="text-sm text-destructive">
+                  This will permanently delete your organization and all associated data. This
+                  action cannot be undone.
+                </p>
+                <p className="text-sm font-medium text-destructive">
+                  Type "{org.name}" to confirm:
+                </p>
+                <Input
+                  type="text"
+                  value={deleteConfirm}
+                  onChange={(e) => setDeleteConfirm(e.target.value)}
+                  className="border-destructive"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowDeleteModal(false);
+                      setDeleteConfirm("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button variant="destructive" onClick={handleDeleteOrg} disabled={loading}>
+                    {loading ? "Deleting..." : "Delete Organization"}
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
