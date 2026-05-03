@@ -1,0 +1,19 @@
+- generic [ref=e58]:
+  - banner [ref=e59]:
+    - generic [ref=e60]:
+      - paragraph [ref=e61]:
+        - link "Dashboard" [ref=e62] [cursor=pointer]:
+          - /url: /
+      - heading "Events" [level=1] [ref=e63]
+    - link "Create on dashboard" [ref=e64] [cursor=pointer]:
+      - /url: /
+      - button "Create on dashboard" [ref=e65]
+  - link "Test 2027-03-19 at 12:03:00 · 60 min upcoming unpublished" [active] [ref=e67] [cursor=pointer]:
+    - /url: /events/3d247a89-71be-44f9-bc54-b05c5462b398
+    - generic [ref=e68]:
+      - generic [ref=e69]:
+        - heading "Test" [level=2] [ref=e70]
+        - paragraph [ref=e71]: 2027-03-19 at 12:03:00 · 60 min
+      - generic [ref=e72]:
+        - generic [ref=e73]: upcoming
+        - generic [ref=e74]: unpublished

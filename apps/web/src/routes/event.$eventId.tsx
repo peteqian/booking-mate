@@ -14,7 +14,7 @@ import {
   updateEvent,
 } from "@/lib/events";
 
-export const Route = createFileRoute("/events/$eventId")({
+export const Route = createFileRoute("/event/$eventId")({
   component: EventDetail,
   beforeLoad: async () => {
     const session = await authClient.getSession();

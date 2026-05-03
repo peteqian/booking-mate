@@ -70,7 +70,7 @@ function Events() {
             {events.map((event) => (
               <Link
                 key={event.id}
-                to="/events/$eventId"
+                to="/event/$eventId"
                 params={{ eventId: event.id }}
                 className="block rounded-lg border p-4 transition-colors hover:bg-muted/50"
               >

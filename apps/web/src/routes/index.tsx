@@ -173,7 +173,7 @@ function Index() {
                   {events.map((event) => (
                     <Link
                       key={event.id}
-                      to="/events/$eventId"
+                      to="/event/$eventId"
                       params={{ eventId: event.id }}
                       className="block rounded-md border p-4 transition-colors hover:bg-muted/50"
                     >

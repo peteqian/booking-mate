@@ -16,7 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InviteInvitationIdRouteImport } from './routes/invite.$invitationId'
-import { Route as EventsEventIdRouteImport } from './routes/events.$eventId'
+import { Route as EventEventIdRouteImport } from './routes/event.$eventId'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -53,41 +53,41 @@ const InviteInvitationIdRoute = InviteInvitationIdRouteImport.update({
   path: '/invite/$invitationId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EventsEventIdRoute = EventsEventIdRouteImport.update({
-  id: '/$eventId',
-  path: '/$eventId',
-  getParentRoute: () => EventsRoute,
+const EventEventIdRoute = EventEventIdRouteImport.update({
+  id: '/event/$eventId',
+  path: '/event/$eventId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/events': typeof EventsRouteWithChildren
+  '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
-  '/events/$eventId': typeof EventsEventIdRoute
+  '/event/$eventId': typeof EventEventIdRoute
   '/invite/$invitationId': typeof InviteInvitationIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/events': typeof EventsRouteWithChildren
+  '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
-  '/events/$eventId': typeof EventsEventIdRoute
+  '/event/$eventId': typeof EventEventIdRoute
   '/invite/$invitationId': typeof InviteInvitationIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/events': typeof EventsRouteWithChildren
+  '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
-  '/events/$eventId': typeof EventsEventIdRoute
+  '/event/$eventId': typeof EventEventIdRoute
   '/invite/$invitationId': typeof InviteInvitationIdRoute
 }
 export interface FileRouteTypes {
@@ -99,7 +99,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/settings'
     | '/signup'
-    | '/events/$eventId'
+    | '/event/$eventId'
     | '/invite/$invitationId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -109,7 +109,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/settings'
     | '/signup'
-    | '/events/$eventId'
+    | '/event/$eventId'
     | '/invite/$invitationId'
   id:
     | '__root__'
@@ -119,17 +119,18 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/settings'
     | '/signup'
-    | '/events/$eventId'
+    | '/event/$eventId'
     | '/invite/$invitationId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  EventsRoute: typeof EventsRouteWithChildren
+  EventsRoute: typeof EventsRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
+  EventEventIdRoute: typeof EventEventIdRoute
   InviteInvitationIdRoute: typeof InviteInvitationIdRoute
 }
 
@@ -184,34 +185,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InviteInvitationIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/events/$eventId': {
-      id: '/events/$eventId'
-      path: '/$eventId'
-      fullPath: '/events/$eventId'
-      preLoaderRoute: typeof EventsEventIdRouteImport
-      parentRoute: typeof EventsRoute
+    '/event/$eventId': {
+      id: '/event/$eventId'
+      path: '/event/$eventId'
+      fullPath: '/event/$eventId'
+      preLoaderRoute: typeof EventEventIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
 
-interface EventsRouteChildren {
-  EventsEventIdRoute: typeof EventsEventIdRoute
-}
-
-const EventsRouteChildren: EventsRouteChildren = {
-  EventsEventIdRoute: EventsEventIdRoute,
-}
-
-const EventsRouteWithChildren =
-  EventsRoute._addFileChildren(EventsRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  EventsRoute: EventsRouteWithChildren,
+  EventsRoute: EventsRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
+  EventEventIdRoute: EventEventIdRoute,
   InviteInvitationIdRoute: InviteInvitationIdRoute,
 }
 export const routeTree = rootRouteImport
