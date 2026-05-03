@@ -1,9 +1,12 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import type { CreateEventRequest, EventDto, EventVisibility } from "@workspace/contracts";
+import type { EventDto } from "@workspace/contracts";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/button";
-import { api, ApiError } from "@/lib/api";
+import { ApiError } from "@/lib/api";
+import { createEvent, emptyEventForm, formToEventRequest, listEvents } from "@/lib/events";
+import type { EventFormState } from "@/lib/events";
 import { getCurrentOrg, type CurrentOrgResponse } from "@/lib/org";
 
 interface SessionData {
@@ -11,32 +14,6 @@ interface SessionData {
     email: string;
   };
 }
-
-interface EventFormState {
-  title: string;
-  date: string;
-  time: string;
-  duration: string;
-  maxCapacity: string;
-  category: string;
-  visibility: EventVisibility;
-  description: string;
-  location: string;
-  price: string;
-}
-
-const emptyEventForm: EventFormState = {
-  title: "",
-  date: "",
-  time: "",
-  duration: "60",
-  maxCapacity: "",
-  category: "",
-  visibility: "unpublished",
-  description: "",
-  location: "",
-  price: "0.00",
-};
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -59,13 +36,26 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const queryClient = useQueryClient();
   const [session, setSession] = useState<SessionData | null>(null);
   const [orgContext, setOrgContext] = useState<CurrentOrgResponse | null>(null);
   const [events, setEvents] = useState<EventDto[]>([]);
   const [eventForm, setEventForm] = useState<EventFormState>(emptyEventForm);
   const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
+
+  const createEventMutation = useMutation({
+    mutationFn: createEvent,
+    onSuccess: async () => {
+      setEventForm(emptyEventForm);
+      const eventsData = await listEvents();
+      setEvents(eventsData.events);
+      await queryClient.invalidateQueries({ queryKey: ["events"] });
+    },
+    onError: (error) => {
+      setError(error instanceof Error ? error.message : "Unable to create event");
+    },
+  });
 
   useEffect(() => {
     void loadData();
@@ -83,7 +73,7 @@ function Index() {
 
       setSession(sessionData.data);
       const currentOrg = await getCurrentOrg();
-      const eventsData = await api.get<{ events: EventDto[] }>("/api/events");
+      const eventsData = await listEvents();
       setOrgContext(currentOrg);
       setEvents(eventsData.events);
     } catch (error) {
@@ -104,32 +94,8 @@ function Index() {
 
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
-    setCreating(true);
     setError("");
-
-    const input: CreateEventRequest = {
-      title: eventForm.title,
-      date: eventForm.date,
-      time: eventForm.time,
-      duration: Number(eventForm.duration),
-      maxCapacity: eventForm.maxCapacity ? Number(eventForm.maxCapacity) : null,
-      category: eventForm.category.trim() || null,
-      visibility: eventForm.visibility,
-      description: eventForm.description.trim() || null,
-      location: eventForm.location.trim() || null,
-      price: eventForm.price,
-    };
-
-    try {
-      await api.post<{ event: EventDto }>("/api/events", input);
-      setEventForm(emptyEventForm);
-      const eventsData = await api.get<{ events: EventDto[] }>("/api/events");
-      setEvents(eventsData.events);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Unable to create event");
-    } finally {
-      setCreating(false);
-    }
+    createEventMutation.mutate(formToEventRequest(eventForm));
   };
 
   return (
@@ -145,6 +111,11 @@ function Index() {
             {session ? (
               <>
                 <span className="text-sm text-muted-foreground">{session.user.email}</span>
+                <Link to="/events">
+                  <Button variant="outline" size="sm">
+                    Events
+                  </Button>
+                </Link>
                 <Link to="/settings">
                   <Button variant="outline" size="sm">
                     Settings
@@ -200,7 +171,12 @@ function Index() {
               ) : (
                 <div className="space-y-3">
                   {events.map((event) => (
-                    <article key={event.id} className="rounded-md border p-4">
+                    <Link
+                      key={event.id}
+                      to="/events/$eventId"
+                      params={{ eventId: event.id }}
+                      className="block rounded-md border p-4 transition-colors hover:bg-muted/50"
+                    >
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                           <h3 className="font-semibold">{event.title}</h3>
@@ -215,7 +191,7 @@ function Index() {
                           {event.visibility}
                         </span>
                       </div>
-                    </article>
+                    </Link>
                   ))}
                 </div>
               )}
@@ -333,8 +309,8 @@ function Index() {
                   />
                 </Field>
 
-                <Button type="submit" className="w-full" disabled={creating}>
-                  {creating ? "Creating..." : "Create event"}
+                <Button type="submit" className="w-full" disabled={createEventMutation.isPending}>
+                  {createEventMutation.isPending ? "Creating..." : "Create event"}
                 </Button>
               </form>
             </section>
