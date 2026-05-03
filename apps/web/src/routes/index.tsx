@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import type { EventDto } from "@workspace/contracts";
 import { authClient } from "@/lib/auth-client";
-import { Button } from "@/components/button";
+import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
 import { createEvent, emptyEventForm, formToEventRequest, listEvents } from "@/lib/events";
 import type { EventFormState } from "@/lib/events";

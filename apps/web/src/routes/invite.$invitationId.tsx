@@ -1,7 +1,7 @@
 import { createFileRoute, redirect, useParams } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { authClient } from "@/lib/auth-client";
-import { Button } from "@/components/button";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/invite/$invitationId")({
   component: Invite,

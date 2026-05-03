@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
-import { Button } from "@/components/button";
+import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
 import { getCurrentOrg, updateOrgSettings } from "@/lib/org";
 

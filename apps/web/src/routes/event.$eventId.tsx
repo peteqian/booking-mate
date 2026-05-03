@@ -1,7 +1,7 @@
 import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/button";
+import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { ApiError } from "@/lib/api";
 import { getCurrentOrg } from "@/lib/org";
