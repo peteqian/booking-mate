@@ -54,9 +54,7 @@ function Invite() {
     return (
       <div className="flex min-h-svh items-center justify-center p-6">
         <div className="text-center space-y-4">
-          <h1 className="text-2xl font-bold text-green-600">
-            Invitation accepted!
-          </h1>
+          <h1 className="text-2xl font-bold text-green-600">Invitation accepted!</h1>
           <p>Redirecting to your organization...</p>
         </div>
       </div>
@@ -68,9 +66,7 @@ function Invite() {
       <div className="w-full max-w-sm space-y-6 text-center">
         <div className="space-y-2">
           <h1 className="text-2xl font-bold">Organization Invitation</h1>
-          <p className="text-muted-foreground">
-            You've been invited to join an organization
-          </p>
+          <p className="text-muted-foreground">You've been invited to join an organization</p>
         </div>
 
         {error && (
@@ -80,11 +76,7 @@ function Invite() {
         )}
 
         {!error && (
-          <Button
-            onClick={handleAccept}
-            className="w-full"
-            disabled={loading}
-          >
+          <Button onClick={handleAccept} className="w-full" disabled={loading}>
             {loading ? "Accepting..." : "Accept Invitation"}
           </Button>
         )}

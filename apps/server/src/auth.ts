@@ -6,7 +6,7 @@ import { Polar } from "@polar-sh/sdk";
 import { eq } from "drizzle-orm";
 import { db } from "./db";
 import { member } from "./db/schema";
-import { ac, owner, admin } from "./auth/permissions";
+import { ac, owner, admin, manager, viewer } from "./auth/permissions";
 import { sendInviteEmail } from "./auth/email";
 
 const polarClient = process.env.POLAR_ACCESS_TOKEN
@@ -27,45 +27,39 @@ const googleProvider =
     : undefined;
 
 const organizationPlugin = organization({
-    organizationLimit: 1,
-    ac,
-    roles: { owner, admin },
-    organizationHooks: {
-      beforeAddMember: async ({ member: memberData, user }) => {
-        const existing = await db
-          .select()
-          .from(member)
-          .where(eq(member.userId, user.id));
-        if (existing.length > 0) {
-          throw new Error("User already belongs to an organization");
-        }
-        return { data: memberData };
-      },
-      beforeAcceptInvitation: async ({ user }) => {
-        const existing = await db
-          .select()
-          .from(member)
-          .where(eq(member.userId, user.id));
-        if (existing.length > 0) {
-          throw new Error("Already in an organization");
-        }
-      },
+  organizationLimit: 1,
+  ac,
+  roles: { owner, admin, manager, viewer },
+  organizationHooks: {
+    beforeAddMember: async ({ member: memberData, user }) => {
+      const existing = await db.select().from(member).where(eq(member.userId, user.id));
+      if (existing.length > 0) {
+        throw new Error("User already belongs to an organization");
+      }
+      return { data: memberData };
     },
-    membershipLimit: async () => {
-      // Owner is free. Polar will become the source of truth for paid admin seats.
-      // Until products are configured, keep the org at owner + one invited admin.
-      return 2;
+    beforeAcceptInvitation: async ({ user }) => {
+      const existing = await db.select().from(member).where(eq(member.userId, user.id));
+      if (existing.length > 0) {
+        throw new Error("Already in an organization");
+      }
     },
-    sendInvitationEmail: async (data) => {
-      const webUrl = process.env.WEB_URL || "http://localhost:5678";
-      const inviteLink = `${webUrl}/invite/${data.id}`;
-      await sendInviteEmail({
-        email: data.email,
-        organizationName: data.organization.name,
-        inviteLink,
-      });
-    },
-  });
+  },
+  membershipLimit: async () => {
+    // Owner is free. Polar will become the source of truth for paid admin seats.
+    // Until products are configured, keep the org at owner + one invited admin.
+    return 2;
+  },
+  sendInvitationEmail: async (data) => {
+    const webUrl = process.env.WEB_URL || "http://localhost:5678";
+    const inviteLink = `${webUrl}/invite/${data.id}`;
+    await sendInviteEmail({
+      email: data.email,
+      organizationName: data.organization.name,
+      inviteLink,
+    });
+  },
+});
 
 const polarPlugin = polarClient
   ? polar({

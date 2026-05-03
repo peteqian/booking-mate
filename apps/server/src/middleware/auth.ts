@@ -1,0 +1,69 @@
+import type { OrgRole } from "@workspace/contracts";
+import { and, eq } from "drizzle-orm";
+import { createMiddleware } from "hono/factory";
+import { auth } from "../auth";
+import { hasRole } from "../auth/permissions";
+import { db } from "../db";
+import { member, organization } from "../db/schema";
+import { apiError } from "../api/errors";
+import type { ApiEnv } from "../api/types";
+
+export const requireAuth = createMiddleware<ApiEnv>(async (c, next) => {
+  const session = await auth.api.getSession({ headers: c.req.raw.headers });
+
+  if (!session) {
+    return apiError(c, 401, "unauthorized", "Authentication required");
+  }
+
+  c.set("user", session.user);
+  c.set("session", session.session);
+  await next();
+});
+
+export const requireOrg = createMiddleware<ApiEnv>(async (c, next) => {
+  const user = c.var.user;
+  const requestedOrgId = c.req.header("X-Org-Id");
+
+  const memberships = await db
+    .select({
+      orgId: member.organizationId,
+      role: member.role,
+      orgName: organization.name,
+      orgSlug: organization.slug,
+      orgLogo: organization.logo,
+    })
+    .from(member)
+    .innerJoin(organization, eq(member.organizationId, organization.id))
+    .where(
+      requestedOrgId
+        ? and(eq(member.userId, user.id), eq(member.organizationId, requestedOrgId))
+        : eq(member.userId, user.id),
+    );
+
+  const membership = memberships[0];
+
+  if (!membership) {
+    return apiError(c, 403, "organization_required", "Organization membership required");
+  }
+
+  c.set("orgId", membership.orgId);
+  c.set("memberRole", membership.role as OrgRole);
+  c.set("org", {
+    id: membership.orgId,
+    name: membership.orgName,
+    slug: membership.orgSlug,
+    logo: membership.orgLogo,
+  });
+
+  await next();
+});
+
+export function requireRole(requiredRole: OrgRole) {
+  return createMiddleware<ApiEnv>(async (c, next) => {
+    if (!hasRole(c.var.memberRole, requiredRole)) {
+      return apiError(c, 403, "forbidden", "You do not have permission to perform this action");
+    }
+
+    await next();
+  });
+}

@@ -29,6 +29,13 @@
       "when": 1777730300000,
       "tag": "0003_drop_non_cascade_auth_constraints",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1777810225981,
+      "tag": "0004_domain_foundation",
+      "breakpoints": true
     }
   ]
 }

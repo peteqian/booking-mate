@@ -43,7 +43,7 @@ function Settings() {
 
         const session = await authClient.getSession();
         const currentMember = membersData.data.members?.find(
-          (m: any) => m.userId === session.data?.user.id
+          (m: any) => m.userId === session.data?.user.id,
         );
         setIsOwner(currentMember?.role === "owner");
       }
@@ -104,10 +104,10 @@ function Settings() {
       <div className="flex min-h-svh items-center justify-center p-6">
         <div className="max-w-sm space-y-4 text-center">
           <h1 className="text-2xl font-bold">No organization</h1>
-          <p className="text-muted-foreground">
-            Create an organization before opening settings.
-          </p>
-          <Button onClick={() => (window.location.href = "/onboarding")}>Create organization</Button>
+          <p className="text-muted-foreground">Create an organization before opening settings.</p>
+          <Button onClick={() => (window.location.href = "/onboarding")}>
+            Create organization
+          </Button>
         </div>
       </div>
     );
@@ -121,7 +121,9 @@ function Settings() {
           <p className="text-muted-foreground">
             Only the organization owner can manage organization settings.
           </p>
-          <Button variant="outline" onClick={() => (window.location.href = "/")}>Back to dashboard</Button>
+          <Button variant="outline" onClick={() => (window.location.href = "/")}>
+            Back to dashboard
+          </Button>
         </div>
       </div>
     );
@@ -168,9 +170,7 @@ function Settings() {
                   <p className="font-medium">{member.user.name || member.user.email}</p>
                   <p className="text-sm text-muted-foreground">{member.user.email}</p>
                 </div>
-                <span className="rounded-full bg-secondary px-2 py-1 text-xs">
-                  {member.role}
-                </span>
+                <span className="rounded-full bg-secondary px-2 py-1 text-xs">{member.role}</span>
               </div>
             ))}
           </div>
@@ -196,7 +196,8 @@ function Settings() {
         <div className="space-y-4 rounded-lg border p-6">
           <h2 className="text-lg font-semibold">Billing</h2>
           <p className="text-sm text-muted-foreground">
-            Polar billing is ready for configuration. Add your Polar product ID to enable seat checkout.
+            Polar billing is ready for configuration. Add your Polar product ID to enable seat
+            checkout.
           </p>
           <Button
             variant="outline"
@@ -209,50 +210,48 @@ function Settings() {
         </div>
 
         <div className="space-y-4 rounded-lg border border-red-200 p-6">
-            <h2 className="text-lg font-semibold text-red-600">Danger Zone</h2>
-            <Button
-              variant="outline"
-              className="border-red-300 text-red-600 hover:bg-red-50"
-              onClick={() => setShowDeleteModal(true)}
-            >
-              Delete Organization
-            </Button>
+          <h2 className="text-lg font-semibold text-red-600">Danger Zone</h2>
+          <Button
+            variant="outline"
+            className="border-red-300 text-red-600 hover:bg-red-50"
+            onClick={() => setShowDeleteModal(true)}
+          >
+            Delete Organization
+          </Button>
 
-            {showDeleteModal && (
-              <div className="mt-4 space-y-4 rounded-md bg-red-50 p-4">
-                <p className="text-sm text-red-800">
-                  This will permanently delete your organization and all
-                  associated data. This action cannot be undone.
-                </p>
-                <p className="text-sm font-medium text-red-800">
-                  Type "{org.name}" to confirm:
-                </p>
-                <input
-                  type="text"
-                  value={deleteConfirm}
-                  onChange={(e) => setDeleteConfirm(e.target.value)}
-                  className="w-full rounded-md border border-red-300 px-3 py-2"
-                />
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setShowDeleteModal(false);
-                      setDeleteConfirm("");
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    className="bg-red-600 text-white hover:bg-red-700"
-                    onClick={handleDeleteOrg}
-                    disabled={loading}
-                  >
-                    {loading ? "Deleting..." : "Delete Organization"}
-                  </Button>
-                </div>
+          {showDeleteModal && (
+            <div className="mt-4 space-y-4 rounded-md bg-red-50 p-4">
+              <p className="text-sm text-red-800">
+                This will permanently delete your organization and all associated data. This action
+                cannot be undone.
+              </p>
+              <p className="text-sm font-medium text-red-800">Type "{org.name}" to confirm:</p>
+              <input
+                type="text"
+                value={deleteConfirm}
+                onChange={(e) => setDeleteConfirm(e.target.value)}
+                className="w-full rounded-md border border-red-300 px-3 py-2"
+              />
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDeleteConfirm("");
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-red-600 text-white hover:bg-red-700"
+                  onClick={handleDeleteOrg}
+                  disabled={loading}
+                >
+                  {loading ? "Deleting..." : "Delete Organization"}
+                </Button>
               </div>
-            )}
+            </div>
+          )}
         </div>
       </div>
     </div>

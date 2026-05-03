@@ -42,6 +42,8 @@
         "@tanstack/react-query": "^5.66.0",
         "@tanstack/react-router": "^1.114.0",
         "@tanstack/react-virtual": "^3.11.0",
+        "@workspace/contracts": "workspace:*",
+        "better-auth": "^1.6.9",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "lucide-react": "^1.14.0",
