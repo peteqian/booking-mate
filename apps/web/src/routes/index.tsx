@@ -1,7 +1,6 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import type { EventDto } from "@workspace/contracts";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,9 +15,10 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ApiError } from "@/lib/api";
-import { createEvent, emptyEventForm, formToEventRequest, listEvents } from "@/lib/events";
-import type { EventFormState } from "@/lib/events";
+import { emptyEventForm, formToEventRequest, type EventFormState } from "@/lib/events";
 import { getCurrentOrg, type CurrentOrgResponse } from "@/lib/org";
+import { eventsQueryOptions } from "@/queries/events";
+import { useCreateEvent } from "@/hooks/use-events";
 
 interface SessionData {
   user: {
@@ -44,29 +44,21 @@ export const Route = createFileRoute("/")({
       throw error;
     }
   },
+  loader: ({ context }) => context.queryClient.ensureQueryData(eventsQueryOptions),
 });
 
 function Index() {
-  const queryClient = useQueryClient();
   const [session, setSession] = useState<SessionData | null>(null);
   const [orgContext, setOrgContext] = useState<CurrentOrgResponse | null>(null);
-  const [events, setEvents] = useState<EventDto[]>([]);
   const [eventForm, setEventForm] = useState<EventFormState>(emptyEventForm);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const createEventMutation = useMutation({
-    mutationFn: createEvent,
-    onSuccess: async () => {
-      setEventForm(emptyEventForm);
-      const eventsData = await listEvents();
-      setEvents(eventsData.events);
-      await queryClient.invalidateQueries({ queryKey: ["events"] });
-    },
-    onError: (error) => {
-      setError(error instanceof Error ? error.message : "Unable to create event");
-    },
-  });
+  const {
+    data: { events },
+  } = useSuspenseQuery(eventsQueryOptions);
+
+  const createEventMutation = useCreateEvent();
 
   useEffect(() => {
     void loadData();
@@ -84,9 +76,7 @@ function Index() {
 
       setSession(sessionData.data);
       const currentOrg = await getCurrentOrg();
-      const eventsData = await listEvents();
       setOrgContext(currentOrg);
-      setEvents(eventsData.events);
     } catch (error) {
       setError(error instanceof Error ? error.message : "Unable to load dashboard");
     } finally {
@@ -106,7 +96,14 @@ function Index() {
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    createEventMutation.mutate(formToEventRequest(eventForm));
+    createEventMutation.mutate(formToEventRequest(eventForm), {
+      onSuccess: () => {
+        setEventForm(emptyEventForm);
+      },
+      onError: (error) => {
+        setError(error instanceof Error ? error.message : "Unable to create event");
+      },
+    });
   };
 
   return (

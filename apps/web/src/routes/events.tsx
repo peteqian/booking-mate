@@ -1,10 +1,10 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { ApiError } from "@/lib/api";
 import { getCurrentOrg } from "@/lib/org";
-import { listEvents } from "@/lib/events";
+import { eventsQueryOptions } from "@/queries/events";
 
 export const Route = createFileRoute("/events")({
   component: Events,
@@ -22,16 +22,13 @@ export const Route = createFileRoute("/events")({
       throw error;
     }
   },
+  loader: ({ context }) => context.queryClient.ensureQueryData(eventsQueryOptions),
 });
 
 function Events() {
-  const eventsQuery = useQuery({
-    queryKey: ["events"],
-    queryFn: listEvents,
-  });
-
-  const events = eventsQuery.data?.events ?? [];
-  const error = eventsQuery.error;
+  const {
+    data: { events },
+  } = useSuspenseQuery(eventsQueryOptions);
 
   return (
     <div className="min-h-svh p-6">
@@ -50,15 +47,7 @@ function Events() {
           </Link>
         </header>
 
-        {error && (
-          <div className="rounded-md bg-red-50 p-4">
-            <p className="text-sm text-red-600">{error.message}</p>
-          </div>
-        )}
-
-        {eventsQuery.isPending ? (
-          <p className="text-muted-foreground">Loading events...</p>
-        ) : events.length === 0 ? (
+        {events.length === 0 ? (
           <div className="rounded-lg border border-dashed p-8 text-center">
             <h2 className="font-semibold">No events yet</h2>
             <p className="mt-2 text-sm text-muted-foreground">

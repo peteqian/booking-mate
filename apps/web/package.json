@@ -46,6 +46,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.18",
+    "@tanstack/react-query-devtools": "^5.100.9",
     "@tanstack/router-plugin": "^1.114.0",
     "@types/node": "^25.1.0",
     "@types/react": "^19.2.10",
