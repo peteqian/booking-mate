@@ -127,6 +127,10 @@ export interface RegistrationDto {
   updatedAt: string;
 }
 
+export interface RegistrationWithAttendeeDto extends RegistrationDto {
+  attendee: AttendeeDto;
+}
+
 export interface PaymentConnectionDto {
   id: string;
   orgId: string;

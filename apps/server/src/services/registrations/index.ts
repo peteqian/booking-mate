@@ -1,4 +1,5 @@
 import type {
+  AttendeeDto,
   CreateRegistrationRequest,
   RegistrationDto,
   UpdateRegistrationRequest,
@@ -6,6 +7,10 @@ import type {
 import { and, eq, ne } from "drizzle-orm";
 import { db } from "../../db";
 import { attendees, events, registrations } from "../../db/schema";
+
+export interface RegistrationWithAttendeeDto extends RegistrationDto {
+  attendee: AttendeeDto;
+}
 
 export function toRegistrationDto(
   registration: typeof registrations.$inferSelect,
@@ -24,6 +29,18 @@ export function toRegistrationDto(
   };
 }
 
+function toAttendeeDto(attendee: typeof attendees.$inferSelect): AttendeeDto {
+  return {
+    id: attendee.id,
+    orgId: attendee.orgId,
+    name: attendee.name,
+    email: attendee.email,
+    phone: attendee.phone,
+    createdAt: attendee.createdAt.toISOString(),
+    updatedAt: attendee.updatedAt.toISOString(),
+  };
+}
+
 export async function listRegistrations(orgId: string): Promise<RegistrationDto[]> {
   const rows = await db.select().from(registrations).where(eq(registrations.orgId, orgId));
   return rows.map(toRegistrationDto);
@@ -32,13 +49,17 @@ export async function listRegistrations(orgId: string): Promise<RegistrationDto[
 export async function listRegistrationsByEvent(
   orgId: string,
   eventId: string,
-): Promise<RegistrationDto[]> {
+): Promise<RegistrationWithAttendeeDto[]> {
   const rows = await db
     .select()
     .from(registrations)
+    .innerJoin(attendees, eq(registrations.attendeeId, attendees.id))
     .where(and(eq(registrations.orgId, orgId), eq(registrations.eventId, eventId)));
 
-  return rows.map(toRegistrationDto);
+  return rows.map((row) => ({
+    ...toRegistrationDto(row.registrations),
+    attendee: toAttendeeDto(row.attendees),
+  }));
 }
 
 export async function createRegistration(
