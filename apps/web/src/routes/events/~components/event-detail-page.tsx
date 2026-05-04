@@ -15,11 +15,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getCurrentOrg } from "@/lib/org";
 import { AppShell } from "@/components/app-shell";
 import { eventFormSchema, eventToForm, type EventFormState } from "@/lib/events";
-import type { PaymentStatus, RegistrationWithAttendeeDto, EventResourceDto, ResourceDto } from "@workspace/contracts";
+import type { AttendeeDto, PaymentStatus, RegistrationWithAttendeeDto, EventResourceDto, ResourceDto } from "@workspace/contracts";
 import { eventQueryOptions } from "@/queries/events";
 import { eventRegistrationsQueryOptions } from "@/queries/registrations";
 import { attendeesQueryOptions } from "@/queries/attendees";
@@ -45,7 +53,7 @@ export function EventDetailPage({
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState(mode === "edit" ? "details" : "details");
-  const [attendeeSearch, setAttendeeSearch] = useState("");
+  const [selectedAttendee, setSelectedAttendee] = useState<AttendeeDto | null>(null);
   const [registrationForm, setRegistrationForm] = useState({
     attendeeId: "",
     name: "",
@@ -75,7 +83,7 @@ export function EventDetailPage({
   });
 
   const { data: attendeesData } = useQuery({
-    ...attendeesQueryOptions(attendeeSearch),
+    ...attendeesQueryOptions(),
     enabled: activeTab === "registrations",
   });
 
@@ -171,6 +179,7 @@ export function EventDetailPage({
         status: "confirmed",
         paymentStatus: "not_required",
       });
+      setSelectedAttendee(null);
     } catch (error) {
       setError(error instanceof Error ? error.message : "Unable to create registration");
     }
@@ -611,32 +620,61 @@ export function EventDetailPage({
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="attendee-search">Find attendee</Label>
-                    <Input
-                      id="attendee-search"
-                      value={attendeeSearch}
-                      onChange={(e) => setAttendeeSearch(e.target.value)}
-                      placeholder="Search by name or email"
-                    />
-                  </div>
-                  <div className="space-y-2 sm:col-span-2">
-                    <Label>Existing attendee</Label>
-                    <Select
-                      value={registrationForm.attendeeId || "new"}
-                      onValueChange={(value) =>
-                        setRegistrationForm((current) => ({ ...current, attendeeId: value === "new" ? "" : value }))
-                      }
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="attendee-combobox">Attendee</Label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs"
+                        onClick={() => {
+                          setSelectedAttendee(null);
+                          setRegistrationForm((current) => ({
+                            ...current,
+                            attendeeId: "",
+                            name: "",
+                            email: "",
+                            phone: "",
+                          }));
+                        }}
+                      >
+                        + Create new
+                      </Button>
+                    </div>
+                    <Combobox<AttendeeDto>
+                      items={attendees}
+                      value={selectedAttendee}
+                      onValueChange={(attendee) => {
+                        setSelectedAttendee(attendee ?? null);
+                        setRegistrationForm((current) => ({
+                          ...current,
+                          attendeeId: attendee?.id ?? "",
+                          name: attendee?.name ?? "",
+                          email: attendee?.email ?? "",
+                          phone: attendee?.phone ?? "",
+                        }));
+                      }}
+                      itemToStringLabel={(attendee) => `${attendee.name} (${attendee.email})`}
+                      itemToStringValue={(attendee) => attendee.id}
+                      isItemEqualToValue={(a, b) => a.id === b.id}
                     >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent alignItemWithTrigger={false}>
-                        <SelectItem value="new">Create a new attendee</SelectItem>
-                        {attendees.map((attendee) => (
-                          <SelectItem key={attendee.id} value={attendee.id}>{attendee.name} ({attendee.email})</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      <ComboboxInput id="attendee-combobox" placeholder="Search by name or email" />
+                      <ComboboxContent>
+                        <ComboboxList>
+                          {(attendee: AttendeeDto) => (
+                            <ComboboxItem key={attendee.id} value={attendee}>
+                              <div className="flex flex-col">
+                                <span className="text-sm">{attendee.name}</span>
+                                <span className="text-xs text-muted-foreground">{attendee.email}</span>
+                              </div>
+                            </ComboboxItem>
+                          )}
+                        </ComboboxList>
+                        <ComboboxEmpty>
+                          No matching attendee. Use "+ Create new" to add one.
+                        </ComboboxEmpty>
+                      </ComboboxContent>
+                    </Combobox>
                   </div>
                   {!registrationForm.attendeeId && (
                     <>
