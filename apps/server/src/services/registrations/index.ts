@@ -2,11 +2,13 @@ import type {
   AttendeeDto,
   CreateRegistrationRequest,
   RegistrationDto,
+  RegistrationWithEventDto,
   UpdateRegistrationRequest,
 } from "@workspace/contracts";
 import { and, eq, ne } from "drizzle-orm";
 import { db } from "../../db";
 import { attendees, events, registrations } from "../../db/schema";
+import { toEventDto } from "../events";
 
 export interface RegistrationWithAttendeeDto extends RegistrationDto {
   attendee: AttendeeDto;
@@ -59,6 +61,22 @@ export async function listRegistrationsByEvent(
   return rows.map((row) => ({
     ...toRegistrationDto(row.registrations),
     attendee: toAttendeeDto(row.attendees),
+  }));
+}
+
+export async function listRegistrationsByAttendee(
+  orgId: string,
+  attendeeId: string,
+): Promise<RegistrationWithEventDto[]> {
+  const rows = await db
+    .select()
+    .from(registrations)
+    .innerJoin(events, eq(registrations.eventId, events.id))
+    .where(and(eq(registrations.orgId, orgId), eq(registrations.attendeeId, attendeeId)));
+
+  return rows.map((row) => ({
+    ...toRegistrationDto(row.registrations),
+    event: toEventDto(row.events),
   }));
 }
 

@@ -133,6 +133,10 @@ export interface RegistrationWithAttendeeDto extends RegistrationDto {
   attendee: AttendeeDto;
 }
 
+export interface RegistrationWithEventDto extends RegistrationDto {
+  event: EventDto;
+}
+
 export interface PaymentConnectionDto {
   id: string;
   orgId: string;

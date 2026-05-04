@@ -1,5 +1,5 @@
 /* eslint-disable react/no-children-prop */
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import { useEffect, useMemo, useState } from "react";
@@ -39,7 +39,7 @@ import {
   type AttendeeFormState,
 } from "@/lib/attendees";
 
-export const Route = createFileRoute("/attendees")({
+export const Route = createFileRoute("/attendees/")({
   component: AttendeesPage,
   beforeLoad: async () => {
     const session = await authClient.getSession();
@@ -141,7 +141,15 @@ function AttendeesPage() {
               <TableBody>
                 {sorted.map((attendee) => (
                   <TableRow key={attendee.id} className="group hover:bg-muted/30">
-                    <TableCell className="py-2 text-sm font-medium">{attendee.name}</TableCell>
+                    <TableCell className="py-2 text-sm font-medium">
+                      <Link
+                        to="/attendees/$attendeeId"
+                        params={{ attendeeId: attendee.id }}
+                        className="underline-offset-4 hover:underline"
+                      >
+                        {attendee.name}
+                      </Link>
+                    </TableCell>
                     <TableCell className="py-2 text-xs text-muted-foreground">
                       {attendee.email}
                     </TableCell>

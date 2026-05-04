@@ -1,9 +1,10 @@
-import { Link, useLocation } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { Link, useLocation, type LinkProps } from "@tanstack/react-router";
+import { useEffect, useState, type ReactNode } from "react";
 import { authClient } from "@/lib/auth-client";
 import { getCurrentOrg, type CurrentOrgResponse } from "@/lib/org";
 import { Button } from "@/components/ui/button";
 import {
+  ArrowLeft,
   CalendarDays,
   LayoutDashboard,
   ListChecks,
@@ -195,17 +196,14 @@ export function AppShell({ children, title, description, headerActions }: AppShe
         {/** @philosophy The main page header never has a bottom border. The separation between header and content is created by whitespace and visual hierarchy, not lines. Never add border-bottom here. */}
         <header className="flex h-12 flex-shrink-0 items-center justify-between bg-background/90 px-5 backdrop-blur supports-backdrop-filter:bg-background/75">
           <div className="flex min-w-0 items-center gap-2">
-            <div className="min-w-0">
+            <div className="flex min-w-0 items-center">
               {title && (
-                <h1 className="truncate text-sm font-medium tracking-[-0.02em]">{title}</h1>
+                <h1 className="flex min-w-0 items-center text-sm font-medium tracking-[-0.02em]">
+                  {title}
+                </h1>
               )}
               {description && <p className="sr-only">{description}</p>}
             </div>
-            {orgContext?.org.name && (
-              <span className="hidden text-sm text-muted-foreground sm:inline">
-                · {orgContext.org.name}
-              </span>
-            )}
           </div>
           {headerActions && (
             <div className="flex items-center gap-2">
@@ -221,5 +219,79 @@ export function AppShell({ children, title, description, headerActions }: AppShe
         </main>
       </div>
     </div>
+  );
+}
+
+/**
+ * @philosophy Page header pattern.
+ *
+ * Detail/sub-pages render their breadcrumb trail in the AppShell `title` slot
+ * using these helpers. The convention is:
+ *
+ *   [circular back button] [parent links] / [parent links] / [current page]
+ *
+ * Rules:
+ *   1. The back button is a small circular icon-only `PageBackButton` placed
+ *      at the very start. It points to the immediate parent, not always the
+ *      list root. The browser back button is not a substitute — back must be
+ *      a deterministic in-app navigation.
+ *   2. Intermediate items are real `<Link>`s using the default header text
+ *      style (medium weight). They must be navigable.
+ *   3. The trailing/current item uses `PageBreadcrumbCurrent` which renders
+ *      muted, regular-weight text. It is never a link. Marking the current
+ *      page bold is redundant — the page itself is the heading.
+ *   4. The org name is never appended to the trail. Org context lives in the
+ *      sidebar header and on the user/org switcher; repeating it here is
+ *      noise.
+ *   5. Top-level pages (Events list, Attendees list, etc.) pass a plain
+ *      string `title` instead of a breadcrumb — no back button, no trail.
+ *
+ * Render order in title:
+ *   <PageBreadcrumb>
+ *     <PageBackButton to="..." label="..." />
+ *     <Link to="...">Parent</Link>
+ *     <PageBreadcrumbSeparator />
+ *     <PageBreadcrumbCurrent>Current page</PageBreadcrumbCurrent>
+ *   </PageBreadcrumb>
+ */
+export function PageBreadcrumb({ children }: { children: ReactNode }) {
+  return <span className="flex min-w-0 items-center gap-2">{children}</span>;
+}
+
+export function PageBreadcrumbSeparator() {
+  return <span className="shrink-0 text-muted-foreground">/</span>;
+}
+
+/**
+ * Trailing/current breadcrumb item. Muted and non-bold to differentiate from
+ * upstream parent links.
+ */
+export function PageBreadcrumbCurrent({ children }: { children: ReactNode }) {
+  return (
+    <span className="min-w-0 truncate font-normal text-muted-foreground">
+      {children}
+    </span>
+  );
+}
+
+/**
+ * Circular back button rendered before breadcrumbs on detail pages.
+ */
+export function PageBackButton({
+  label = "Back",
+  ...linkProps
+}: LinkProps & { label?: string }) {
+  return (
+    <Button
+      asChild
+      variant="outline"
+      size="icon-sm"
+      className="shrink-0 rounded-full shadow-sm"
+      aria-label={label}
+    >
+      <Link {...linkProps}>
+        <ArrowLeft className="size-3.5" />
+      </Link>
+    </Button>
   );
 }

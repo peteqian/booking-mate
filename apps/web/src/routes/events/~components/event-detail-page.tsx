@@ -25,7 +25,13 @@ import {
 } from "@/components/ui/combobox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getCurrentOrg } from "@/lib/org";
-import { AppShell } from "@/components/app-shell";
+import {
+  AppShell,
+  PageBackButton,
+  PageBreadcrumb,
+  PageBreadcrumbCurrent,
+  PageBreadcrumbSeparator,
+} from "@/components/app-shell";
 import { eventFormSchema, eventToForm, type EventFormState } from "@/lib/events";
 import type { AttendeeDto, PaymentStatus, RegistrationWithAttendeeDto, EventResourceDto, ResourceDto } from "@workspace/contracts";
 import { eventQueryOptions } from "@/queries/events";
@@ -188,25 +194,32 @@ export function EventDetailPage({
   return (
     <AppShell
       title={
-        <span className="flex min-w-0 items-center gap-1.5">
+        <PageBreadcrumb>
+          <PageBackButton
+            to={mode === "edit" ? "/events/$eventId" : "/events/"}
+            params={mode === "edit" ? { eventId } : undefined}
+            label={mode === "edit" ? "Back to event" : "Back to events"}
+          />
           <Link to="/events/" className="shrink-0 hover:underline">
             Events
           </Link>
-          <span className="shrink-0 text-muted-foreground">/</span>
-          <Link
-            to="/events/$eventId"
-            params={{ eventId }}
-            className="min-w-0 truncate hover:underline"
-          >
-            {event?.title ?? "Event"}
-          </Link>
-          {mode === "edit" && (
+          <PageBreadcrumbSeparator />
+          {mode === "edit" ? (
             <>
-              <span className="shrink-0 text-muted-foreground">/</span>
-              <span className="shrink-0">Edit</span>
+              <Link
+                to="/events/$eventId"
+                params={{ eventId }}
+                className="min-w-0 truncate hover:underline"
+              >
+                {event?.title ?? "Event"}
+              </Link>
+              <PageBreadcrumbSeparator />
+              <PageBreadcrumbCurrent>Edit</PageBreadcrumbCurrent>
             </>
+          ) : (
+            <PageBreadcrumbCurrent>{event?.title ?? "Event"}</PageBreadcrumbCurrent>
           )}
-        </span>
+        </PageBreadcrumb>
       }
       description={mode === "edit" ? event?.title ?? "Update event details." : "View and manage event details."}
       headerActions={

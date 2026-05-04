@@ -15,10 +15,11 @@ import { Route as ResourcesRouteImport } from './routes/resources'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CalendarRouteImport } from './routes/calendar'
-import { Route as AttendeesRouteImport } from './routes/attendees'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EventsIndexRouteImport } from './routes/events/index'
+import { Route as AttendeesIndexRouteImport } from './routes/attendees/index'
 import { Route as InviteInvitationIdRouteImport } from './routes/invite.$invitationId'
+import { Route as AttendeesAttendeeIdRouteImport } from './routes/attendees/$attendeeId'
 import { Route as OrgSlugSettingsRouteImport } from './routes/$orgSlug.settings'
 import { Route as EventsEventIdIndexRouteImport } from './routes/events/$eventId/index'
 import { Route as EventsEventIdEditRouteImport } from './routes/events/$eventId/edit'
@@ -53,11 +54,6 @@ const CalendarRoute = CalendarRouteImport.update({
   path: '/calendar',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AttendeesRoute = AttendeesRouteImport.update({
-  id: '/attendees',
-  path: '/attendees',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -68,9 +64,19 @@ const EventsIndexRoute = EventsIndexRouteImport.update({
   path: '/events/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AttendeesIndexRoute = AttendeesIndexRouteImport.update({
+  id: '/attendees/',
+  path: '/attendees/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InviteInvitationIdRoute = InviteInvitationIdRouteImport.update({
   id: '/invite/$invitationId',
   path: '/invite/$invitationId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AttendeesAttendeeIdRoute = AttendeesAttendeeIdRouteImport.update({
+  id: '/attendees/$attendeeId',
+  path: '/attendees/$attendeeId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrgSlugSettingsRoute = OrgSlugSettingsRouteImport.update({
@@ -91,7 +97,6 @@ const EventsEventIdEditRoute = EventsEventIdEditRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/attendees': typeof AttendeesRoute
   '/calendar': typeof CalendarRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -99,14 +104,15 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/$orgSlug/settings': typeof OrgSlugSettingsRoute
+  '/attendees/$attendeeId': typeof AttendeesAttendeeIdRoute
   '/invite/$invitationId': typeof InviteInvitationIdRoute
+  '/attendees/': typeof AttendeesIndexRoute
   '/events/': typeof EventsIndexRoute
   '/events/$eventId/edit': typeof EventsEventIdEditRoute
   '/events/$eventId/': typeof EventsEventIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/attendees': typeof AttendeesRoute
   '/calendar': typeof CalendarRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -114,7 +120,9 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/$orgSlug/settings': typeof OrgSlugSettingsRoute
+  '/attendees/$attendeeId': typeof AttendeesAttendeeIdRoute
   '/invite/$invitationId': typeof InviteInvitationIdRoute
+  '/attendees': typeof AttendeesIndexRoute
   '/events': typeof EventsIndexRoute
   '/events/$eventId/edit': typeof EventsEventIdEditRoute
   '/events/$eventId': typeof EventsEventIdIndexRoute
@@ -122,7 +130,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/attendees': typeof AttendeesRoute
   '/calendar': typeof CalendarRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -130,7 +137,9 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/$orgSlug/settings': typeof OrgSlugSettingsRoute
+  '/attendees/$attendeeId': typeof AttendeesAttendeeIdRoute
   '/invite/$invitationId': typeof InviteInvitationIdRoute
+  '/attendees/': typeof AttendeesIndexRoute
   '/events/': typeof EventsIndexRoute
   '/events/$eventId/edit': typeof EventsEventIdEditRoute
   '/events/$eventId/': typeof EventsEventIdIndexRoute
@@ -139,7 +148,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/attendees'
     | '/calendar'
     | '/login'
     | '/onboarding'
@@ -147,14 +155,15 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/$orgSlug/settings'
+    | '/attendees/$attendeeId'
     | '/invite/$invitationId'
+    | '/attendees/'
     | '/events/'
     | '/events/$eventId/edit'
     | '/events/$eventId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/attendees'
     | '/calendar'
     | '/login'
     | '/onboarding'
@@ -162,14 +171,15 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/$orgSlug/settings'
+    | '/attendees/$attendeeId'
     | '/invite/$invitationId'
+    | '/attendees'
     | '/events'
     | '/events/$eventId/edit'
     | '/events/$eventId'
   id:
     | '__root__'
     | '/'
-    | '/attendees'
     | '/calendar'
     | '/login'
     | '/onboarding'
@@ -177,7 +187,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/$orgSlug/settings'
+    | '/attendees/$attendeeId'
     | '/invite/$invitationId'
+    | '/attendees/'
     | '/events/'
     | '/events/$eventId/edit'
     | '/events/$eventId/'
@@ -185,7 +197,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AttendeesRoute: typeof AttendeesRoute
   CalendarRoute: typeof CalendarRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
@@ -193,7 +204,9 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
   OrgSlugSettingsRoute: typeof OrgSlugSettingsRoute
+  AttendeesAttendeeIdRoute: typeof AttendeesAttendeeIdRoute
   InviteInvitationIdRoute: typeof InviteInvitationIdRoute
+  AttendeesIndexRoute: typeof AttendeesIndexRoute
   EventsIndexRoute: typeof EventsIndexRoute
   EventsEventIdEditRoute: typeof EventsEventIdEditRoute
   EventsEventIdIndexRoute: typeof EventsEventIdIndexRoute
@@ -243,13 +256,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CalendarRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/attendees': {
-      id: '/attendees'
-      path: '/attendees'
-      fullPath: '/attendees'
-      preLoaderRoute: typeof AttendeesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -264,11 +270,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/attendees/': {
+      id: '/attendees/'
+      path: '/attendees'
+      fullPath: '/attendees/'
+      preLoaderRoute: typeof AttendeesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/invite/$invitationId': {
       id: '/invite/$invitationId'
       path: '/invite/$invitationId'
       fullPath: '/invite/$invitationId'
       preLoaderRoute: typeof InviteInvitationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/attendees/$attendeeId': {
+      id: '/attendees/$attendeeId'
+      path: '/attendees/$attendeeId'
+      fullPath: '/attendees/$attendeeId'
+      preLoaderRoute: typeof AttendeesAttendeeIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$orgSlug/settings': {
@@ -297,7 +317,6 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AttendeesRoute: AttendeesRoute,
   CalendarRoute: CalendarRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
@@ -305,7 +324,9 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
   OrgSlugSettingsRoute: OrgSlugSettingsRoute,
+  AttendeesAttendeeIdRoute: AttendeesAttendeeIdRoute,
   InviteInvitationIdRoute: InviteInvitationIdRoute,
+  AttendeesIndexRoute: AttendeesIndexRoute,
   EventsIndexRoute: EventsIndexRoute,
   EventsEventIdEditRoute: EventsEventIdEditRoute,
   EventsEventIdIndexRoute: EventsEventIdIndexRoute,

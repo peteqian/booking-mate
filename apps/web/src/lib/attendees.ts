@@ -1,4 +1,9 @@
-import type { AttendeeDto, CreateAttendeeRequest, UpdateAttendeeRequest } from "@workspace/contracts";
+import type {
+  AttendeeDto,
+  CreateAttendeeRequest,
+  RegistrationWithEventDto,
+  UpdateAttendeeRequest,
+} from "@workspace/contracts";
 import { z } from "zod";
 import { api } from "./api";
 
@@ -47,4 +52,10 @@ export function createAttendee(input: CreateAttendeeRequest) {
 
 export function updateAttendee(attendeeId: string, input: UpdateAttendeeRequest) {
   return api.patch<{ attendee: AttendeeDto }>(`/api/attendees/${attendeeId}`, input);
+}
+
+export function listAttendeeRegistrations(attendeeId: string) {
+  return api.get<{ registrations: RegistrationWithEventDto[] }>(
+    `/api/attendees/${attendeeId}/registrations`,
+  );
 }

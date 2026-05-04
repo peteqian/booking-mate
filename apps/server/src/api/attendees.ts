@@ -5,6 +5,7 @@ import type { ApiEnv } from "./types";
 import { isRecord, readJson, stringOrNull } from "./validation";
 import { requireAuth, requireOrg, requireRole } from "../middleware/auth";
 import { createAttendee, getAttendee, listAttendees, updateAttendee } from "../services/attendees";
+import { listRegistrationsByAttendee } from "../services/registrations";
 
 function parseCreateAttendee(input: unknown): CreateAttendeeRequest | string {
   if (!isRecord(input)) return "Request body must be an object";
@@ -64,4 +65,11 @@ export const attendeeRoutes = new Hono<ApiEnv>()
     const attendee = await updateAttendee(c.var.orgId, c.req.param("attendeeId"), input);
     if (!attendee) return apiError(c, 404, "attendee_not_found", "Attendee not found");
     return c.json({ attendee });
+  })
+  .get("/:attendeeId/registrations", async (c) => {
+    const attendee = await getAttendee(c.var.orgId, c.req.param("attendeeId"));
+    if (!attendee) return apiError(c, 404, "attendee_not_found", "Attendee not found");
+    return c.json({
+      registrations: await listRegistrationsByAttendee(c.var.orgId, c.req.param("attendeeId")),
+    });
   });
