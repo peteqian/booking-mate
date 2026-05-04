@@ -1,19 +1,27 @@
 import type { CreateEventRequest, EventDto, UpdateEventRequest } from "@workspace/contracts";
+import { z } from "zod";
 import { api } from "./api";
 
-export interface EventFormState {
-  title: string;
-  date: string;
-  time: string;
-  duration: string;
-  maxCapacity: string;
-  category: string;
-  status: EventDto["status"];
-  visibility: EventDto["visibility"];
-  description: string;
-  location: string;
-  price: string;
-}
+export const eventFormSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  date: z.string().min(1, "Date is required"),
+  time: z.string().min(1, "Time is required"),
+  duration: z.string().regex(/^\d+$/, "Duration must be a whole number"),
+  maxCapacity: z.string().regex(/^\d*$/, "Capacity must be a whole number"),
+  category: z.string(),
+  status: z.enum(["upcoming", "completed", "cancelled"]),
+  visibility: z.enum(["published", "unpublished", "archived"]),
+  description: z.string(),
+  location: z.string(),
+  price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Price must look like 0.00"),
+  recurring: z.enum(["true", "false"]),
+  recurrenceFrequency: z.string(),
+  recurrenceInterval: z.string().regex(/^\d*$/, "Interval must be a whole number"),
+  recurrenceDays: z.string(),
+  recurrenceEndDate: z.string(),
+});
+
+export type EventFormState = z.infer<typeof eventFormSchema>;
 
 export const emptyEventForm: EventFormState = {
   title: "",
@@ -27,6 +35,11 @@ export const emptyEventForm: EventFormState = {
   description: "",
   location: "",
   price: "0.00",
+  recurring: "false",
+  recurrenceFrequency: "",
+  recurrenceInterval: "",
+  recurrenceDays: "",
+  recurrenceEndDate: "",
 };
 
 export function eventToForm(event: EventDto): EventFormState {
@@ -42,6 +55,11 @@ export function eventToForm(event: EventDto): EventFormState {
     description: event.description ?? "",
     location: event.location ?? "",
     price: event.price,
+    recurring: String(event.recurring),
+    recurrenceFrequency: event.recurrenceFrequency ?? "",
+    recurrenceInterval: event.recurrenceInterval === null ? "" : String(event.recurrenceInterval),
+    recurrenceDays: event.recurrenceDays.join(", "),
+    recurrenceEndDate: event.recurrenceEndDate ?? "",
   };
 }
 
@@ -58,6 +76,14 @@ export function formToEventRequest(form: EventFormState): CreateEventRequest {
     description: form.description.trim() || null,
     location: form.location.trim() || null,
     price: form.price,
+    recurring: form.recurring === "true",
+    recurrenceFrequency: form.recurrenceFrequency.trim() || null,
+    recurrenceInterval: form.recurrenceInterval ? Number(form.recurrenceInterval) : null,
+    recurrenceDays: form.recurrenceDays
+      .split(",")
+      .map((day) => day.trim())
+      .filter(Boolean),
+    recurrenceEndDate: form.recurrenceEndDate || null,
   };
 }
 
@@ -79,4 +105,8 @@ export function updateEvent(eventId: string, input: UpdateEventRequest) {
 
 export function deleteEvent(eventId: string) {
   return api.delete<{ deleted: true }>(`/api/events/${eventId}`);
+}
+
+export function duplicateEvent(eventId: string) {
+  return api.post<{ event: EventDto }>(`/api/events/${eventId}/duplicate`, {});
 }

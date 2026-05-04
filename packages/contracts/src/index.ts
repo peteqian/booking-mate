@@ -89,6 +89,8 @@ export interface EventDto {
   recurrenceInterval: number | null;
   recurrenceEndDate: string | null;
   price: string;
+  confirmedRegistrations: number;
+  waitlistedRegistrations: number;
   createdAt: string;
   updatedAt: string;
 }

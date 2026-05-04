@@ -4,11 +4,15 @@ import type {
   EventResourceDto,
   UpdateEventRequest,
 } from "@workspace/contracts";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "../../db";
-import { eventResources, events, resources } from "../../db/schema";
+import { eventResources, events, resources, registrations } from "../../db/schema";
 
-export function toEventDto(event: typeof events.$inferSelect): EventDto {
+export function toEventDto(
+  event: typeof events.$inferSelect,
+  confirmedCount = 0,
+  waitlistedCount = 0,
+): EventDto {
   return {
     id: event.id,
     orgId: event.orgId,
@@ -29,6 +33,8 @@ export function toEventDto(event: typeof events.$inferSelect): EventDto {
     recurrenceInterval: event.recurrenceInterval,
     recurrenceEndDate: event.recurrenceEndDate,
     price: event.price,
+    confirmedRegistrations: confirmedCount,
+    waitlistedRegistrations: waitlistedCount,
     createdAt: event.createdAt.toISOString(),
     updatedAt: event.updatedAt.toISOString(),
   };
@@ -49,7 +55,38 @@ function toEventResourceDto(eventResource: typeof eventResources.$inferSelect): 
 
 export async function listEvents(orgId: string): Promise<EventDto[]> {
   const rows = await db.select().from(events).where(eq(events.orgId, orgId));
-  return rows.map(toEventDto);
+
+  const eventIds = rows.map((row) => row.id);
+
+  let counts: Array<{ eventId: string; status: string; count: number }> = [];
+  if (eventIds.length > 0) {
+    counts = await db
+      .select({
+        eventId: registrations.eventId,
+        status: registrations.status,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(registrations)
+      .where(and(eq(registrations.orgId, orgId), inArray(registrations.eventId, eventIds)))
+      .groupBy(registrations.eventId, registrations.status);
+  }
+
+  const countMap = new Map<string, { confirmed: number; waitlisted: number }>();
+  for (const row of rows) {
+    countMap.set(row.id, { confirmed: 0, waitlisted: 0 });
+  }
+  for (const c of counts) {
+    const existing = countMap.get(c.eventId);
+    if (existing) {
+      if (c.status === "confirmed") existing.confirmed = c.count;
+      if (c.status === "waitlisted") existing.waitlisted = c.count;
+    }
+  }
+
+  return rows.map((row) => {
+    const counts = countMap.get(row.id) ?? { confirmed: 0, waitlisted: 0 };
+    return toEventDto(row, counts.confirmed, counts.waitlisted);
+  });
 }
 
 export async function getEvent(orgId: string, eventId: string): Promise<EventDto | null> {
@@ -59,7 +96,21 @@ export async function getEvent(orgId: string, eventId: string): Promise<EventDto
     .where(and(eq(events.orgId, orgId), eq(events.id, eventId)))
     .limit(1);
 
-  return rows[0] ? toEventDto(rows[0]) : null;
+  if (!rows[0]) return null;
+
+  const counts = await db
+    .select({
+      status: registrations.status,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(registrations)
+    .where(and(eq(registrations.orgId, orgId), eq(registrations.eventId, eventId)))
+    .groupBy(registrations.status);
+
+  const confirmed = counts.find((c) => c.status === "confirmed")?.count ?? 0;
+  const waitlisted = counts.find((c) => c.status === "waitlisted")?.count ?? 0;
+
+  return toEventDto(rows[0], confirmed, waitlisted);
 }
 
 export async function createEvent(
@@ -91,7 +142,7 @@ export async function createEvent(
     })
     .returning();
 
-  return toEventDto(rows[0]);
+  return toEventDto(rows[0], 0, 0);
 }
 
 export async function updateEvent(
@@ -105,7 +156,21 @@ export async function updateEvent(
     .where(and(eq(events.orgId, orgId), eq(events.id, eventId)))
     .returning();
 
-  return rows[0] ? toEventDto(rows[0]) : null;
+  if (!rows[0]) return null;
+
+  const counts = await db
+    .select({
+      status: registrations.status,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(registrations)
+    .where(and(eq(registrations.orgId, orgId), eq(registrations.eventId, eventId)))
+    .groupBy(registrations.status);
+
+  const confirmed = counts.find((c) => c.status === "confirmed")?.count ?? 0;
+  const waitlisted = counts.find((c) => c.status === "waitlisted")?.count ?? 0;
+
+  return toEventDto(rows[0], confirmed, waitlisted);
 }
 
 export async function deleteEvent(orgId: string, eventId: string): Promise<boolean> {

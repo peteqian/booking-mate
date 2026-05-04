@@ -43,7 +43,7 @@ export async function listPublicEvents(slug: string) {
     .from(events)
     .where(and(eq(events.orgId, publicOrg.org.id), eq(events.visibility, "published")));
 
-  return rows.map(toEventDto);
+  return rows.map((row) => toEventDto(row));
 }
 
 export async function getPublicEvent(slug: string, eventId: string) {

@@ -67,11 +67,12 @@ export async function createRegistration(
   input: CreateRegistrationRequest,
 ): Promise<RegistrationDto | "event_not_found" | "attendee_not_found" | "duplicate_registration"> {
   const eventRows = await db
-    .select({ id: events.id })
+    .select({ id: events.id, maxCapacity: events.maxCapacity, price: events.price })
     .from(events)
     .where(and(eq(events.orgId, orgId), eq(events.id, input.eventId)))
     .limit(1);
   if (!eventRows[0]) return "event_not_found";
+  const event = eventRows[0];
 
   const attendeeRows = await db
     .select({ id: attendees.id })
@@ -94,14 +95,38 @@ export async function createRegistration(
     .limit(1);
   if (existing[0]) return "duplicate_registration";
 
+  // Determine registration status based on capacity
+  let status = input.status ?? "confirmed";
+  if (status === "confirmed" && event.maxCapacity !== null && event.maxCapacity > 0) {
+    const confirmedCount = await db
+      .select({ count: registrations.id })
+      .from(registrations)
+      .where(
+        and(
+          eq(registrations.orgId, orgId),
+          eq(registrations.eventId, input.eventId),
+          eq(registrations.status, "confirmed"),
+        ),
+      );
+    if (confirmedCount.length >= event.maxCapacity) {
+      status = "waitlisted";
+    }
+  }
+
+  // Determine payment status based on event price
+  let paymentStatus = input.paymentStatus ?? "not_required";
+  if (paymentStatus === "not_required" && Number(event.price) > 0) {
+    paymentStatus = "pending";
+  }
+
   const rows = await db
     .insert(registrations)
     .values({
       orgId,
       eventId: input.eventId,
       attendeeId: input.attendeeId,
-      status: input.status ?? "confirmed",
-      paymentStatus: input.paymentStatus ?? "not_required",
+      status,
+      paymentStatus,
     })
     .returning();
 

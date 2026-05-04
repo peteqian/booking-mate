@@ -100,6 +100,14 @@ Database schema lives in `apps/server/src/db/schema.ts`. After modifying:
 - Shared types go in `packages/contracts/src/index.ts`
 - Run `bun run lint` and `bun run format:check` before committing
 
+### Frontend Route Structure
+
+- Keep TanStack Router route files as thin route modules: route declaration, loader/beforeLoad, params/context plumbing, and rendering a feature component.
+- Do not export reusable feature UI from a route file for another route to import. This route/component coupling makes routes hard to move and can accidentally turn shared UI into route modules.
+- Put route-local reusable UI under the route directory in `~components/`.
+- Example: shared Events UI belongs in `apps/web/src/routes/events/~components/`, while `apps/web/src/routes/events/$eventId/index.tsx` and `apps/web/src/routes/events/$eventId/edit.tsx` should remain small wrappers.
+- Keep truly shared app-wide UI in `apps/web/src/components/`; do not promote route-specific components there prematurely.
+
 ## Git
 
 - Default branch: `main`
