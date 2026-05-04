@@ -3,7 +3,7 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import { useEffect, useMemo, useState } from "react";
-import { Search, UserPlus, Users } from "lucide-react";
+import { Pencil, Search, UserPlus, Users } from "lucide-react";
 import type { AttendeeDto } from "@workspace/contracts";
 import { authClient } from "@/lib/auth-client";
 import { ApiError } from "@/lib/api";
@@ -130,18 +130,18 @@ function AttendeesPage() {
           <div className="overflow-hidden rounded-xl border bg-background">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Added</TableHead>
-                  <TableHead className="w-20" />
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="h-10">Name</TableHead>
+                  <TableHead className="h-10">Email</TableHead>
+                  <TableHead className="h-10">Phone</TableHead>
+                  <TableHead className="h-10">Added</TableHead>
+                  <TableHead className="h-10 w-10" aria-label="Actions" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {sorted.map((attendee) => (
-                  <TableRow key={attendee.id} className="group hover:bg-muted/30">
-                    <TableCell className="py-2 text-sm font-medium">
+                  <TableRow key={attendee.id} className="hover:bg-muted/40">
+                    <TableCell className="py-3 text-sm font-medium">
                       <Link
                         to="/attendees/$attendeeId"
                         params={{ attendeeId: attendee.id }}
@@ -150,25 +150,29 @@ function AttendeesPage() {
                         {attendee.name}
                       </Link>
                     </TableCell>
-                    <TableCell className="py-2 text-xs text-muted-foreground">
+                    <TableCell className="py-3 text-sm text-muted-foreground">
                       {attendee.email}
                     </TableCell>
-                    <TableCell className="py-2 text-xs text-muted-foreground">
+                    <TableCell className="py-3 text-sm text-muted-foreground tabular-nums">
                       {attendee.phone ?? "—"}
                     </TableCell>
-                    <TableCell className="py-2 text-xs text-muted-foreground whitespace-nowrap">
+                    <TableCell className="py-3 text-sm text-muted-foreground whitespace-nowrap tabular-nums">
                       {attendee.createdAt.slice(0, 10)}
                     </TableCell>
-                    <TableCell className="py-2 text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => setEditing(attendee)}
-                        disabled={!canManage}
-                      >
-                        Edit
-                      </Button>
+                    <TableCell className="py-3 pr-3">
+                      <div className="flex items-center justify-end">
+                        {canManage && (
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            className="size-7 text-muted-foreground hover:text-foreground"
+                            onClick={() => setEditing(attendee)}
+                            aria-label={`Edit ${attendee.name}`}
+                          >
+                            <Pencil className="size-3.5" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import { useEffect, useState } from "react";
+import { ArrowUpCircle, Ban, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +25,22 @@ import {
   ComboboxList,
 } from "@/components/ui/combobox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { getCurrentOrg } from "@/lib/org";
 import {
   AppShell,
@@ -43,7 +60,7 @@ import { useUpdateEvent, useDeleteEvent, useDuplicateEvent } from "@/hooks/use-e
 import { useCreateRegistration, useUpdateRegistration, useDeleteRegistration } from "@/hooks/use-registrations";
 import { useReplaceEventResources } from "@/hooks/use-resources";
 import { useCreateAttendee } from "@/hooks/use-attendees";
-import { PaymentStatusSelect, RegistrationSummary } from "./registration-summary";
+import { PaymentStatusSelect } from "./registration-summary";
 
 export function EventDetailPage({
   eventId,
@@ -153,6 +170,18 @@ export function EventDetailPage({
   };
 
   const registrations = registrationsData?.registrations ?? [];
+  const [statusFilter, setStatusFilter] = useState<RegistrationWithAttendeeDto["status"] | null>(null);
+  const [addRegOpen, setAddRegOpen] = useState(false);
+  const filteredRegistrations = statusFilter
+    ? registrations.filter((r) => r.status === statusFilter)
+    : registrations;
+  const statusCounts = registrations.reduce(
+    (acc, r) => {
+      acc[r.status] = (acc[r.status] ?? 0) + 1;
+      return acc;
+    },
+    { confirmed: 0, waitlisted: 0, cancelled: 0 } as Record<RegistrationWithAttendeeDto["status"], number>,
+  );
   const attendees = attendeesData?.attendees ?? [];
 
   const handleCreateRegistration = async (e: React.FormEvent) => {
@@ -186,6 +215,7 @@ export function EventDetailPage({
         paymentStatus: "not_required",
       });
       setSelectedAttendee(null);
+      setAddRegOpen(false);
     } catch (error) {
       setError(error instanceof Error ? error.message : "Unable to create registration");
     }
@@ -624,13 +654,14 @@ export function EventDetailPage({
           </TabsContent>
 
           <TabsContent value="registrations" className="mt-6">
-            <RegistrationSummary event={event} registrations={registrations} />
             {canManage && (
-              <form onSubmit={handleCreateRegistration} className="mb-6 mt-4 space-y-4 rounded-xl border bg-background p-4">
-                <div>
-                  <h2 className="font-semibold tracking-tight">Add registration</h2>
-                  <p className="text-sm text-muted-foreground">Select an attendee or create one inline.</p>
-                </div>
+              <Dialog open={addRegOpen} onOpenChange={setAddRegOpen}>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Add registration</DialogTitle>
+                    <DialogDescription>Select an attendee or create one inline.</DialogDescription>
+                  </DialogHeader>
+              <form onSubmit={handleCreateRegistration} className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2 sm:col-span-2">
                     <div className="flex items-center justify-between">
@@ -724,10 +755,17 @@ export function EventDetailPage({
                     />
                   </div>
                 </div>
-                <Button type="submit" disabled={createRegistrationMutation.isPending || createAttendeeMutation.isPending}>
-                  {createRegistrationMutation.isPending || createAttendeeMutation.isPending ? "Adding..." : "Add registration"}
-                </Button>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button type="button" variant="outline" onClick={() => setAddRegOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={createRegistrationMutation.isPending || createAttendeeMutation.isPending}>
+                    {createRegistrationMutation.isPending || createAttendeeMutation.isPending ? "Adding..." : "Add registration"}
+                  </Button>
+                </div>
               </form>
+                </DialogContent>
+              </Dialog>
             )}
             {registrationsLoading ? (
               <p className="text-muted-foreground">Loading registrations...</p>
@@ -737,89 +775,198 @@ export function EventDetailPage({
                 <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
                   Registrations will appear here when attendees sign up.
                 </p>
+                {canManage && (
+                  <Button className="mt-4 gap-1" onClick={() => setAddRegOpen(true)}>
+                    <Plus className="size-3.5" />
+                    Add registration
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="space-y-3">
-                {registrations.map((registration) => (
-                  <div
-                    key={registration.id}
-                    className="flex flex-col gap-3 rounded-lg border bg-background/90 p-4 shadow-[0_1px_0_rgba(0,0,0,0.04)] transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div>
-                      <p className="font-medium">{registration.attendee.name}</p>
-                      <p className="text-sm text-muted-foreground">{registration.attendee.email}</p>
-                      <div className="mt-1 flex gap-2">
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs ${
-                            registration.status === "confirmed"
-                              ? "bg-green-100 text-green-800"
-                              : registration.status === "waitlisted"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {registration.status}
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="text-muted-foreground">Filter:</span>
+                  {(["confirmed", "waitlisted", "cancelled"] as const).map((s) => {
+                    const active = statusFilter === s;
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setStatusFilter(active ? null : s)}
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 capitalize transition-colors ${
+                          active
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                        }`}
+                        aria-pressed={active}
+                      >
+                        {s}
+                        <span className={`tabular-nums ${active ? "opacity-80" : "opacity-60"}`}>
+                          {statusCounts[s]}
                         </span>
-                        {registration.paymentStatus !== "not_required" && (
-                          <span className="rounded-full bg-secondary px-2 py-0.5 text-xs">
-                            {registration.paymentStatus}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Select
-                        value={registration.status}
-                        onValueChange={(value) => {
-                          if (value) {
-                            updateRegistrationMutation.mutate(
-                              { id: registration.id, input: { status: value as RegistrationWithAttendeeDto["status"] } },
-                              {
-                                onError: (error) => {
-                                  setError(
-                                    error instanceof Error
-                                      ? error.message
-                                      : "Unable to update registration",
-                                  );
-                                },
-                              },
-                            );
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent alignItemWithTrigger={false}>
-                          <SelectItem value="confirmed">Confirmed</SelectItem>
-                          <SelectItem value="waitlisted">Waitlisted</SelectItem>
-                          <SelectItem value="cancelled">Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <PaymentStatusSelect
-                        value={registration.paymentStatus}
-                        onChange={(paymentStatus) =>
-                          updateRegistrationMutation.mutate(
-                            { id: registration.id, input: { paymentStatus } },
-                            {
-                              onError: (error) => {
-                                setError(error instanceof Error ? error.message : "Unable to update registration");
-                              },
-                            },
-                          )
-                        }
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteRegistration(registration.id)}
-                        disabled={!canDelete || deleteRegistrationMutation.isPending}
-                      >
-                        {canDelete ? "Remove" : "Admin required"}
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                      </button>
+                    );
+                  })}
+                  {statusFilter && (
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter(null)}
+                      className="text-xs text-muted-foreground underline-offset-4 hover:underline"
+                    >
+                      Clear
+                    </button>
+                  )}
+                  {canManage && (
+                    <Button
+                      size="sm"
+                      className="ml-auto gap-1"
+                      onClick={() => setAddRegOpen(true)}
+                    >
+                      <Plus className="size-3.5" />
+                      Add registration
+                    </Button>
+                  )}
+                </div>
+                <div className="overflow-hidden rounded-xl border bg-background">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="h-10">Attendee</TableHead>
+                        <TableHead className="h-10 w-32">Status</TableHead>
+                        <TableHead className="h-10 w-44">Payment</TableHead>
+                        <TableHead className="h-10 w-56" aria-label="Actions" />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredRegistrations.length === 0 ? (
+                        <TableRow className="hover:bg-transparent">
+                          <TableCell colSpan={4} className="py-10 text-center text-sm text-muted-foreground">
+                            No {statusFilter} registrations.
+                          </TableCell>
+                        </TableRow>
+                      ) : null}
+                      {filteredRegistrations.map((registration) => {
+                      const statusVariant: Record<
+                        RegistrationWithAttendeeDto["status"],
+                        "default" | "secondary" | "outline"
+                      > = {
+                        confirmed: "default",
+                        waitlisted: "secondary",
+                        cancelled: "outline",
+                      };
+                      return (
+                        <TableRow key={registration.id} className="hover:bg-muted/40">
+                          <TableCell className="py-3">
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium">{registration.attendee.name}</span>
+                              <span className="text-xs text-muted-foreground">{registration.attendee.email}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-3">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setStatusFilter(
+                                  statusFilter === registration.status ? null : registration.status,
+                                )
+                              }
+                              className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              title={`Filter by ${registration.status}`}
+                            >
+                              <Badge variant={statusVariant[registration.status]} className="capitalize cursor-pointer">
+                                {registration.status}
+                              </Badge>
+                            </button>
+                          </TableCell>
+                          <TableCell className="py-3">
+                            <PaymentStatusSelect
+                              value={registration.paymentStatus}
+                              onChange={(paymentStatus) =>
+                                updateRegistrationMutation.mutate(
+                                  { id: registration.id, input: { paymentStatus } },
+                                  {
+                                    onError: (error) => {
+                                      setError(error instanceof Error ? error.message : "Unable to update registration");
+                                    },
+                                  },
+                                )
+                              }
+                            />
+                          </TableCell>
+                          <TableCell className="py-3 pr-3">
+                            <div className="flex items-center justify-end gap-1">
+                              {registration.status === "waitlisted" && canManage && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 gap-1 px-2 text-xs"
+                                  onClick={() =>
+                                    updateRegistrationMutation.mutate(
+                                      { id: registration.id, input: { status: "confirmed" } },
+                                      {
+                                        onError: (error) =>
+                                          setError(
+                                            error instanceof Error
+                                              ? error.message
+                                              : "Unable to promote registration",
+                                          ),
+                                      },
+                                    )
+                                  }
+                                  disabled={updateRegistrationMutation.isPending}
+                                  title="Promote to confirmed"
+                                >
+                                  <ArrowUpCircle className="size-3.5" />
+                                  Promote
+                                </Button>
+                              )}
+                              {registration.status !== "cancelled" && canManage && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                  onClick={() => {
+                                    if (!window.confirm("Cancel this registration?")) return;
+                                    updateRegistrationMutation.mutate(
+                                      { id: registration.id, input: { status: "cancelled" } },
+                                      {
+                                        onError: (error) =>
+                                          setError(
+                                            error instanceof Error
+                                              ? error.message
+                                              : "Unable to cancel registration",
+                                          ),
+                                      },
+                                    );
+                                  }}
+                                  disabled={updateRegistrationMutation.isPending}
+                                  title="Cancel registration"
+                                >
+                                  <Ban className="size-3.5" />
+                                  Cancel
+                                </Button>
+                              )}
+                              {canDelete && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  className="size-7 text-muted-foreground hover:text-destructive"
+                                  onClick={() => handleDeleteRegistration(registration.id)}
+                                  disabled={deleteRegistrationMutation.isPending}
+                                  aria-label="Remove registration"
+                                  title="Remove registration"
+                                >
+                                  <Trash2 className="size-3.5" />
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+                </div>
               </div>
             )}
           </TabsContent>
