@@ -3,6 +3,9 @@ node_modules
 .pnp
 .pnp.js
 
+# Agents
+settings.local.json
+
 # Local env files
 .env
 .env.local
