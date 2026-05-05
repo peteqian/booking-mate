@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { DragDropProvider, useDraggable, useDroppable } from "@dnd-kit/react";
 import { useEffect, useMemo, useState } from "react";
@@ -57,8 +57,6 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { authClient } from "@/lib/auth-client";
-import { ApiError } from "@/lib/api";
 import { emptyEventForm, formToEventRequest, updateEvent, type EventFormState } from "@/lib/events";
 import { getCurrentOrg } from "@/lib/org";
 import { canManageEvents } from "@/lib/permissions";
@@ -88,22 +86,8 @@ const sortLabels: Record<SortKey, string> = {
   location: "Location",
 };
 
-export const Route = createFileRoute("/events/")({
+export const Route = createFileRoute("/_auth/_org/events/")({
   component: Events,
-  beforeLoad: async () => {
-    const session = await authClient.getSession();
-    if (!session.data) throw redirect({ to: "/login" });
-
-    try {
-      return await getCurrentOrg();
-    } catch (error) {
-      if (error instanceof ApiError && error.code === "organization_required") {
-        throw redirect({ to: "/onboarding" });
-      }
-
-      throw error;
-    }
-  },
   loader: ({ context }) => context.queryClient.ensureQueryData(eventsQueryOptions),
 });
 
@@ -1145,7 +1129,7 @@ function ResourceAssignmentEditor({
               <div key={index} className="grid gap-3 rounded-md border bg-muted/20 p-3 sm:grid-cols-[1fr_1fr_90px_auto] sm:items-end">
                 <div className="space-y-2">
                   <Label className="text-xs text-muted-foreground">Resource</Label>
-                  <Select value={assignment.resourceId} onValueChange={(value) => updateAssignment(index, "resourceId", value)}>
+                  <Select value={assignment.resourceId ?? ""} onValueChange={(value) => updateAssignment(index, "resourceId", value ?? "")}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select resource" />
                     </SelectTrigger>

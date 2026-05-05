@@ -1,12 +1,10 @@
 /* eslint-disable react/no-children-prop */
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import { useEffect, useMemo, useState } from "react";
 import { Pencil, Search, UserPlus, Users } from "lucide-react";
 import type { AttendeeDto } from "@workspace/contracts";
-import { authClient } from "@/lib/auth-client";
-import { ApiError } from "@/lib/api";
 import { getCurrentOrg } from "@/lib/org";
 import { canManageAttendees } from "@/lib/permissions";
 import { AppShell } from "@/components/app-shell";
@@ -36,23 +34,10 @@ import {
   attendeeToForm,
   emptyAttendeeForm,
   formToAttendeeRequest,
-  type AttendeeFormState,
 } from "@/lib/attendees";
 
-export const Route = createFileRoute("/attendees/")({
+export const Route = createFileRoute("/_auth/_org/attendees/")({
   component: AttendeesPage,
-  beforeLoad: async () => {
-    const session = await authClient.getSession();
-    if (!session.data) throw redirect({ to: "/login" });
-    try {
-      return await getCurrentOrg();
-    } catch (error) {
-      if (error instanceof ApiError && error.code === "organization_required") {
-        throw redirect({ to: "/onboarding" });
-      }
-      throw error;
-    }
-  },
   loader: ({ context }) => context.queryClient.ensureQueryData(attendeesQueryOptions()),
 });
 
@@ -316,11 +301,8 @@ function EditAttendeeDialog({
   );
 }
 
-function AttendeeFormFields({
-  form,
-}: {
-  form: ReturnType<typeof useForm<AttendeeFormState>>;
-}) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function AttendeeFormFields({ form }: { form: any }) {
   return (
     <form
       onSubmit={(e) => {
@@ -332,7 +314,8 @@ function AttendeeFormFields({
     >
       <form.Field
         name="name"
-        children={(field) => (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        children={(field: any) => (
           <div className="space-y-2">
             <Label htmlFor={field.name}>Name</Label>
             <Input
@@ -345,7 +328,7 @@ function AttendeeFormFields({
             {field.state.meta.errors[0] && (
               <p className="text-xs text-destructive">
                 {String(
-                  (field.state.meta.errors[0] as { message?: string } | string)?.message ??
+                  (field.state.meta.errors[0] as { message?: string }).message ??
                     field.state.meta.errors[0],
                 )}
               </p>
@@ -355,7 +338,8 @@ function AttendeeFormFields({
       />
       <form.Field
         name="email"
-        children={(field) => (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        children={(field: any) => (
           <div className="space-y-2">
             <Label htmlFor={field.name}>Email</Label>
             <Input
@@ -369,7 +353,7 @@ function AttendeeFormFields({
             {field.state.meta.errors[0] && (
               <p className="text-xs text-destructive">
                 {String(
-                  (field.state.meta.errors[0] as { message?: string } | string)?.message ??
+                  (field.state.meta.errors[0] as { message?: string }).message ??
                     field.state.meta.errors[0],
                 )}
               </p>
@@ -379,7 +363,8 @@ function AttendeeFormFields({
       />
       <form.Field
         name="phone"
-        children={(field) => (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        children={(field: any) => (
           <div className="space-y-2">
             <Label htmlFor={field.name}>Phone</Label>
             <Input

@@ -1,29 +1,12 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { authClient } from "@/lib/auth-client";
-import { ApiError } from "@/lib/api";
-import { getCurrentOrg } from "@/lib/org";
 import { eventsQueryOptions } from "@/queries/events";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_auth/_org/")({
   component: Index,
-  beforeLoad: async () => {
-    const session = await authClient.getSession();
-    if (!session.data) return;
-
-    try {
-      await getCurrentOrg();
-    } catch (error) {
-      if (error instanceof ApiError && error.code === "organization_required") {
-        throw redirect({ to: "/onboarding" });
-      }
-
-      throw error;
-    }
-  },
   loader: ({ context }) => context.queryClient.ensureQueryData(eventsQueryOptions),
 });
 
@@ -43,7 +26,7 @@ function Index() {
                 <CardTitle className="text-xl tracking-tight">Upcoming events</CardTitle>
                 <CardDescription>Recent schedule items from your event workspace.</CardDescription>
               </div>
-              <Link to="/events/">
+              <Link to="/events">
                 <Button>Manage events</Button>
               </Link>
             </CardHeader>
@@ -54,7 +37,7 @@ function Index() {
                   <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
                     Events are managed from the Events workspace.
                   </p>
-                  <Link to="/events/" className="mt-4 inline-flex">
+                  <Link to="/events" className="mt-4 inline-flex">
                     <Button variant="outline">Open events</Button>
                   </Link>
                 </div>

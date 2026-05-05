@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -8,12 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
 
-export const Route = createFileRoute("/$orgSlug/settings")({
+export const Route = createFileRoute("/_auth/_org/$orgSlug/settings")({
   component: OrganizationSettings,
-  beforeLoad: async () => {
-    const session = await authClient.getSession();
-    if (!session.data) throw redirect({ to: "/login" });
-  },
 });
 
 function OrganizationSettings() {

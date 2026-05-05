@@ -55,7 +55,7 @@ export function eventToForm(event: EventDto): EventFormState {
     description: event.description ?? "",
     location: event.location ?? "",
     price: event.price,
-    recurring: String(event.recurring),
+    recurring: event.recurring ? "true" : "false",
     recurrenceFrequency: event.recurrenceFrequency ?? "",
     recurrenceInterval: event.recurrenceInterval === null ? "" : String(event.recurrenceInterval),
     recurrenceDays: event.recurrenceDays.join(", "),

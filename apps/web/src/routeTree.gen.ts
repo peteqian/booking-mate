@@ -10,38 +10,25 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as ResourcesRouteImport } from './routes/resources'
-import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as CalendarRouteImport } from './routes/calendar'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as EventsIndexRouteImport } from './routes/events/index'
-import { Route as AttendeesIndexRouteImport } from './routes/attendees/index'
+import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as InviteInvitationIdRouteImport } from './routes/invite.$invitationId'
-import { Route as AttendeesAttendeeIdRouteImport } from './routes/attendees/$attendeeId'
-import { Route as OrgSlugSettingsRouteImport } from './routes/$orgSlug.settings'
-import { Route as EventsEventIdIndexRouteImport } from './routes/events/$eventId/index'
-import { Route as EventsEventIdEditRouteImport } from './routes/events/$eventId/edit'
+import { Route as AuthSettingsRouteImport } from './routes/_auth/settings'
+import { Route as AuthOnboardingRouteImport } from './routes/_auth/onboarding'
+import { Route as AuthOrgRouteImport } from './routes/_auth/_org'
+import { Route as AuthOrgIndexRouteImport } from './routes/_auth/_org/index'
+import { Route as AuthOrgResourcesRouteImport } from './routes/_auth/_org/resources'
+import { Route as AuthOrgCalendarRouteImport } from './routes/_auth/_org/calendar'
+import { Route as AuthOrgEventsIndexRouteImport } from './routes/_auth/_org/events/index'
+import { Route as AuthOrgAttendeesIndexRouteImport } from './routes/_auth/_org/attendees/index'
+import { Route as AuthOrgAttendeesAttendeeIdRouteImport } from './routes/_auth/_org/attendees/$attendeeId'
+import { Route as AuthOrgOrgSlugSettingsRouteImport } from './routes/_auth/_org/$orgSlug.settings'
+import { Route as AuthOrgEventsEventIdIndexRouteImport } from './routes/_auth/_org/events/$eventId/index'
+import { Route as AuthOrgEventsEventIdEditRouteImport } from './routes/_auth/_org/events/$eventId/edit'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResourcesRoute = ResourcesRouteImport.update({
-  id: '/resources',
-  path: '/resources',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingRoute = OnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -49,24 +36,8 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CalendarRoute = CalendarRouteImport.update({
-  id: '/calendar',
-  path: '/calendar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EventsIndexRoute = EventsIndexRouteImport.update({
-  id: '/events/',
-  path: '/events/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AttendeesIndexRoute = AttendeesIndexRouteImport.update({
-  id: '/attendees/',
-  path: '/attendees/',
+const AuthRoute = AuthRouteImport.update({
+  id: '/_auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InviteInvitationIdRoute = InviteInvitationIdRouteImport.update({
@@ -74,89 +45,133 @@ const InviteInvitationIdRoute = InviteInvitationIdRouteImport.update({
   path: '/invite/$invitationId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AttendeesAttendeeIdRoute = AttendeesAttendeeIdRouteImport.update({
-  id: '/attendees/$attendeeId',
-  path: '/attendees/$attendeeId',
-  getParentRoute: () => rootRouteImport,
+const AuthSettingsRoute = AuthSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthRoute,
 } as any)
-const OrgSlugSettingsRoute = OrgSlugSettingsRouteImport.update({
+const AuthOnboardingRoute = AuthOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthOrgRoute = AuthOrgRouteImport.update({
+  id: '/_org',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthOrgIndexRoute = AuthOrgIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthOrgRoute,
+} as any)
+const AuthOrgResourcesRoute = AuthOrgResourcesRouteImport.update({
+  id: '/resources',
+  path: '/resources',
+  getParentRoute: () => AuthOrgRoute,
+} as any)
+const AuthOrgCalendarRoute = AuthOrgCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => AuthOrgRoute,
+} as any)
+const AuthOrgEventsIndexRoute = AuthOrgEventsIndexRouteImport.update({
+  id: '/events/',
+  path: '/events/',
+  getParentRoute: () => AuthOrgRoute,
+} as any)
+const AuthOrgAttendeesIndexRoute = AuthOrgAttendeesIndexRouteImport.update({
+  id: '/attendees/',
+  path: '/attendees/',
+  getParentRoute: () => AuthOrgRoute,
+} as any)
+const AuthOrgAttendeesAttendeeIdRoute =
+  AuthOrgAttendeesAttendeeIdRouteImport.update({
+    id: '/attendees/$attendeeId',
+    path: '/attendees/$attendeeId',
+    getParentRoute: () => AuthOrgRoute,
+  } as any)
+const AuthOrgOrgSlugSettingsRoute = AuthOrgOrgSlugSettingsRouteImport.update({
   id: '/$orgSlug/settings',
   path: '/$orgSlug/settings',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthOrgRoute,
 } as any)
-const EventsEventIdIndexRoute = EventsEventIdIndexRouteImport.update({
-  id: '/events/$eventId/',
-  path: '/events/$eventId/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EventsEventIdEditRoute = EventsEventIdEditRouteImport.update({
-  id: '/events/$eventId/edit',
-  path: '/events/$eventId/edit',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const AuthOrgEventsEventIdIndexRoute =
+  AuthOrgEventsEventIdIndexRouteImport.update({
+    id: '/events/$eventId/',
+    path: '/events/$eventId/',
+    getParentRoute: () => AuthOrgRoute,
+  } as any)
+const AuthOrgEventsEventIdEditRoute =
+  AuthOrgEventsEventIdEditRouteImport.update({
+    id: '/events/$eventId/edit',
+    path: '/events/$eventId/edit',
+    getParentRoute: () => AuthOrgRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/calendar': typeof CalendarRoute
+  '/': typeof AuthOrgIndexRoute
   '/login': typeof LoginRoute
-  '/onboarding': typeof OnboardingRoute
-  '/resources': typeof ResourcesRoute
-  '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
-  '/$orgSlug/settings': typeof OrgSlugSettingsRoute
-  '/attendees/$attendeeId': typeof AttendeesAttendeeIdRoute
+  '/onboarding': typeof AuthOnboardingRoute
+  '/settings': typeof AuthSettingsRoute
   '/invite/$invitationId': typeof InviteInvitationIdRoute
-  '/attendees/': typeof AttendeesIndexRoute
-  '/events/': typeof EventsIndexRoute
-  '/events/$eventId/edit': typeof EventsEventIdEditRoute
-  '/events/$eventId/': typeof EventsEventIdIndexRoute
+  '/calendar': typeof AuthOrgCalendarRoute
+  '/resources': typeof AuthOrgResourcesRoute
+  '/$orgSlug/settings': typeof AuthOrgOrgSlugSettingsRoute
+  '/attendees/$attendeeId': typeof AuthOrgAttendeesAttendeeIdRoute
+  '/attendees/': typeof AuthOrgAttendeesIndexRoute
+  '/events/': typeof AuthOrgEventsIndexRoute
+  '/events/$eventId/edit': typeof AuthOrgEventsEventIdEditRoute
+  '/events/$eventId/': typeof AuthOrgEventsEventIdIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/calendar': typeof CalendarRoute
+  '/': typeof AuthOrgIndexRoute
   '/login': typeof LoginRoute
-  '/onboarding': typeof OnboardingRoute
-  '/resources': typeof ResourcesRoute
-  '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
-  '/$orgSlug/settings': typeof OrgSlugSettingsRoute
-  '/attendees/$attendeeId': typeof AttendeesAttendeeIdRoute
+  '/onboarding': typeof AuthOnboardingRoute
+  '/settings': typeof AuthSettingsRoute
   '/invite/$invitationId': typeof InviteInvitationIdRoute
-  '/attendees': typeof AttendeesIndexRoute
-  '/events': typeof EventsIndexRoute
-  '/events/$eventId/edit': typeof EventsEventIdEditRoute
-  '/events/$eventId': typeof EventsEventIdIndexRoute
+  '/calendar': typeof AuthOrgCalendarRoute
+  '/resources': typeof AuthOrgResourcesRoute
+  '/$orgSlug/settings': typeof AuthOrgOrgSlugSettingsRoute
+  '/attendees/$attendeeId': typeof AuthOrgAttendeesAttendeeIdRoute
+  '/attendees': typeof AuthOrgAttendeesIndexRoute
+  '/events': typeof AuthOrgEventsIndexRoute
+  '/events/$eventId/edit': typeof AuthOrgEventsEventIdEditRoute
+  '/events/$eventId': typeof AuthOrgEventsEventIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/calendar': typeof CalendarRoute
+  '/_auth': typeof AuthRouteWithChildren
   '/login': typeof LoginRoute
-  '/onboarding': typeof OnboardingRoute
-  '/resources': typeof ResourcesRoute
-  '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
-  '/$orgSlug/settings': typeof OrgSlugSettingsRoute
-  '/attendees/$attendeeId': typeof AttendeesAttendeeIdRoute
+  '/_auth/_org': typeof AuthOrgRouteWithChildren
+  '/_auth/onboarding': typeof AuthOnboardingRoute
+  '/_auth/settings': typeof AuthSettingsRoute
   '/invite/$invitationId': typeof InviteInvitationIdRoute
-  '/attendees/': typeof AttendeesIndexRoute
-  '/events/': typeof EventsIndexRoute
-  '/events/$eventId/edit': typeof EventsEventIdEditRoute
-  '/events/$eventId/': typeof EventsEventIdIndexRoute
+  '/_auth/_org/calendar': typeof AuthOrgCalendarRoute
+  '/_auth/_org/resources': typeof AuthOrgResourcesRoute
+  '/_auth/_org/': typeof AuthOrgIndexRoute
+  '/_auth/_org/$orgSlug/settings': typeof AuthOrgOrgSlugSettingsRoute
+  '/_auth/_org/attendees/$attendeeId': typeof AuthOrgAttendeesAttendeeIdRoute
+  '/_auth/_org/attendees/': typeof AuthOrgAttendeesIndexRoute
+  '/_auth/_org/events/': typeof AuthOrgEventsIndexRoute
+  '/_auth/_org/events/$eventId/edit': typeof AuthOrgEventsEventIdEditRoute
+  '/_auth/_org/events/$eventId/': typeof AuthOrgEventsEventIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/calendar'
     | '/login'
-    | '/onboarding'
-    | '/resources'
-    | '/settings'
     | '/signup'
+    | '/onboarding'
+    | '/settings'
+    | '/invite/$invitationId'
+    | '/calendar'
+    | '/resources'
     | '/$orgSlug/settings'
     | '/attendees/$attendeeId'
-    | '/invite/$invitationId'
     | '/attendees/'
     | '/events/'
     | '/events/$eventId/edit'
@@ -164,52 +179,44 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/calendar'
     | '/login'
-    | '/onboarding'
-    | '/resources'
-    | '/settings'
     | '/signup'
+    | '/onboarding'
+    | '/settings'
+    | '/invite/$invitationId'
+    | '/calendar'
+    | '/resources'
     | '/$orgSlug/settings'
     | '/attendees/$attendeeId'
-    | '/invite/$invitationId'
     | '/attendees'
     | '/events'
     | '/events/$eventId/edit'
     | '/events/$eventId'
   id:
     | '__root__'
-    | '/'
-    | '/calendar'
+    | '/_auth'
     | '/login'
-    | '/onboarding'
-    | '/resources'
-    | '/settings'
     | '/signup'
-    | '/$orgSlug/settings'
-    | '/attendees/$attendeeId'
+    | '/_auth/_org'
+    | '/_auth/onboarding'
+    | '/_auth/settings'
     | '/invite/$invitationId'
-    | '/attendees/'
-    | '/events/'
-    | '/events/$eventId/edit'
-    | '/events/$eventId/'
+    | '/_auth/_org/calendar'
+    | '/_auth/_org/resources'
+    | '/_auth/_org/'
+    | '/_auth/_org/$orgSlug/settings'
+    | '/_auth/_org/attendees/$attendeeId'
+    | '/_auth/_org/attendees/'
+    | '/_auth/_org/events/'
+    | '/_auth/_org/events/$eventId/edit'
+    | '/_auth/_org/events/$eventId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  CalendarRoute: typeof CalendarRoute
+  AuthRoute: typeof AuthRouteWithChildren
   LoginRoute: typeof LoginRoute
-  OnboardingRoute: typeof OnboardingRoute
-  ResourcesRoute: typeof ResourcesRoute
-  SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
-  OrgSlugSettingsRoute: typeof OrgSlugSettingsRoute
-  AttendeesAttendeeIdRoute: typeof AttendeesAttendeeIdRoute
   InviteInvitationIdRoute: typeof InviteInvitationIdRoute
-  AttendeesIndexRoute: typeof AttendeesIndexRoute
-  EventsIndexRoute: typeof EventsIndexRoute
-  EventsEventIdEditRoute: typeof EventsEventIdEditRoute
-  EventsEventIdIndexRoute: typeof EventsEventIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -221,27 +228,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/resources': {
-      id: '/resources'
-      path: '/resources'
-      fullPath: '/resources'
-      preLoaderRoute: typeof ResourcesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding': {
-      id: '/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof OnboardingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -249,32 +235,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/calendar': {
-      id: '/calendar'
-      path: '/calendar'
-      fullPath: '/calendar'
-      preLoaderRoute: typeof CalendarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
-      path: '/'
+    '/_auth': {
+      id: '/_auth'
+      path: ''
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/events/': {
-      id: '/events/'
-      path: '/events'
-      fullPath: '/events/'
-      preLoaderRoute: typeof EventsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/attendees/': {
-      id: '/attendees/'
-      path: '/attendees'
-      fullPath: '/attendees/'
-      preLoaderRoute: typeof AttendeesIndexRouteImport
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/invite/$invitationId': {
@@ -284,53 +249,149 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InviteInvitationIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/attendees/$attendeeId': {
-      id: '/attendees/$attendeeId'
+    '/_auth/settings': {
+      id: '/_auth/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthSettingsRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/onboarding': {
+      id: '/_auth/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthOnboardingRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/_org': {
+      id: '/_auth/_org'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthOrgRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/_org/': {
+      id: '/_auth/_org/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof AuthOrgIndexRouteImport
+      parentRoute: typeof AuthOrgRoute
+    }
+    '/_auth/_org/resources': {
+      id: '/_auth/_org/resources'
+      path: '/resources'
+      fullPath: '/resources'
+      preLoaderRoute: typeof AuthOrgResourcesRouteImport
+      parentRoute: typeof AuthOrgRoute
+    }
+    '/_auth/_org/calendar': {
+      id: '/_auth/_org/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof AuthOrgCalendarRouteImport
+      parentRoute: typeof AuthOrgRoute
+    }
+    '/_auth/_org/events/': {
+      id: '/_auth/_org/events/'
+      path: '/events'
+      fullPath: '/events/'
+      preLoaderRoute: typeof AuthOrgEventsIndexRouteImport
+      parentRoute: typeof AuthOrgRoute
+    }
+    '/_auth/_org/attendees/': {
+      id: '/_auth/_org/attendees/'
+      path: '/attendees'
+      fullPath: '/attendees/'
+      preLoaderRoute: typeof AuthOrgAttendeesIndexRouteImport
+      parentRoute: typeof AuthOrgRoute
+    }
+    '/_auth/_org/attendees/$attendeeId': {
+      id: '/_auth/_org/attendees/$attendeeId'
       path: '/attendees/$attendeeId'
       fullPath: '/attendees/$attendeeId'
-      preLoaderRoute: typeof AttendeesAttendeeIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthOrgAttendeesAttendeeIdRouteImport
+      parentRoute: typeof AuthOrgRoute
     }
-    '/$orgSlug/settings': {
-      id: '/$orgSlug/settings'
+    '/_auth/_org/$orgSlug/settings': {
+      id: '/_auth/_org/$orgSlug/settings'
       path: '/$orgSlug/settings'
       fullPath: '/$orgSlug/settings'
-      preLoaderRoute: typeof OrgSlugSettingsRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthOrgOrgSlugSettingsRouteImport
+      parentRoute: typeof AuthOrgRoute
     }
-    '/events/$eventId/': {
-      id: '/events/$eventId/'
+    '/_auth/_org/events/$eventId/': {
+      id: '/_auth/_org/events/$eventId/'
       path: '/events/$eventId'
       fullPath: '/events/$eventId/'
-      preLoaderRoute: typeof EventsEventIdIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthOrgEventsEventIdIndexRouteImport
+      parentRoute: typeof AuthOrgRoute
     }
-    '/events/$eventId/edit': {
-      id: '/events/$eventId/edit'
+    '/_auth/_org/events/$eventId/edit': {
+      id: '/_auth/_org/events/$eventId/edit'
       path: '/events/$eventId/edit'
       fullPath: '/events/$eventId/edit'
-      preLoaderRoute: typeof EventsEventIdEditRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthOrgEventsEventIdEditRouteImport
+      parentRoute: typeof AuthOrgRoute
     }
   }
 }
 
+interface AuthOrgRouteChildren {
+  AuthOrgCalendarRoute: typeof AuthOrgCalendarRoute
+  AuthOrgResourcesRoute: typeof AuthOrgResourcesRoute
+  AuthOrgIndexRoute: typeof AuthOrgIndexRoute
+  AuthOrgOrgSlugSettingsRoute: typeof AuthOrgOrgSlugSettingsRoute
+  AuthOrgAttendeesAttendeeIdRoute: typeof AuthOrgAttendeesAttendeeIdRoute
+  AuthOrgAttendeesIndexRoute: typeof AuthOrgAttendeesIndexRoute
+  AuthOrgEventsIndexRoute: typeof AuthOrgEventsIndexRoute
+  AuthOrgEventsEventIdEditRoute: typeof AuthOrgEventsEventIdEditRoute
+  AuthOrgEventsEventIdIndexRoute: typeof AuthOrgEventsEventIdIndexRoute
+}
+
+const AuthOrgRouteChildren: AuthOrgRouteChildren = {
+  AuthOrgCalendarRoute: AuthOrgCalendarRoute,
+  AuthOrgResourcesRoute: AuthOrgResourcesRoute,
+  AuthOrgIndexRoute: AuthOrgIndexRoute,
+  AuthOrgOrgSlugSettingsRoute: AuthOrgOrgSlugSettingsRoute,
+  AuthOrgAttendeesAttendeeIdRoute: AuthOrgAttendeesAttendeeIdRoute,
+  AuthOrgAttendeesIndexRoute: AuthOrgAttendeesIndexRoute,
+  AuthOrgEventsIndexRoute: AuthOrgEventsIndexRoute,
+  AuthOrgEventsEventIdEditRoute: AuthOrgEventsEventIdEditRoute,
+  AuthOrgEventsEventIdIndexRoute: AuthOrgEventsEventIdIndexRoute,
+}
+
+const AuthOrgRouteWithChildren =
+  AuthOrgRoute._addFileChildren(AuthOrgRouteChildren)
+
+interface AuthRouteChildren {
+  AuthOrgRoute: typeof AuthOrgRouteWithChildren
+  AuthOnboardingRoute: typeof AuthOnboardingRoute
+  AuthSettingsRoute: typeof AuthSettingsRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthOrgRoute: AuthOrgRouteWithChildren,
+  AuthOnboardingRoute: AuthOnboardingRoute,
+  AuthSettingsRoute: AuthSettingsRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  CalendarRoute: CalendarRoute,
+  AuthRoute: AuthRouteWithChildren,
   LoginRoute: LoginRoute,
-  OnboardingRoute: OnboardingRoute,
-  ResourcesRoute: ResourcesRoute,
-  SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
-  OrgSlugSettingsRoute: OrgSlugSettingsRoute,
-  AttendeesAttendeeIdRoute: AttendeesAttendeeIdRoute,
   InviteInvitationIdRoute: InviteInvitationIdRoute,
-  AttendeesIndexRoute: AttendeesIndexRoute,
-  EventsIndexRoute: EventsIndexRoute,
-  EventsEventIdEditRoute: EventsEventIdEditRoute,
-  EventsEventIdIndexRoute: EventsEventIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

@@ -1,9 +1,6 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { authClient } from "@/lib/auth-client";
-import { ApiError } from "@/lib/api";
-import { getCurrentOrg } from "@/lib/org";
 import {
   AppShell,
   PageBackButton,
@@ -25,20 +22,8 @@ import {
   attendeeRegistrationsQueryOptions,
 } from "@/queries/attendees";
 
-export const Route = createFileRoute("/attendees/$attendeeId")({
+export const Route = createFileRoute("/_auth/_org/attendees/$attendeeId")({
   component: AttendeeDetailRoute,
-  beforeLoad: async () => {
-    const session = await authClient.getSession();
-    if (!session.data) throw redirect({ to: "/login" });
-    try {
-      return await getCurrentOrg();
-    } catch (error) {
-      if (error instanceof ApiError && error.code === "organization_required") {
-        throw redirect({ to: "/onboarding" });
-      }
-      throw error;
-    }
-  },
   loader: ({ context, params }) =>
     Promise.all([
       context.queryClient.ensureQueryData(attendeeQueryOptions(params.attendeeId)),

@@ -152,7 +152,7 @@ export function EventDetailPage({
     setError("");
     deleteMutation.mutate(eventId, {
       onSuccess: async () => {
-        await navigate({ to: "/events/" });
+        await navigate({ to: "/events" });
       },
       onError: (error) => {
         setError(error instanceof Error ? error.message : "Unable to delete event");
@@ -226,11 +226,11 @@ export function EventDetailPage({
       title={
         <PageBreadcrumb>
           <PageBackButton
-            to={mode === "edit" ? "/events/$eventId" : "/events/"}
+            to={mode === "edit" ? "/events/$eventId" : "/events"}
             params={mode === "edit" ? { eventId } : undefined}
             label={mode === "edit" ? "Back to event" : "Back to events"}
           />
-          <Link to="/events/" className="shrink-0 hover:underline">
+          <Link to="/events" className="shrink-0 hover:underline">
             Events
           </Link>
           <PageBreadcrumbSeparator />
@@ -578,7 +578,7 @@ export function EventDetailPage({
                           <Select
                             value={field.state.value || "none"}
                             onValueChange={(value) =>
-                              field.handleChange(value === "none" ? "" : value)
+                              field.handleChange(value === "none" || value === null ? "" : value)
                             }
                             disabled={!canManage}
                           >
@@ -1102,8 +1102,8 @@ function EventResourcesTab({
                   <div className="space-y-2">
                     <Label className="text-xs text-muted-foreground">Resource</Label>
                     <Select
-                      value={assignment.resourceId}
-                      onValueChange={(value) => updateAssignment(index, "resourceId", value)}
+                      value={assignment.resourceId ?? ""}
+                      onValueChange={(value) => updateAssignment(index, "resourceId", value ?? "")}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select a resource" />

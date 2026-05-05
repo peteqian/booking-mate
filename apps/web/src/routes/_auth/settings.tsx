@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -9,15 +9,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { authClient } from "@/lib/auth-client";
 import { useTheme, type Theme } from "@/components/theme-provider";
 
-export const Route = createFileRoute("/settings")({
+export const Route = createFileRoute("/_auth/settings")({
   component: UserSettings,
-  beforeLoad: async () => {
-    const session = await authClient.getSession();
-    if (!session.data) throw redirect({ to: "/login" });
-  },
 });
 
 function UserSettings() {

@@ -15,14 +15,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ApiError } from "@/lib/api";
 import { getCurrentOrg, updateOrgSettings } from "@/lib/org";
 
-export const Route = createFileRoute("/onboarding")({
+export const Route = createFileRoute("/_auth/onboarding")({
   component: Onboarding,
   beforeLoad: async () => {
-    const session = await authClient.getSession();
-    if (!session.data) {
-      throw redirect({ to: "/login" });
-    }
-
     try {
       await getCurrentOrg();
       throw redirect({ to: "/" });
@@ -30,7 +25,6 @@ export const Route = createFileRoute("/onboarding")({
       if (error instanceof ApiError && error.code === "organization_required") {
         return;
       }
-
       throw error;
     }
   },

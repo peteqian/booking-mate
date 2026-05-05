@@ -21,6 +21,9 @@ coverage
 
 # Build Outputs
 dist
+.output
+.nitro
+.tanstack
 
 # Debug
 npm-debug.log*

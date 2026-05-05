@@ -25,7 +25,7 @@ interface AppShellProps {
 
 const workspaceNavItems = [
   { label: "Dashboard", to: "/", icon: LayoutDashboard },
-  { label: "Events", to: "/events/", icon: Ticket },
+  { label: "Events", to: "/events", icon: Ticket },
   { label: "Calendar", to: "/calendar", icon: CalendarDays },
   { label: "Resources", to: "/resources", icon: ListChecks },
   { label: "Attendees", to: "/attendees", icon: Users },
@@ -283,15 +283,13 @@ export function PageBackButton({
 }: LinkProps & { label?: string }) {
   return (
     <Button
-      asChild
+      render={<Link {...linkProps} />}
       variant="outline"
       size="icon-sm"
       className="shrink-0 rounded-full shadow-sm"
       aria-label={label}
     >
-      <Link {...linkProps}>
-        <ArrowLeft className="size-3.5" />
-      </Link>
+      <ArrowLeft className="size-3.5" />
     </Button>
   );
 }
