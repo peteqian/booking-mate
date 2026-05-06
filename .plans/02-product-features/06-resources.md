@@ -4,13 +4,15 @@
 
 Resources are first-class. Events are visible booking objects, but resources are the underlying things assigned to events and future booking flows.
 
+Status: backend resource service + API + schema with `resourceType` enum (instructor/material/location/custom) implemented. Frontend `resources.tsx` is `<PlaceholderPage>`. Event-side assignment UI works via event detail/edit.
+
 Included:
 
-- Instructors.
-- Materials.
-- Locations.
-- Custom resource types.
-- Assign resources to events.
+- [~] Instructors. (backend yes; resources page no)
+- [~] Materials. (backend yes; resources page no)
+- [~] Locations. (backend yes; resources page no)
+- [~] Custom resource types. (backend yes; resources page no)
+- [x] Assign resources to events.
 
 ## Resource Types
 
@@ -52,29 +54,29 @@ Fields:
 
 ## Event Assignment
 
-Events can have many resources through `event_resources`.
+- [x] Events can have many resources through `event_resources`.
 
 Examples:
 
-- One primary instructor.
-- One location.
-- Multiple materials.
-- Equipment quantity.
+- [x] One primary instructor.
+- [x] One location.
+- [x] Multiple materials.
+- [x] Equipment quantity.
 
 ## UI
 
 Resources page:
 
-- Tabs or filter chips for resource types.
-- Create/edit/delete resource.
-- Search resources.
-- Basic list/table per type.
+- [ ] Tabs or filter chips for resource types.
+- [ ] Create/edit/delete resource.
+- [ ] Search resources.
+- [ ] Basic list/table per type.
 
 Event form:
 
-- Assign instructor resources.
-- Assign location resource.
-- Assign material resources.
+- [x] Assign instructor resources.
+- [x] Assign location resource.
+- [x] Assign material resources.
 
 ## Deferred
 

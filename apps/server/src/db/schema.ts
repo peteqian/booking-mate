@@ -25,7 +25,7 @@ const updatedAt = () => timestamp("updated_at").notNull().defaultNow();
 export const orgRole = pgEnum("org_role", ["owner", "admin", "manager", "viewer"]);
 export const orgPlan = pgEnum("org_plan", ["free", "pro"]);
 export const eventStatus = pgEnum("event_status", ["upcoming", "completed", "cancelled"]);
-export const eventVisibility = pgEnum("event_visibility", ["published", "unpublished", "archived"]);
+export const eventVisibility = pgEnum("event_visibility", ["published", "unpublished"]);
 export const registrationStatus = pgEnum("registration_status", [
   "confirmed",
   "waitlisted",
@@ -110,7 +110,9 @@ export const events = pgTable(
     createdById: text("created_by_id").references(() => user.id, { onDelete: "set null" }),
     title: text("title").notNull(),
     description: text("description"),
+    notes: text("notes"),
     category: text("category"),
+    tags: jsonb("tags").$type<string[]>().notNull().default([]),
     date: text("date").notNull(),
     time: time("time").notNull(),
     duration: integer("duration").notNull(),
@@ -118,6 +120,7 @@ export const events = pgTable(
     location: text("location"),
     status: eventStatus("status").notNull().default("upcoming"),
     visibility: eventVisibility("visibility").notNull().default("unpublished"),
+    archivedAt: timestamp("archived_at"),
     recurring: boolean("recurring").notNull().default(false),
     recurrenceFrequency: text("recurrence_frequency"),
     recurrenceDays: jsonb("recurrence_days").$type<string[]>().notNull().default([]),
@@ -132,6 +135,7 @@ export const events = pgTable(
     index("events_org_date_idx").on(table.orgId, table.date),
     index("events_org_status_idx").on(table.orgId, table.status),
     index("events_org_visibility_idx").on(table.orgId, table.visibility),
+    index("events_org_archived_at_idx").on(table.orgId, table.archivedAt),
   ],
 );
 

@@ -23,7 +23,7 @@ import {
 import { listRegistrationsByEvent } from "../services/registrations";
 
 const eventStatuses = ["upcoming", "completed", "cancelled"] as const;
-const eventVisibilities = ["published", "unpublished", "archived"] as const;
+const eventVisibilities = ["published", "unpublished"] as const;
 
 function isEventStatus(value: string): value is EventStatus {
   return eventStatuses.includes(value as EventStatus);
@@ -50,6 +50,7 @@ function parseEvent(
 
   for (const field of [
     "description",
+    "notes",
     "category",
     "location",
     "recurrenceFrequency",
@@ -101,6 +102,15 @@ function parseEvent(
     parsed.visibility = input.visibility;
   }
 
+  if (input.archivedAt !== undefined) {
+    const value = stringOrNull(input.archivedAt);
+    if (value === undefined) return "archivedAt must be a string or null";
+    if (value !== null && Number.isNaN(Date.parse(value))) {
+      return "archivedAt must be a valid date string or null";
+    }
+    parsed.archivedAt = value;
+  }
+
   if (input.recurring !== undefined) {
     if (typeof input.recurring !== "boolean") return "Recurring must be a boolean";
     parsed.recurring = input.recurring;
@@ -114,6 +124,13 @@ function parseEvent(
       return "Recurrence days must be an array of strings";
     }
     parsed.recurrenceDays = input.recurrenceDays;
+  }
+
+  if (input.tags !== undefined) {
+    if (!Array.isArray(input.tags) || input.tags.some((tag) => typeof tag !== "string")) {
+      return "Tags must be an array of strings";
+    }
+    parsed.tags = (input.tags as string[]).map((tag) => tag.trim()).filter(Boolean);
   }
 
   if (partial && Object.keys(parsed).length === 0) return "At least one field is required";

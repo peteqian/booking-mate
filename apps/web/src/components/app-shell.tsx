@@ -1,7 +1,8 @@
-import { Link, useLocation, type LinkProps } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { Link, useLocation, useNavigate, type LinkProps } from "@tanstack/react-router";
+import { useState, type ReactNode } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
-import { getCurrentOrg, type CurrentOrgResponse } from "@/lib/org";
+import { currentOrgQueryOptions, sessionQueryOptions } from "@/queries/auth";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
@@ -24,17 +25,20 @@ interface AppShellProps {
 }
 
 const workspaceNavItems = [
-  { label: "Dashboard", to: "/", icon: LayoutDashboard },
-  { label: "Events", to: "/events", icon: Ticket },
-  { label: "Calendar", to: "/calendar", icon: CalendarDays },
-  { label: "Resources", to: "/resources", icon: ListChecks },
-  { label: "Attendees", to: "/attendees", icon: Users },
+  { label: "Dashboard", to: "/admin", icon: LayoutDashboard },
+  { label: "Events", to: "/admin/events", icon: Ticket },
+  { label: "Calendar", to: "/admin/calendar", icon: CalendarDays },
+  { label: "Resources", to: "/admin/resources", icon: ListChecks },
+  { label: "Attendees", to: "/admin/attendees", icon: Users },
 ] as const;
 
 export function AppShell({ children, title, description, headerActions }: AppShellProps) {
   const location = useLocation();
-  const [orgContext, setOrgContext] = useState<CurrentOrgResponse | null>(null);
-  const [email, setEmail] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { data: session } = useQuery(sessionQueryOptions);
+  const { data: orgContext } = useQuery(currentOrgQueryOptions);
+  const email = session?.user.email ?? null;
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
       return window.localStorage.getItem("sidebar-collapsed") === "true";
@@ -48,28 +52,10 @@ export function AppShell({ children, title, description, headerActions }: AppShe
     window.localStorage.setItem("sidebar-collapsed", String(next));
   };
 
-  useEffect(() => {
-    let active = true;
-
-    async function loadShellData() {
-      const [session, org] = await Promise.allSettled([authClient.getSession(), getCurrentOrg()]);
-
-      if (!active) return;
-      if (session.status === "fulfilled") {
-        setEmail(session.value.data?.user.email ?? null);
-      }
-      if (org.status === "fulfilled") setOrgContext(org.value);
-    }
-
-    void loadShellData();
-    return () => {
-      active = false;
-    };
-  }, []);
-
   const handleSignOut = async () => {
     await authClient.signOut();
-    window.location.href = "/login";
+    queryClient.clear();
+    await navigate({ to: "/login" });
   };
 
   return (
@@ -79,7 +65,7 @@ export function AppShell({ children, title, description, headerActions }: AppShe
         {!collapsed ? (
           <div className="flex h-12 w-full items-center justify-between px-3">
             <Link
-              to="/"
+              to="/admin"
               title="Dashboard"
               className="flex size-8 items-center justify-center rounded-lg border bg-background text-sm font-semibold shadow-xs transition-colors hover:bg-muted"
             >
@@ -141,14 +127,14 @@ export function AppShell({ children, title, description, headerActions }: AppShe
 
           {orgContext?.org.slug && (
             <Link
-              to="/$orgSlug/settings"
+              to="/admin/$orgSlug/settings"
               params={{ orgSlug: orgContext.org.slug }}
               title="Organization settings"
               aria-label="Organization settings"
               className={`flex h-9 items-center gap-3 rounded-lg text-sm transition-colors ${
                 collapsed ? "justify-center px-2" : "px-3"
               } ${
-                location.pathname === `/${orgContext.org.slug}/settings`
+                location.pathname === `/admin/${orgContext.org.slug}/settings`
                   ? "border border-ring bg-background text-foreground shadow-xs"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
@@ -213,9 +199,7 @@ export function AppShell({ children, title, description, headerActions }: AppShe
         </header>
 
         <main className="flex-1 overflow-y-auto overflow-x-hidden px-5 pt-4 pb-10 sm:px-8 lg:pt-6 lg:pb-14">
-          <div className="mx-auto max-w-6xl">
-            {children}
-          </div>
+          <div className="mx-auto max-w-6xl">{children}</div>
         </main>
       </div>
     </div>

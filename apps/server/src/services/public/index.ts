@@ -1,9 +1,9 @@
-import type { PublicRegistrationRequest } from "@workspace/contracts";
-import { and, eq } from "drizzle-orm";
+import type { EventDto, PublicRegistrationRequest } from "@workspace/contracts";
+import { eq } from "drizzle-orm";
 import { db } from "../../db";
-import { attendees, events, organization, orgSettings, registrations } from "../../db/schema";
-import { toEventDto } from "../events";
-import { toRegistrationDto } from "../registrations";
+import { attendees, organization, orgSettings } from "../../db/schema";
+import { getEvent, listEvents } from "../events";
+import { createRegistration } from "../registrations";
 
 export async function getPublicOrg(slug: string) {
   const rows = await db.select().from(organization).where(eq(organization.slug, slug)).limit(1);
@@ -38,31 +38,27 @@ export async function listPublicEvents(slug: string) {
   const publicOrg = await getPublicOrg(slug);
   if (!publicOrg) return null;
 
-  const rows = await db
-    .select()
-    .from(events)
-    .where(and(eq(events.orgId, publicOrg.org.id), eq(events.visibility, "published")));
+  const rows = await listEvents(publicOrg.org.id);
+  return rows.filter(isPublicEvent).map(stripPrivate);
+}
 
-  return rows.map((row) => toEventDto(row));
+function stripPrivate<T extends { notes: string | null }>(dto: T): T {
+  return { ...dto, notes: null };
+}
+
+function isPublicEvent(event: EventDto) {
+  return (
+    event.visibility === "published" && event.status === "upcoming" && event.archivedAt === null
+  );
 }
 
 export async function getPublicEvent(slug: string, eventId: string) {
   const publicOrg = await getPublicOrg(slug);
   if (!publicOrg) return null;
 
-  const rows = await db
-    .select()
-    .from(events)
-    .where(
-      and(
-        eq(events.orgId, publicOrg.org.id),
-        eq(events.id, eventId),
-        eq(events.visibility, "published"),
-      ),
-    )
-    .limit(1);
-
-  return rows[0] ? toEventDto(rows[0]) : null;
+  const event = await getEvent(publicOrg.org.id, eventId);
+  if (!event || !isPublicEvent(event)) return null;
+  return stripPrivate(event);
 }
 
 export async function registerForPublicEvent(
@@ -76,12 +72,13 @@ export async function registerForPublicEvent(
   const event = await getPublicEvent(slug, eventId);
   if (!event) return "event_not_found";
 
+  const email = input.email.trim().toLowerCase();
   const attendeeRows = await db
     .insert(attendees)
     .values({
       orgId: publicOrg.org.id,
       name: input.name,
-      email: input.email,
+      email,
       phone: input.phone ?? null,
     })
     .onConflictDoUpdate({
@@ -90,23 +87,8 @@ export async function registerForPublicEvent(
     })
     .returning();
 
-  const existing = await db
-    .select({ id: registrations.id })
-    .from(registrations)
-    .where(
-      and(
-        eq(registrations.orgId, publicOrg.org.id),
-        eq(registrations.eventId, eventId),
-        eq(registrations.attendeeId, attendeeRows[0].id),
-      ),
-    )
-    .limit(1);
-  if (existing[0]) return "duplicate_registration";
-
-  const rows = await db
-    .insert(registrations)
-    .values({ orgId: publicOrg.org.id, eventId, attendeeId: attendeeRows[0].id })
-    .returning();
-
-  return toRegistrationDto(rows[0]);
+  return createRegistration(publicOrg.org.id, {
+    eventId,
+    attendeeId: attendeeRows[0].id,
+  });
 }

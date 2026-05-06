@@ -36,6 +36,20 @@
       "when": 1777810225981,
       "tag": "0004_domain_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1778056944359,
+      "tag": "0005_keen_dark_beast",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1778078341584,
+      "tag": "0006_first_mole_man",
+      "breakpoints": true
     }
   ]
 }

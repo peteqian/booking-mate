@@ -3,6 +3,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { HotkeysProvider } from "@tanstack/react-hotkeys";
 import { ThemeProvider } from "@/components/theme-provider";
+import { setUnauthorizedHandler } from "@/lib/api";
+import { authKeys } from "@/queries/auth";
 import { routeTree } from "./routeTree.gen";
 
 export function getRouter() {
@@ -23,7 +25,7 @@ export function getRouter() {
     },
   });
 
-  return createTanStackRouter({
+  const router = createTanStackRouter({
     routeTree,
     context: { queryClient },
     defaultPreload: "intent",
@@ -34,10 +36,19 @@ export function getRouter() {
         <HotkeysProvider>
           <ThemeProvider>{children}</ThemeProvider>
         </HotkeysProvider>
-        <ReactQueryDevtools initialIsOpen={false} />
+        {import.meta.env.DEV ? <ReactQueryDevtools initialIsOpen={false} /> : null}
       </QueryClientProvider>
     ),
   });
+
+  setUnauthorizedHandler(() => {
+    queryClient.setQueryData(authKeys.session, null);
+    if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+      router.navigate({ to: "/login" });
+    }
+  });
+
+  return router;
 }
 
 declare module "@tanstack/react-router" {

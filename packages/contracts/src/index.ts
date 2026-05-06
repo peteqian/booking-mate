@@ -11,7 +11,7 @@ export type OrgRole = "owner" | "admin" | "manager" | "viewer";
 export type OrgPlan = "free" | "pro";
 export type ResourceType = "instructor" | "material" | "location" | "equipment" | "custom";
 export type EventStatus = "upcoming" | "completed" | "cancelled";
-export type EventVisibility = "published" | "unpublished" | "archived";
+export type EventVisibility = "published" | "unpublished";
 export type RegistrationStatus = "confirmed" | "waitlisted" | "cancelled";
 export type PaymentStatus = "not_required" | "pending" | "paid" | "refunded" | "expired";
 export type WebhookDeliveryStatus = "pending" | "delivered" | "failed" | "dead_letter";
@@ -75,7 +75,9 @@ export interface EventDto {
   createdById: string | null;
   title: string;
   description: string | null;
+  notes: string | null;
   category: string | null;
+  tags: string[];
   date: string;
   time: string;
   duration: number;
@@ -83,6 +85,7 @@ export interface EventDto {
   location: string | null;
   status: EventStatus;
   visibility: EventVisibility;
+  archivedAt: string | null;
   recurring: boolean;
   recurrenceFrequency: string | null;
   recurrenceDays: string[];
@@ -181,7 +184,9 @@ export type UpdateResourceRequest = Partial<CreateResourceRequest>;
 export interface CreateEventRequest {
   title: string;
   description?: string | null;
+  notes?: string | null;
   category?: string | null;
+  tags?: string[];
   date: string;
   time: string;
   duration: number;
@@ -197,7 +202,9 @@ export interface CreateEventRequest {
   price?: string;
 }
 
-export type UpdateEventRequest = Partial<CreateEventRequest>;
+export type UpdateEventRequest = Partial<CreateEventRequest> & {
+  archivedAt?: string | null;
+};
 
 export interface CreateAttendeeRequest {
   name: string;

@@ -1,13 +1,15 @@
-import { createFileRoute, redirect, useParams } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate, useParams } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
+import { authKeys, sessionQueryOptions } from "@/queries/auth";
 
 export const Route = createFileRoute("/invite/$invitationId")({
   component: Invite,
-  beforeLoad: async () => {
-    const session = await authClient.getSession();
-    if (!session.data) {
+  beforeLoad: async ({ context }) => {
+    const session = await context.queryClient.ensureQueryData(sessionQueryOptions);
+    if (!session) {
       throw redirect({ to: "/login" });
     }
   },
@@ -15,6 +17,8 @@ export const Route = createFileRoute("/invite/$invitationId")({
 
 function Invite() {
   const { invitationId } = useParams({ from: "/invite/$invitationId" });
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -45,8 +49,9 @@ function Invite() {
     }
 
     setSuccess(true);
+    await queryClient.invalidateQueries({ queryKey: authKeys.currentOrg });
     setTimeout(() => {
-      window.location.href = "/";
+      void navigate({ to: "/admin" });
     }, 2000);
   };
 

@@ -2,6 +2,8 @@ import { Hono } from "hono";
 import { apiError } from "./errors";
 import type { ApiEnv } from "./types";
 import { requireAuth, requireOrg, requireRole } from "../middleware/auth";
+import { logEvent } from "../observability/events";
+import { enrichLogger } from "../observability/request-context";
 import {
   deletePaymentConnection,
   listPaymentConnections,
@@ -10,9 +12,12 @@ import {
 
 export const paymentRoutes = new Hono<ApiEnv>();
 
-paymentRoutes.post("/webhooks/:provider", (c) =>
-  c.json({ provider: c.req.param("provider"), received: true }),
-);
+paymentRoutes.post("/webhooks/:provider", (c) => {
+  const provider = c.req.param("provider");
+  enrichLogger({ provider, source: "webhook" });
+  logEvent("webhook.received", { provider });
+  return c.json({ provider, received: true });
+});
 
 paymentRoutes
   .use("*", requireAuth, requireOrg)

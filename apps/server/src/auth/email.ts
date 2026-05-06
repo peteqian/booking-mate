@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { getLogger } from "../observability/request-context";
 
 let resend: Resend | null = null;
 
@@ -19,10 +20,7 @@ export async function sendInviteEmail({
   inviteLink: string;
 }) {
   if (!process.env.RESEND_API_KEY) {
-    console.log("[DEV] Invite email would be sent:");
-    console.log(`  To: ${email}`);
-    console.log(`  Org: ${organizationName}`);
-    console.log(`  Link: ${inviteLink}`);
+    getLogger().info({ to: email, organizationName, inviteLink }, "dev invite email");
     return;
   }
 

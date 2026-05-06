@@ -1,6 +1,9 @@
+import "./observability/otel";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { auth } from "./auth";
+import { observability } from "./middleware/observability";
+import { logger } from "./observability/logger";
 import type { HealthResponse, RootResponse } from "@workspace/contracts";
 import { attendeeRoutes } from "./api/attendees";
 import { eventRoutes } from "./api/events";
@@ -13,12 +16,35 @@ import { webhookRoutes } from "./api/webhooks";
 
 const app = new Hono();
 const webOrigin = Bun.env.WEB_URL || "http://localhost:5678";
+const allowlist = (Bun.env.PUBLIC_HOST_ALLOWLIST || ".traefik.me,.localhost")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 
-// Enable CORS for web app
+function resolveOrigin(origin: string) {
+  if (origin === webOrigin) return origin;
+  let host: string;
+  try {
+    host = new URL(origin).hostname;
+  } catch {
+    return null;
+  }
+  for (const entry of allowlist) {
+    if (entry.startsWith(".")) {
+      if (host.endsWith(entry) || host === entry.slice(1)) return origin;
+    } else if (host === entry) {
+      return origin;
+    }
+  }
+  return null;
+}
+
+app.use("*", observability);
+
 app.use(
   "*",
   cors({
-    origin: [webOrigin],
+    origin: resolveOrigin,
     allowHeaders: ["Content-Type", "Authorization", "X-Org-Id"],
     allowMethods: ["POST", "GET", "PATCH", "PUT", "DELETE", "OPTIONS"],
     exposeHeaders: ["Content-Length"],
@@ -50,4 +76,4 @@ Bun.serve({
   fetch: app.fetch,
 });
 
-console.log(`Server running on http://localhost:${port}`);
+logger.info({ port }, "server started");

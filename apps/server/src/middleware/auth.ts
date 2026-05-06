@@ -7,6 +7,7 @@ import { db } from "../db";
 import { member, organization } from "../db/schema";
 import { apiError } from "../api/errors";
 import type { ApiEnv } from "../api/types";
+import { enrichLogger } from "../observability/request-context";
 
 export const requireAuth = createMiddleware<ApiEnv>(async (c, next) => {
   const session = await auth.api.getSession({ headers: c.req.raw.headers });
@@ -17,6 +18,7 @@ export const requireAuth = createMiddleware<ApiEnv>(async (c, next) => {
 
   c.set("user", session.user);
   c.set("session", session.session);
+  enrichLogger({ userId: session.user.id });
   await next();
 });
 
@@ -54,6 +56,7 @@ export const requireOrg = createMiddleware<ApiEnv>(async (c, next) => {
     slug: membership.orgSlug,
     logo: membership.orgLogo,
   });
+  enrichLogger({ orgId: membership.orgId, orgSlug: membership.orgSlug, orgRole: membership.role });
 
   await next();
 });

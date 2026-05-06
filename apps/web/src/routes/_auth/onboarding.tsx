@@ -1,6 +1,8 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
+import { authKeys, currentOrgQueryOptions } from "@/queries/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,14 +15,14 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ApiError } from "@/lib/api";
-import { getCurrentOrg, updateOrgSettings } from "@/lib/org";
+import { updateOrgSettings } from "@/lib/org";
 
 export const Route = createFileRoute("/_auth/onboarding")({
   component: Onboarding,
-  beforeLoad: async () => {
+  beforeLoad: async ({ context }) => {
     try {
-      await getCurrentOrg();
-      throw redirect({ to: "/" });
+      await context.queryClient.ensureQueryData(currentOrgQueryOptions);
+      throw redirect({ to: "/admin" });
     } catch (error) {
       if (error instanceof ApiError && error.code === "organization_required") {
         return;
@@ -31,6 +33,8 @@ export const Route = createFileRoute("/_auth/onboarding")({
 });
 
 function Onboarding() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [contactEmail, setContactEmail] = useState("");
@@ -86,7 +90,8 @@ function Onboarding() {
       return;
     }
 
-    window.location.href = "/";
+    await queryClient.invalidateQueries({ queryKey: authKeys.currentOrg });
+    await navigate({ to: "/admin" });
   };
 
   return (

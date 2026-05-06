@@ -1,23 +1,27 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import { authKeys, sessionQueryOptions } from "@/queries/auth";
 
 export const Route = createFileRoute("/login")({
   component: Login,
-  beforeLoad: async () => {
-    const session = await authClient.getSession();
-    if (session.data) {
-      throw redirect({ to: "/" });
+  beforeLoad: async ({ context }) => {
+    const session = await context.queryClient.ensureQueryData(sessionQueryOptions);
+    if (session) {
+      throw redirect({ to: "/admin" });
     }
   },
 });
 
 function Login() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -39,13 +43,14 @@ function Login() {
       return;
     }
 
-    window.location.href = "/";
+    await queryClient.invalidateQueries({ queryKey: authKeys.session });
+    await navigate({ to: "/admin" });
   };
 
   const handleGoogleSignIn = async () => {
     await authClient.signIn.social({
       provider: "google",
-      callbackURL: "/",
+      callbackURL: "/admin",
     });
   };
 

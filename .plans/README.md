@@ -46,6 +46,8 @@ Build in user-value order, not file/folder order. Core platform work should be i
 - [Plan Limits](04-commercial/01-plan-limits.md)
 - [Provider-Agnostic Payments](04-commercial/02-provider-agnostic-payments.md)
 - [Stripe Connect](04-commercial/03-stripe-connect.md)
+- [Square](04-commercial/04-square.md)
+- [PayPal](04-commercial/05-paypal.md)
 - [Webhook Delivery](05-integrations/01-webhook-delivery.md)
 - [Email Templates](05-integrations/02-email-templates.md)
 - [Subdomain and Custom Domains](05-integrations/03-subdomain-custom-domains.md)

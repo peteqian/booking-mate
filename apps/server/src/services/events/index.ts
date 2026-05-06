@@ -19,7 +19,9 @@ export function toEventDto(
     createdById: event.createdById,
     title: event.title,
     description: event.description,
+    notes: event.notes,
     category: event.category,
+    tags: event.tags,
     date: event.date,
     time: event.time,
     duration: event.duration,
@@ -27,6 +29,7 @@ export function toEventDto(
     location: event.location,
     status: event.status,
     visibility: event.visibility,
+    archivedAt: event.archivedAt?.toISOString() ?? null,
     recurring: event.recurring,
     recurrenceFrequency: event.recurrenceFrequency,
     recurrenceDays: event.recurrenceDays,
@@ -125,7 +128,9 @@ export async function createEvent(
       createdById,
       title: input.title,
       description: input.description ?? null,
+      notes: input.notes ?? null,
       category: input.category ?? null,
+      tags: input.tags ?? [],
       date: input.date,
       time: input.time,
       duration: input.duration,
@@ -150,9 +155,15 @@ export async function updateEvent(
   eventId: string,
   input: UpdateEventRequest,
 ): Promise<EventDto | null> {
+  const { archivedAt, ...eventInput } = input;
+  const patch: Partial<typeof events.$inferInsert> = { ...eventInput, updatedAt: new Date() };
+  if (archivedAt !== undefined) {
+    patch.archivedAt = archivedAt === null ? null : new Date(archivedAt);
+  }
+
   const rows = await db
     .update(events)
-    .set({ ...input, updatedAt: new Date() })
+    .set(patch)
     .where(and(eq(events.orgId, orgId), eq(events.id, eventId)))
     .returning();
 
@@ -193,7 +204,9 @@ export async function duplicateEvent(
   return createEvent(orgId, createdById, {
     title: `${source.title} Copy`,
     description: source.description,
+    notes: source.notes,
     category: source.category,
+    tags: source.tags,
     date: source.date,
     time: source.time,
     duration: source.duration,
