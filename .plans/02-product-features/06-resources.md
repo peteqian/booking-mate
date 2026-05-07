@@ -4,14 +4,15 @@
 
 Resources are first-class. Events are visible booking objects, but resources are the underlying things assigned to events and future booking flows.
 
-Status: backend resource service + API + schema with `resourceType` enum (instructor/material/location/custom) implemented. Frontend `resources.tsx` is `<PlaceholderPage>`. Event-side assignment UI works via event detail/edit.
+Status: backend resource service + API + schema with `resourceType` enum (instructor/material/location/equipment/custom) implemented. Frontend management page lives at `/_auth/admin/resources/index.tsx` with tabs per type, search, archive, type-conditional create/edit, delete, and a detail page (`$resourceId.tsx`) listing event usages.
 
 Included:
 
-- [~] Instructors. (backend yes; resources page no)
-- [~] Materials. (backend yes; resources page no)
-- [~] Locations. (backend yes; resources page no)
-- [~] Custom resource types. (backend yes; resources page no)
+- [x] Instructors.
+- [x] Materials.
+- [x] Locations.
+- [x] Equipment.
+- [x] Custom resource types.
 - [x] Assign resources to events.
 
 ## Resource Types
@@ -44,6 +45,16 @@ Fields:
 - Capacity.
 - Notes.
 
+### Equipment
+
+Fields:
+
+- Name.
+- Description.
+- Capacity (pool size).
+- URL.
+- Cost (rental).
+
 ### Custom
 
 Fields:
@@ -67,10 +78,12 @@ Examples:
 
 Resources page:
 
-- [ ] Tabs or filter chips for resource types.
-- [ ] Create/edit/delete resource.
-- [ ] Search resources.
-- [ ] Basic list/table per type.
+- [x] Tabs or filter chips for resource types.
+- [x] Create/edit/delete resource.
+- [x] Search resources.
+- [x] Basic list/table per type.
+- [x] Archive/unarchive (soft hide).
+- [x] Detail page with usage list.
 
 Event form:
 

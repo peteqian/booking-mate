@@ -41,13 +41,7 @@ import {
   PageBreadcrumbSeparator,
 } from "@/components/app-shell";
 import { eventFormSchema, eventToForm, type EventFormState } from "@/lib/events";
-import type {
-  AttendeeDto,
-  PaymentStatus,
-  RegistrationWithAttendeeDto,
-  EventResourceDto,
-  ResourceDto,
-} from "@workspace/contracts";
+import type { AttendeeDto, PaymentStatus, RegistrationWithAttendeeDto } from "@workspace/contracts";
 import { eventQueryOptions } from "@/queries/events";
 import { eventRegistrationsQueryOptions } from "@/queries/registrations";
 import { attendeesQueryOptions } from "@/queries/attendees";
@@ -59,6 +53,7 @@ import { RegistrationsTable } from "./registrations-table";
 import { useReplaceEventResources } from "@/hooks/use-resources";
 import { useCreateAttendee } from "@/hooks/use-attendees";
 import { PaymentStatusSelect, RegistrationSummary } from "./registration-summary";
+import { EventResourcesTab } from "./event-resources-tab";
 
 export function EventDetailPage({
   eventId,
@@ -73,7 +68,7 @@ export function EventDetailPage({
   const canDelete = canDeleteEvents(orgContext.memberRole);
   const navigate = useNavigate();
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState(mode === "edit" ? "details" : "details");
+  const [activeTab, setActiveTab] = useState("details");
   const [selectedAttendee, setSelectedAttendee] = useState<AttendeeDto | null>(null);
   const [registrationForm, setRegistrationForm] = useState({
     attendeeId: "",
@@ -93,15 +88,11 @@ export function EventDetailPage({
     enabled: activeTab === "registrations",
   });
 
-  const { data: eventResourcesData } = useQuery({
-    ...eventResourcesQueryOptions(eventId),
-    enabled: activeTab === "resources" || activeTab === "details",
-  });
+  const { data: eventResourcesData } = useQuery(eventResourcesQueryOptions(eventId));
 
-  const { data: resourcesData } = useQuery({
-    ...resourcesQueryOptions(),
-    enabled: activeTab === "resources" || activeTab === "details",
-  });
+  const { data: resourcesData, refetch: refetchResources } = useQuery(
+    resourcesQueryOptions({ includeArchived: true }),
+  );
 
   const { data: attendeesData } = useQuery({
     ...attendeesQueryOptions(),
@@ -872,228 +863,17 @@ export function EventDetailPage({
 
           <TabsContent value="resources" className="mt-6">
             <EventResourcesTab
-              eventId={eventId}
               canManage={canManage}
               allResources={allResources}
               assignedResources={assignedResources}
               resourceById={resourceById}
               replaceResourcesMutation={replaceResourcesMutation}
+              refetchResources={refetchResources}
               onError={setError}
             />
           </TabsContent>
         </Tabs>
       </div>
     </AppShell>
-  );
-}
-
-function EventResourcesTab({
-  canManage,
-  allResources,
-  assignedResources,
-  resourceById,
-  replaceResourcesMutation,
-  onError,
-}: {
-  eventId: string;
-  canManage: boolean;
-  allResources: ResourceDto[];
-  assignedResources: EventResourceDto[];
-  resourceById: Map<string, ResourceDto>;
-  replaceResourcesMutation: ReturnType<typeof useReplaceEventResources>;
-  onError: (message: string) => void;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [draftAssignments, setDraftAssignments] = useState<
-    Array<{ resourceId: string; role: string; quantity: number }>
-  >([]);
-
-  useEffect(() => {
-    setDraftAssignments(
-      assignedResources.map((ar) => ({
-        resourceId: ar.resourceId,
-        role: ar.role,
-        quantity: ar.quantity,
-      })),
-    );
-  }, [assignedResources]);
-
-  const handleSave = () => {
-    const validAssignments = draftAssignments.filter((a) => a.resourceId && a.role.trim());
-    replaceResourcesMutation.mutate(
-      {
-        resources: validAssignments.map((a) => ({
-          resourceId: a.resourceId,
-          role: a.role.trim(),
-          quantity: a.quantity > 0 ? a.quantity : 1,
-        })),
-      },
-      {
-        onSuccess: () => setEditing(false),
-        onError: (error) =>
-          onError(error instanceof Error ? error.message : "Unable to update resources"),
-      },
-    );
-  };
-
-  const addAssignment = () => {
-    setDraftAssignments((prev) => [...prev, { resourceId: "", role: "", quantity: 1 }]);
-  };
-
-  const updateAssignment = (
-    index: number,
-    field: "resourceId" | "role" | "quantity",
-    value: string | number,
-  ) => {
-    setDraftAssignments((prev) => {
-      const next = [...prev];
-      if (field === "quantity") {
-        next[index] = {
-          ...next[index],
-          [field]: typeof value === "string" ? parseInt(value) || 1 : value,
-        };
-      } else {
-        next[index] = { ...next[index], [field]: value };
-      }
-      return next;
-    });
-  };
-
-  const removeAssignment = (index: number) => {
-    setDraftAssignments((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const unassignedResources = allResources.filter(
-    (r) => !draftAssignments.some((a) => a.resourceId === r.id),
-  );
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold tracking-tight">Assigned resources</h2>
-        {canManage && (
-          <>
-            {editing ? (
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setEditing(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={handleSave}
-                  disabled={replaceResourcesMutation.isPending}
-                >
-                  {replaceResourcesMutation.isPending ? "Saving..." : "Save"}
-                </Button>
-              </div>
-            ) : (
-              <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
-                Edit resources
-              </Button>
-            )}
-          </>
-        )}
-      </div>
-
-      {editing ? (
-        <div className="space-y-4">
-          {draftAssignments.map((assignment, index) => {
-            const resource = resourceById.get(assignment.resourceId);
-            return (
-              <div
-                key={index}
-                className="flex items-start gap-3 rounded-lg border bg-background p-4"
-              >
-                <div className="flex-1 space-y-3">
-                  <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground">Resource</Label>
-                    <Select
-                      value={assignment.resourceId ?? ""}
-                      onValueChange={(value) => updateAssignment(index, "resourceId", value ?? "")}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a resource" />
-                      </SelectTrigger>
-                      <SelectContent alignItemWithTrigger={false}>
-                        {resource && (
-                          <SelectItem value={resource.id}>
-                            {resource.name} ({resource.type})
-                          </SelectItem>
-                        )}
-                        {unassignedResources.map((r) => (
-                          <SelectItem key={r.id} value={r.id}>
-                            {r.name} ({r.type})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">Role</Label>
-                      <Input
-                        value={assignment.role}
-                        onChange={(e) => updateAssignment(index, "role", e.target.value)}
-                        placeholder="e.g., instructor, location, material"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">Quantity</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        value={assignment.quantity}
-                        onChange={(e) => updateAssignment(index, "quantity", e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-destructive"
-                  onClick={() => removeAssignment(index)}
-                >
-                  Remove
-                </Button>
-              </div>
-            );
-          })}
-          <Button variant="outline" size="sm" onClick={addAssignment}>
-            Add resource
-          </Button>
-        </div>
-      ) : assignedResources.length === 0 ? (
-        <div className="rounded-xl border border-dashed bg-muted/30 p-10 text-center">
-          <h2 className="text-lg font-semibold tracking-tight">No resources assigned</h2>
-          <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
-            Assign instructors, locations, materials, and equipment to this event.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {assignedResources.map((assignment) => {
-            const resource = resourceById.get(assignment.resourceId);
-            return (
-              <div
-                key={assignment.id}
-                className="flex items-center justify-between rounded-lg border bg-background/90 p-4 shadow-[0_1px_0_rgba(0,0,0,0.04)]"
-              >
-                <div>
-                  <p className="font-medium">{resource?.name ?? "Unknown resource"}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {assignment.role} · {resource?.type ?? "unknown"}
-                    {assignment.quantity > 1 && ` · qty ${assignment.quantity}`}
-                  </p>
-                </div>
-                <span className="rounded-full bg-secondary px-2 py-1 text-xs font-medium">
-                  {resource?.type ?? "unknown"}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
   );
 }

@@ -1,5 +1,12 @@
-import type { EventDto } from "@workspace/contracts";
+import type { CategoryConfigs, EventDto } from "@workspace/contracts";
 import { addMinutes, format, parse } from "date-fns";
+import { createContext, useContext } from "react";
+
+const CategoryConfigsContext = createContext<CategoryConfigs>({});
+export const CategoryConfigsProvider = CategoryConfigsContext.Provider;
+export function useCategoryConfigs(): CategoryConfigs {
+  return useContext(CategoryConfigsContext);
+}
 
 const TAG_COLORS = [
   "bg-red-500",
@@ -21,17 +28,47 @@ const TAG_COLORS = [
   "bg-rose-500",
 ];
 
-export function getCategoryColor(category: string | null | undefined): string {
-  if (!category) return "bg-gray-500";
-  const hash = category.split("").reduce((acc, char) => char.charCodeAt(0) + acc, 0);
+function hashColorClass(seed: string | null | undefined): string {
+  if (!seed) return "bg-gray-500";
+  const hash = seed.split("").reduce((acc, char) => char.charCodeAt(0) + acc, 0);
   return TAG_COLORS[hash % TAG_COLORS.length];
 }
 
-export function getEventColor(event: { tags: string[]; category: string | null }): string {
-  const primary = event.tags[0] ?? event.category;
-  if (!primary) return "bg-gray-500";
-  const hash = primary.split("").reduce((acc, char) => char.charCodeAt(0) + acc, 0);
-  return TAG_COLORS[hash % TAG_COLORS.length];
+type ColorEvent = {
+  tags: string[];
+  category: string | null;
+  status: "upcoming" | "completed" | "cancelled";
+  visibility: "published" | "unpublished";
+};
+
+export function getEventColorStyle(
+  event: ColorEvent,
+  configs?: CategoryConfigs,
+): { className?: string; style?: { backgroundColor: string } } {
+  if (event.status === "cancelled") return { className: "bg-destructive" };
+  if (event.status === "completed") return { className: "bg-muted-foreground/60" };
+  const configured = event.category ? configs?.[event.category]?.color : undefined;
+  if (configured) return { style: { backgroundColor: configured } };
+  const seed = event.tags[0] ?? event.category;
+  if (seed) return { className: hashColorClass(seed) };
+  if (event.visibility === "published") return { className: "bg-success" };
+  return { className: "bg-muted-foreground/40" };
+}
+
+export interface EventTone {
+  opacity?: string;
+  lineThrough: boolean;
+  italic: boolean;
+}
+
+export function getEventTone(event: ColorEvent): EventTone {
+  if (event.status === "cancelled")
+    return { lineThrough: true, italic: false, opacity: "opacity-60" };
+  if (event.status === "completed")
+    return { lineThrough: false, italic: false, opacity: "opacity-70" };
+  if (event.visibility === "unpublished")
+    return { lineThrough: false, italic: true };
+  return { lineThrough: false, italic: false };
 }
 
 export function shortTime(time: string): string {
@@ -145,6 +182,73 @@ export function eventsByDate(
     bucket.sort((a, b) => a.start.getTime() - b.start.getTime());
   }
   return map;
+}
+
+export function splitAllDay(instances: EventInstance[]): {
+  allDay: EventInstance[];
+  timed: EventInstance[];
+} {
+  const allDay: EventInstance[] = [];
+  const timed: EventInstance[] = [];
+  for (const instance of instances) {
+    if (instance.event.allDay) allDay.push(instance);
+    else timed.push(instance);
+  }
+  return { allDay, timed };
+}
+
+export interface LaidOutInstance {
+  instance: EventInstance;
+  column: number;
+  columnCount: number;
+}
+
+// Sweep-line column assignment for overlapping events on a single day.
+// Each event gets a column index and a group-wide columnCount so callers
+// can render side-by-side using `left = column / columnCount`.
+export function layoutDay(instances: EventInstance[]): LaidOutInstance[] {
+  if (instances.length === 0) return [];
+
+  const sorted = [...instances].sort((a, b) => {
+    const startDiff = a.start.getTime() - b.start.getTime();
+    if (startDiff !== 0) return startDiff;
+    return b.end.getTime() - a.end.getTime();
+  });
+
+  const result: LaidOutInstance[] = [];
+  let group: { laid: LaidOutInstance[]; groupEnd: number } = { laid: [], groupEnd: 0 };
+
+  const flushGroup = () => {
+    if (group.laid.length === 0) return;
+    const columnCount = group.laid.reduce((max, item) => Math.max(max, item.column + 1), 1);
+    for (const item of group.laid) {
+      result.push({ ...item, columnCount });
+    }
+    group = { laid: [], groupEnd: 0 };
+  };
+
+  for (const instance of sorted) {
+    const startMs = instance.start.getTime();
+    const endMs = instance.end.getTime();
+
+    if (group.laid.length > 0 && startMs >= group.groupEnd) {
+      flushGroup();
+    }
+
+    const usedColumns = new Set(
+      group.laid
+        .filter((item) => item.instance.end.getTime() > startMs)
+        .map((item) => item.column),
+    );
+    let column = 0;
+    while (usedColumns.has(column)) column += 1;
+
+    group.laid.push({ instance, column, columnCount: 0 });
+    group.groupEnd = Math.max(group.groupEnd, endMs);
+  }
+  flushGroup();
+
+  return result;
 }
 
 export type { EventInstance };

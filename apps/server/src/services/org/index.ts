@@ -28,6 +28,7 @@ function toOrgSettingsDto(settings: typeof orgSettings.$inferSelect): OrgSetting
     categories: settings.categories,
     categoryConfigs: settings.categoryConfigs,
     webhookUrl: settings.webhookUrl,
+    webhookSecret: settings.webhookSecret,
     createdAt: settings.createdAt.toISOString(),
     updatedAt: settings.updatedAt.toISOString(),
   };

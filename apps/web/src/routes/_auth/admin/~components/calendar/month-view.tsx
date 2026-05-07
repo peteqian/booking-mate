@@ -3,7 +3,15 @@ import { Repeat } from "lucide-react";
 import { useMemo } from "react";
 import type { EventDto } from "@workspace/contracts";
 import { cn } from "@/lib/utils";
-import { dateKey, eventsByDate, getEventColor, shortTime, type EventInstance } from "./event-utils";
+import {
+  dateKey,
+  eventsByDate,
+  getEventColorStyle,
+  getEventTone,
+  shortTime,
+  useCategoryConfigs,
+  type EventInstance,
+} from "./event-utils";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MAX_VISIBLE = 2;
@@ -180,6 +188,9 @@ interface MonthEventChipProps {
 
 function MonthEventChip({ instance, canManage, onEventClick }: MonthEventChipProps) {
   const event = instance.event;
+  const configs = useCategoryConfigs();
+  const color = getEventColorStyle(event, configs);
+  const tone = getEventTone(event);
   const { ref, isDragSource } = useDraggable({
     id: `event:${instance.instanceKey}`,
     type: "event",
@@ -196,13 +207,25 @@ function MonthEventChip({ instance, canManage, onEventClick }: MonthEventChipPro
       }}
       className={cn(
         "flex items-center gap-1 rounded-sm bg-muted/60 px-1 py-0.5 text-[10.5px] leading-tight transition-colors hover:bg-muted",
+        tone.opacity,
+        tone.italic && "italic",
         isDragSource && "opacity-50",
       )}
       title={`${event.title} at ${shortTime(event.time)}`}
     >
-      <span className={cn("size-1.5 shrink-0 rounded-full", getEventColor(event))} aria-hidden />
-      <span className="font-medium tabular-nums text-muted-foreground">{shortTime(event.time)}</span>
-      <span className="truncate font-medium text-foreground">{event.title}</span>
+      <span
+        className={cn("size-1.5 shrink-0 rounded-full", color.className)}
+        style={color.style}
+        aria-hidden
+      />
+      {!event.allDay && (
+        <span className="font-medium tabular-nums text-muted-foreground">{shortTime(event.time)}</span>
+      )}
+      <span
+        className={cn("truncate font-medium text-foreground", tone.lineThrough && "line-through")}
+      >
+        {event.title}
+      </span>
       {event.recurring && <Repeat className="ml-auto size-2.5 shrink-0 text-muted-foreground" />}
     </div>
   );

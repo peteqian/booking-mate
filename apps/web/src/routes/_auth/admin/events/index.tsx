@@ -132,7 +132,7 @@ function Events() {
   const createMutation = useCreateEvent();
   const duplicateMutation = useDuplicateEvent();
   const { data: resourcesData } = useQuery({
-    ...resourcesQueryOptions(),
+    ...resourcesQueryOptions({ includeArchived: true }),
     enabled: createOpen,
   });
 
@@ -1216,7 +1216,8 @@ function ResourceAssignmentEditor({
             );
             const availableResources = resources.filter(
               (resource) =>
-                resource.id === assignment.resourceId || !selectedResourceIds.has(resource.id),
+                resource.id === assignment.resourceId ||
+                (!resource.archivedAt && !selectedResourceIds.has(resource.id)),
             );
             return (
               <div
@@ -1236,6 +1237,7 @@ function ResourceAssignmentEditor({
                       {currentResource && (
                         <SelectItem value={currentResource.id}>
                           {currentResource.name} ({currentResource.type})
+                          {currentResource.archivedAt ? " · archived" : ""}
                         </SelectItem>
                       )}
                       {availableResources

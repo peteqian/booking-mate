@@ -64,7 +64,7 @@ export const orgSettings = pgTable(
     currency: text("currency").notNull().default("USD"),
     categories: jsonb("categories").$type<string[]>().notNull().default([]),
     categoryConfigs: jsonb("category_configs")
-      .$type<Record<string, unknown>>()
+      .$type<import("@workspace/contracts").CategoryConfigs>()
       .notNull()
       .default({}),
     webhookUrl: text("webhook_url"),
@@ -90,6 +90,10 @@ export const resources = pgTable(
     phone: text("phone"),
     capacity: integer("capacity"),
     url: text("url"),
+    cost: numeric("cost", { precision: 12, scale: 2 }),
+    currency: text("currency"),
+    notes: text("notes"),
+    archivedAt: timestamp("archived_at"),
     metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -97,6 +101,7 @@ export const resources = pgTable(
   (table) => [
     index("resources_org_id_idx").on(table.orgId),
     index("resources_org_type_idx").on(table.orgId, table.type),
+    index("resources_org_archived_at_idx").on(table.orgId, table.archivedAt),
   ],
 );
 
@@ -116,6 +121,7 @@ export const events = pgTable(
     date: text("date").notNull(),
     time: time("time").notNull(),
     duration: integer("duration").notNull(),
+    allDay: boolean("all_day").notNull().default(false),
     maxCapacity: integer("max_capacity"),
     location: text("location"),
     status: eventStatus("status").notNull().default("upcoming"),

@@ -2,13 +2,25 @@ import type { EventStatus, EventVisibility } from "@workspace/contracts";
 import { Badge } from "@/components/ui/badge";
 
 export function StatusBadge({ status }: { status: EventStatus }) {
-  const variants: Record<EventStatus, "default" | "secondary" | "destructive" | "outline"> = {
-    upcoming: "default",
-    completed: "secondary",
-    cancelled: "destructive",
+  const styles: Record<EventStatus, { variant: "default" | "destructive"; className: string }> = {
+    upcoming: {
+      variant: "default",
+      className:
+        "h-5 px-1.5 text-[10px] capitalize bg-info text-info-foreground hover:bg-info/90 border-transparent",
+    },
+    completed: {
+      variant: "default",
+      className:
+        "h-5 px-1.5 text-[10px] capitalize bg-success text-success-foreground hover:bg-success/90 border-transparent",
+    },
+    cancelled: {
+      variant: "destructive",
+      className: "h-5 px-1.5 text-[10px] capitalize",
+    },
   };
+  const { variant, className } = styles[status];
   return (
-    <Badge variant={variants[status]} className="h-5 px-1.5 text-[10px] capitalize">
+    <Badge variant={variant} className={className}>
       {status}
     </Badge>
   );

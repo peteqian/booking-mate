@@ -31,6 +31,13 @@ export interface OrganizationDto {
   createdAt: string;
 }
 
+export interface CategoryConfig {
+  color?: string;
+  icon?: string;
+}
+
+export type CategoryConfigs = Record<string, CategoryConfig>;
+
 export interface OrgSettingsDto {
   id: string;
   orgId: string;
@@ -38,8 +45,9 @@ export interface OrgSettingsDto {
   contactEmail: string | null;
   currency: string;
   categories: string[];
-  categoryConfigs: Record<string, unknown>;
+  categoryConfigs: CategoryConfigs;
   webhookUrl: string | null;
+  webhookSecret: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -64,9 +72,23 @@ export interface ResourceDto {
   phone: string | null;
   capacity: number | null;
   url: string | null;
+  cost: string | null;
+  currency: string | null;
+  notes: string | null;
+  archivedAt: string | null;
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ResourceUsageDto {
+  eventResourceId: string;
+  eventId: string;
+  eventTitle: string;
+  eventDate: string;
+  eventStatus: EventStatus;
+  role: string;
+  quantity: number;
 }
 
 export interface EventDto {
@@ -81,6 +103,7 @@ export interface EventDto {
   date: string;
   time: string;
   duration: number;
+  allDay: boolean;
   maxCapacity: number | null;
   location: string | null;
   status: EventStatus;
@@ -176,6 +199,9 @@ export interface CreateResourceRequest {
   phone?: string | null;
   capacity?: number | null;
   url?: string | null;
+  cost?: string | null;
+  currency?: string | null;
+  notes?: string | null;
   metadata?: Record<string, unknown>;
 }
 
@@ -190,6 +216,7 @@ export interface CreateEventRequest {
   date: string;
   time: string;
   duration: number;
+  allDay?: boolean;
   maxCapacity?: number | null;
   location?: string | null;
   status?: EventStatus;
@@ -243,7 +270,7 @@ export interface UpdateOrgSettingsRequest {
   contactEmail?: string | null;
   currency?: string;
   categories?: string[];
-  categoryConfigs?: Record<string, unknown>;
+  categoryConfigs?: CategoryConfigs;
   webhookUrl?: string | null;
   emailTemplates?: Record<string, unknown>;
 }

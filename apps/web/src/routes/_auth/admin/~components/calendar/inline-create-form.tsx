@@ -76,6 +76,16 @@ export function InlineCreateForm({ prefill, onCreated }: InlineCreateFormProps) 
         />
       </div>
 
+      <label className="flex items-center gap-2 text-xs text-muted-foreground">
+        <input
+          type="checkbox"
+          checked={form.allDay === "true"}
+          onChange={(e) => update("allDay", e.target.checked ? "true" : "false")}
+          className="size-3.5"
+        />
+        All-day event
+      </label>
+
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1.5">
           <Label htmlFor="ic-date" className="text-xs text-muted-foreground">
@@ -90,36 +100,40 @@ export function InlineCreateForm({ prefill, onCreated }: InlineCreateFormProps) 
             className="h-8 text-sm"
           />
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="ic-time" className="text-xs text-muted-foreground">
-            Time
-          </Label>
-          <Input
-            id="ic-time"
-            type="time"
-            value={form.time}
-            onChange={(e) => update("time", e.target.value)}
-            required
-            className="h-8 text-sm"
-          />
-        </div>
+        {form.allDay === "false" && (
+          <div className="space-y-1.5">
+            <Label htmlFor="ic-time" className="text-xs text-muted-foreground">
+              Time
+            </Label>
+            <Input
+              id="ic-time"
+              type="time"
+              value={form.time}
+              onChange={(e) => update("time", e.target.value)}
+              required
+              className="h-8 text-sm"
+            />
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <div className="space-y-1.5">
-          <Label htmlFor="ic-duration" className="text-xs text-muted-foreground">
-            Duration (min)
-          </Label>
-          <Input
-            id="ic-duration"
-            type="number"
-            min="1"
-            value={form.duration}
-            onChange={(e) => update("duration", e.target.value)}
-            required
-            className="h-8 text-sm"
-          />
-        </div>
+        {form.allDay === "false" && (
+          <div className="space-y-1.5">
+            <Label htmlFor="ic-duration" className="text-xs text-muted-foreground">
+              Duration (min)
+            </Label>
+            <Input
+              id="ic-duration"
+              type="number"
+              min="1"
+              value={form.duration}
+              onChange={(e) => update("duration", e.target.value)}
+              required
+              className="h-8 text-sm"
+            />
+          </div>
+        )}
         <div className="space-y-1.5">
           <Label htmlFor="ic-capacity" className="text-xs text-muted-foreground">
             Capacity

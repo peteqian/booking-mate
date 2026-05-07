@@ -1,12 +1,13 @@
 import { DragDropProvider } from "@dnd-kit/react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Flame } from "lucide-react";
-import { useState } from "react";
+import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { CalendarDays, ChevronLeft, ChevronRight, Flame } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { EventDto } from "@workspace/contracts";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { updateEvent } from "@/lib/events";
 import type { CurrentOrgResponse } from "@/lib/org";
 import { canManageEvents } from "@/lib/permissions";
@@ -26,6 +27,9 @@ import { InlineCreateForm } from "./~components/calendar/inline-create-form";
 import { MonthView } from "./~components/calendar/month-view";
 import { WeekView } from "./~components/calendar/week-view";
 import { YearView } from "./~components/calendar/year-view";
+import { CategoryConfigsProvider, type EventInstance } from "./~components/calendar/event-utils";
+import { orgSettingsQueryOptions } from "@/queries/org";
+import { SLOT_PX } from "./~components/calendar/time-grid";
 
 type ViewType = "day" | "week" | "month" | "year";
 
@@ -34,6 +38,18 @@ export const Route = createFileRoute("/_auth/admin/calendar")({
   component: CalendarPage,
   loader: ({ context }) => context.queryClient.ensureQueryData(eventsQueryOptions),
 });
+
+interface ResizeContext {
+  instanceKey: string;
+  eventId: string;
+  startY: number;
+  originalDuration: number;
+}
+
+interface ResizeOverride {
+  instanceKey: string;
+  minutes: number;
+}
 
 function CalendarPage() {
   const orgContext = Route.useRouteContext() as CurrentOrgResponse;
@@ -44,6 +60,8 @@ function CalendarPage() {
   const {
     data: { events },
   } = useSuspenseQuery(eventsQueryOptions);
+  const settingsQuery = useQuery(orgSettingsQueryOptions);
+  const categoryConfigs = settingsQuery.data?.settings.categoryConfigs ?? {};
 
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [viewType, setViewType] = useState<ViewType>("month");
@@ -56,6 +74,16 @@ function CalendarPage() {
     duration?: string;
   } | null>(null);
   const [error, setError] = useState("");
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [resizeOverride, setResizeOverride] = useState<ResizeOverride | null>(null);
+
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const resizeRef = useRef<ResizeContext | null>(null);
+  const resizeOverrideRef = useRef<ResizeOverride | null>(null);
+
+  useEffect(() => {
+    resizeOverrideRef.current = resizeOverride;
+  }, [resizeOverride]);
 
   const handleSelectDate = (key: string) => {
     setSelectedDate((current) => (current === key ? "" : key));
@@ -71,22 +99,31 @@ function CalendarPage() {
     setCreateOpen(true);
   };
 
-  const handleNewClick = () => {
+  const handleNewClick = useCallback(() => {
     setCreatePrefill({
       date: selectedDate || new Date().toISOString().slice(0, 10),
       duration: "60",
     });
     setCreateOpen(true);
-  };
+  }, [selectedDate]);
 
-  const handlePrev = () => setCurrentDate(stepDate(currentDate, viewType, -1));
-  const handleNext = () => setCurrentDate(stepDate(currentDate, viewType, 1));
-  const handleToday = () => setCurrentDate(new Date());
+  const handlePrev = useCallback(
+    () => setCurrentDate((d) => stepDate(d, viewType, -1)),
+    [viewType],
+  );
+  const handleNext = useCallback(
+    () => setCurrentDate((d) => stepDate(d, viewType, 1)),
+    [viewType],
+  );
+  const handleToday = useCallback(() => setCurrentDate(new Date()), []);
 
   const handleDragEnd = async (dragEvent: { canceled?: boolean; operation?: unknown }) => {
     if (dragEvent.canceled) return;
     const operation = dragEvent.operation as
-      | { source?: { data?: { eventId?: string } }; target?: { data?: { dateKey?: string; time?: string } } }
+      | {
+          source?: { data?: { eventId?: string } };
+          target?: { data?: { dateKey?: string; time?: string } };
+        }
       | undefined;
     const eventId = operation?.source?.data?.eventId;
     const target = operation?.target?.data;
@@ -108,6 +145,101 @@ function CalendarPage() {
       setError(err instanceof Error ? err.message : "Failed to reschedule event");
     }
   };
+
+  const handleResizeStart = useCallback(
+    (instance: EventInstance, startY: number) => {
+      resizeRef.current = {
+        instanceKey: instance.instanceKey,
+        eventId: instance.event.id,
+        startY,
+        originalDuration: instance.event.duration,
+      };
+      setResizeOverride({
+        instanceKey: instance.instanceKey,
+        minutes: instance.event.duration,
+      });
+    },
+    [],
+  );
+
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      const ctx = resizeRef.current;
+      if (!ctx) return;
+      const deltaY = e.clientY - ctx.startY;
+      const deltaMinutes = Math.round(((deltaY / SLOT_PX) * 60) / 15) * 15;
+      const minutes = Math.max(15, ctx.originalDuration + deltaMinutes);
+      setResizeOverride({ instanceKey: ctx.instanceKey, minutes });
+    };
+
+    const onUp = async () => {
+      const ctx = resizeRef.current;
+      if (!ctx) return;
+      const override = resizeOverrideRef.current;
+      resizeRef.current = null;
+      setResizeOverride(null);
+      const minutes = override?.minutes ?? ctx.originalDuration;
+      if (minutes === ctx.originalDuration) return;
+      try {
+        await updateEvent(ctx.eventId, { duration: minutes });
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: eventKeys.lists() }),
+          queryClient.invalidateQueries({ queryKey: eventKeys.detail(ctx.eventId) }),
+        ]);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to resize event");
+      }
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+  }, [queryClient]);
+
+  useEffect(() => {
+    if (viewType !== "week" && viewType !== "day") return;
+    const today = new Date();
+    const isToday =
+      currentDate.toDateString() === today.toDateString() ||
+      (viewType === "week" && isInSameWeek(currentDate, today));
+    if (!isToday) return;
+    const node = scrollRef.current;
+    if (!node) return;
+    const minutes = today.getHours() * 60 + today.getMinutes();
+    node.scrollTop = Math.max(0, (minutes / 60) * SLOT_PX - 200);
+  }, [viewType, currentDate]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+        return;
+      }
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === "t" || e.key === "T") {
+        e.preventDefault();
+        handleToday();
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        handlePrev();
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        handleNext();
+      } else if (e.key === "1") setViewType("day");
+      else if (e.key === "2") setViewType("week");
+      else if (e.key === "3") setViewType("month");
+      else if (e.key === "4") setViewType("year");
+      else if (e.key === "n" || e.key === "N") {
+        e.preventDefault();
+        handleNewClick();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [handleToday, handlePrev, handleNext, handleNewClick]);
 
   const handleCreated = (event: EventDto) => {
     setSelectedDate(event.date);
@@ -132,24 +264,51 @@ function CalendarPage() {
 
   return (
     <AppShell title="Calendar" description="Schedule and reschedule events.">
+      <CategoryConfigsProvider value={categoryConfigs}>
       <DragDropProvider onDragEnd={handleDragEnd}>
         <div className="flex h-[calc(100svh-6.5rem)] min-h-0 overflow-hidden rounded-xl border bg-card shadow-[0_1px_2px_rgba(0,0,0,0.04),0_1px_8px_rgba(0,0,0,0.04)] lg:h-[calc(100svh-8rem)]">
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             <div className="flex flex-col gap-4 border-b bg-card px-5 py-4">
               <div className="flex items-end justify-between gap-6">
-                <div className="flex items-end gap-3">
-                  <span className="text-4xl font-semibold tabular-nums leading-none tracking-tight">
-                    {currentDate.getDate()}
-                  </span>
-                  <div className="flex flex-col pb-0.5">
-                    <span className="text-sm font-semibold tracking-tight leading-tight">
-                      {currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-                    </span>
-                    <span className="mt-0.5 text-xs font-medium tracking-tight leading-tight text-muted-foreground">
-                      {currentDate.toLocaleDateString("en-US", { weekday: "long" })}
-                    </span>
-                  </div>
-                </div>
+                <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                  <PopoverTrigger
+                    render={
+                      <button
+                        type="button"
+                        className="flex items-end gap-3 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-muted/40"
+                      >
+                        <span className="text-4xl font-semibold tabular-nums leading-none tracking-tight">
+                          {currentDate.getDate()}
+                        </span>
+                        <div className="flex flex-col pb-0.5">
+                          <span className="text-sm font-semibold tracking-tight leading-tight">
+                            {currentDate.toLocaleDateString("en-US", {
+                              month: "long",
+                              year: "numeric",
+                            })}
+                          </span>
+                          <span className="mt-0.5 flex items-center gap-1 text-xs font-medium tracking-tight leading-tight text-muted-foreground">
+                            {currentDate.toLocaleDateString("en-US", { weekday: "long" })}
+                            <CalendarDays className="size-3" />
+                          </span>
+                        </div>
+                      </button>
+                    }
+                  />
+                  <PopoverContent align="start" className="w-auto p-3">
+                    <input
+                      type="date"
+                      value={toDateInput(currentDate)}
+                      onChange={(e) => {
+                        if (!e.target.value) return;
+                        const [y, m, d] = e.target.value.split("-").map(Number);
+                        setCurrentDate(new Date(y, m - 1, d));
+                        setDatePickerOpen(false);
+                      }}
+                      className="rounded-md border bg-background px-2 py-1 text-sm"
+                    />
+                  </PopoverContent>
+                </Popover>
 
                 <Tabs
                   value={viewType}
@@ -173,17 +332,6 @@ function CalendarPage() {
               </div>
 
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1">
-                  <Button variant="outline" size="icon-sm" className="size-7" onClick={handlePrev} aria-label="Previous">
-                    <ChevronLeft className="size-4" />
-                  </Button>
-                  <Button variant="outline" size="icon-sm" className="size-7" onClick={handleNext} aria-label="Next">
-                    <ChevronRight className="size-4" />
-                  </Button>
-                  <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={handleToday}>
-                    Today
-                  </Button>
-                </div>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -193,6 +341,34 @@ function CalendarPage() {
                   <Flame className="size-3.5" />
                   Heat map
                 </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2.5 text-xs"
+                    onClick={handleToday}
+                  >
+                    Today
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon-sm"
+                    className="size-7"
+                    onClick={handlePrev}
+                    aria-label="Previous"
+                  >
+                    <ChevronLeft className="size-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon-sm"
+                    className="size-7"
+                    onClick={handleNext}
+                    aria-label="Next"
+                  >
+                    <ChevronRight className="size-4" />
+                  </Button>
+                </div>
               </div>
             </div>
             {error && (
@@ -206,7 +382,10 @@ function CalendarPage() {
               </div>
             )}
 
-            <div className={cn("min-h-0 flex-1", needsScroll ? "overflow-y-auto" : "overflow-hidden")}>
+            <div
+              ref={scrollRef}
+              className={cn("min-h-0 flex-1", needsScroll ? "overflow-y-auto" : "overflow-hidden")}
+            >
               {viewType === "day" && (
                 <DayView
                   currentDate={currentDate}
@@ -214,6 +393,8 @@ function CalendarPage() {
                   canManage={canManage}
                   onEventClick={handleEventClick}
                   onSlotClick={handleSlotClick}
+                  onResizeStart={handleResizeStart}
+                  resizeOverride={resizeOverride}
                 />
               )}
               {viewType === "week" && (
@@ -225,6 +406,8 @@ function CalendarPage() {
                   onSelectDate={handleSelectDate}
                   onEventClick={handleEventClick}
                   onSlotClick={handleSlotClick}
+                  onResizeStart={handleResizeStart}
+                  resizeOverride={resizeOverride}
                 />
               )}
               {viewType === "month" && (
@@ -265,6 +448,7 @@ function CalendarPage() {
         </div>
       </DragDropProvider>
 
+      </CategoryConfigsProvider>
       <HeatMapDialog open={heatMapOpen} onOpenChange={setHeatMapOpen} events={events} />
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-md">
@@ -317,3 +501,19 @@ function stepDate(date: Date, view: ViewType, direction: 1 | -1): Date {
   return next;
 }
 
+function toDateInput(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function isInSameWeek(a: Date, b: Date): boolean {
+  const startA = new Date(a);
+  startA.setDate(a.getDate() - a.getDay());
+  startA.setHours(0, 0, 0, 0);
+  const startB = new Date(b);
+  startB.setDate(b.getDate() - b.getDay());
+  startB.setHours(0, 0, 0, 0);
+  return startA.getTime() === startB.getTime();
+}

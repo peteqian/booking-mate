@@ -116,6 +116,11 @@ function parseEvent(
     parsed.recurring = input.recurring;
   }
 
+  if (input.allDay !== undefined) {
+    if (typeof input.allDay !== "boolean") return "allDay must be a boolean";
+    parsed.allDay = input.allDay;
+  }
+
   if (input.recurrenceDays !== undefined) {
     if (
       !Array.isArray(input.recurrenceDays) ||

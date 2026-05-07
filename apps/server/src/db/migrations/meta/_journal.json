@@ -50,6 +50,13 @@
       "when": 1778078341584,
       "tag": "0006_first_mole_man",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1778101529070,
+      "tag": "0007_jazzy_layla_miller",
+      "breakpoints": true
     }
   ]
 }

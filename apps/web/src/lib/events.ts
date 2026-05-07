@@ -7,6 +7,7 @@ export const eventFormSchema = z.object({
   date: z.string().min(1, "Date is required"),
   time: z.string().min(1, "Time is required"),
   duration: z.string().regex(/^\d+$/, "Duration must be a whole number"),
+  allDay: z.enum(["true", "false"]),
   maxCapacity: z.string().regex(/^\d*$/, "Capacity must be a whole number"),
   category: z.string(),
   tags: z.string(),
@@ -30,6 +31,7 @@ export const emptyEventForm: EventFormState = {
   date: "",
   time: "",
   duration: "60",
+  allDay: "false",
   maxCapacity: "",
   category: "",
   tags: "",
@@ -52,6 +54,7 @@ export function eventToForm(event: EventDto): EventFormState {
     date: event.date,
     time: event.time,
     duration: String(event.duration),
+    allDay: event.allDay ? "true" : "false",
     maxCapacity: event.maxCapacity === null ? "" : String(event.maxCapacity),
     category: event.category ?? "",
     tags: event.tags.join(", "),
@@ -70,11 +73,13 @@ export function eventToForm(event: EventDto): EventFormState {
 }
 
 export function formToEventRequest(form: EventFormState): CreateEventRequest {
+  const allDay = form.allDay === "true";
   return {
     title: form.title,
     date: form.date,
-    time: form.time,
-    duration: Number(form.duration),
+    time: allDay ? "00:00" : form.time,
+    duration: allDay ? 1440 : Number(form.duration),
+    allDay,
     maxCapacity: form.maxCapacity ? Number(form.maxCapacity) : null,
     category: form.category.trim() || null,
     tags: form.tags

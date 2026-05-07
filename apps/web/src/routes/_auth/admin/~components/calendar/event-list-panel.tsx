@@ -11,7 +11,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { dateKey, endTimeString, getEventColor, shortTime } from "./event-utils";
+import {
+  dateKey,
+  endTimeString,
+  getEventColorStyle,
+  getEventTone,
+  shortTime,
+  useCategoryConfigs,
+} from "./event-utils";
 
 type SortType = "date" | "title";
 
@@ -237,21 +244,34 @@ function ItemList({ items }: { items: EventDto[] }) {
 }
 
 function EventRow({ event }: { event: EventDto }) {
-  const dot = getEventColor(event);
+  const configs = useCategoryConfigs();
+  const dot = getEventColorStyle(event, configs);
+  const tone = getEventTone(event);
   return (
     <Link
       to="/admin/events/$eventId/edit"
       params={{ eventId: event.id }}
-      className="group block rounded-md px-2 py-1.5 transition-colors hover:bg-muted/60"
+      className={cn(
+        "group block rounded-md px-2 py-1.5 transition-colors hover:bg-muted/60",
+        tone.opacity,
+      )}
     >
       <div className="flex items-start gap-2">
         <span
-          className={cn("mt-1.5 size-2 shrink-0 rounded-full", dot)}
+          className={cn("mt-1.5 size-2 shrink-0 rounded-full", dot.className)}
+          style={dot.style}
           aria-hidden
         />
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <p className="truncate text-sm font-medium tracking-tight">{event.title}</p>
+            <p
+              className={cn(
+                "truncate text-sm font-medium tracking-tight",
+                tone.lineThrough && "line-through",
+              )}
+            >
+              {event.title}
+            </p>
             {event.recurring && (
               <Repeat className="size-3 shrink-0 text-muted-foreground" />
             )}

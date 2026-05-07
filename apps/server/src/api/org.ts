@@ -23,6 +23,10 @@ function isOrgRole(value: string): value is OrgRole {
 function parseUpdateOrgSettings(input: unknown): UpdateOrgSettingsRequest | string {
   if (!isRecord(input)) return "Request body must be an object";
 
+  if ("slug" in input || "name" in input) {
+    return "Slug and name are immutable via settings";
+  }
+
   const parsed: UpdateOrgSettingsRequest = {};
 
   if (input.contactEmail !== undefined) {
@@ -49,7 +53,21 @@ function parseUpdateOrgSettings(input: unknown): UpdateOrgSettingsRequest | stri
 
   if (input.categoryConfigs !== undefined) {
     if (!isRecord(input.categoryConfigs)) return "Category configs must be an object";
-    parsed.categoryConfigs = input.categoryConfigs;
+    const configs: Record<string, { color?: string; icon?: string }> = {};
+    for (const [key, value] of Object.entries(input.categoryConfigs)) {
+      if (!isRecord(value)) return `categoryConfigs.${key} must be an object`;
+      const entry: { color?: string; icon?: string } = {};
+      if (value.color !== undefined) {
+        if (typeof value.color !== "string") return `categoryConfigs.${key}.color must be a string`;
+        entry.color = value.color;
+      }
+      if (value.icon !== undefined) {
+        if (typeof value.icon !== "string") return `categoryConfigs.${key}.icon must be a string`;
+        entry.icon = value.icon;
+      }
+      configs[key] = entry;
+    }
+    parsed.categoryConfigs = configs;
   }
 
   if (input.webhookUrl !== undefined) {
