@@ -168,7 +168,9 @@ function PublicEventCard({ event, currency }: { event: EventDto; currency: strin
           {event.location ? <div>{event.location}</div> : null}
           <div className="flex items-center justify-between pt-2">
             <span className="font-medium text-foreground">
-              {Number(event.price) > 0 ? formatPrice(event.price, currency) : "Free"}
+              {event.price !== null && Number(event.price) > 0
+                ? formatPrice(event.price, currency)
+                : "Free"}
             </span>
             {remaining !== null ? (
               <span>{full ? "Waitlist only" : `${remaining} spots left`}</span>

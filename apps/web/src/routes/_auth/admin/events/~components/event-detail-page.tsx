@@ -290,7 +290,8 @@ export function EventDetailPage({
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="details" className="mt-6">
+          <TabsContent value="details" className="mt-6 space-y-4">
+            <SectionJumpNav />
             <form
               id="event-details-form"
               onSubmit={(e) => {
@@ -307,6 +308,7 @@ export function EventDetailPage({
                 </p>
               </div>
               <div className="grid gap-x-8 gap-y-5 p-6 sm:grid-cols-2">
+                <div id="form-basics" className="scroll-mt-24 sm:col-span-2" aria-hidden />
                 <form.Field
                   name="title"
                   children={(field) => (
@@ -396,6 +398,22 @@ export function EventDetailPage({
                 />
 
                 <form.Field
+                  name="location"
+                  children={(field) => (
+                    <div className="space-y-2 sm:col-span-2">
+                      <Label htmlFor={field.name}>Location</Label>
+                      <Input
+                        id={field.name}
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                        disabled={!canManage}
+                      />
+                    </div>
+                  )}
+                />
+
+                <form.Field
                   name="status"
                   children={(field) => (
                     <div className="space-y-2">
@@ -443,6 +461,7 @@ export function EventDetailPage({
                   )}
                 />
 
+                <div id="form-details" className="scroll-mt-24 sm:col-span-2" aria-hidden />
                 <form.Field
                   name="category"
                   children={(field) => (
@@ -475,21 +494,6 @@ export function EventDetailPage({
                   )}
                 />
 
-                <form.Field
-                  name="location"
-                  children={(field) => (
-                    <div className="space-y-2 sm:col-span-2">
-                      <Label htmlFor={field.name}>Location</Label>
-                      <Input
-                        id={field.name}
-                        value={field.state.value}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        onBlur={field.handleBlur}
-                        disabled={!canManage}
-                      />
-                    </div>
-                  )}
-                />
                 <form.Field
                   name="tags"
                   children={(field) => (
@@ -545,6 +549,7 @@ export function EventDetailPage({
                   )}
                 />
 
+                <div id="form-recurrence" className="scroll-mt-24 sm:col-span-2" aria-hidden />
                 <div className="rounded-xl border bg-muted/20 p-4 sm:col-span-2">
                   <div>
                     <h3 className="font-medium">Recurrence</h3>
@@ -875,5 +880,38 @@ export function EventDetailPage({
         </Tabs>
       </div>
     </AppShell>
+  );
+}
+
+const detailSections: { id: string; label: string }[] = [
+  { id: "form-basics", label: "Basics" },
+  { id: "form-details", label: "Details" },
+  { id: "form-recurrence", label: "Recurrence" },
+];
+
+function SectionJumpNav() {
+  const jump = (id: string) => {
+    const target = document.getElementById(id);
+    if (!target) return;
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  return (
+    <nav
+      aria-label="Jump to form section"
+      className="flex flex-wrap gap-1 rounded-lg border bg-muted/30 p-1"
+    >
+      {detailSections.map((section) => (
+        <Button
+          key={section.id}
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2.5 text-xs"
+          onClick={() => jump(section.id)}
+        >
+          {section.label}
+        </Button>
+      ))}
+    </nav>
   );
 }

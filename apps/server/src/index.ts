@@ -16,7 +16,7 @@ import { webhookRoutes } from "./api/webhooks";
 
 const app = new Hono();
 const webOrigin = Bun.env.WEB_URL || "http://localhost:5678";
-const allowlist = (Bun.env.PUBLIC_HOST_ALLOWLIST || ".traefik.me,.localhost")
+const allowlist = (Bun.env.PUBLIC_HOST_ALLOWLIST || ".traefik.me,.lvh.me,.localhost")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);

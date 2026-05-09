@@ -17,6 +17,7 @@ export const eventFormSchema = z.object({
   notes: z.string(),
   location: z.string(),
   price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Price must look like 0.00"),
+  isFree: z.enum(["true", "false"]),
   recurring: z.enum(["true", "false"]),
   recurrenceFrequency: z.string(),
   recurrenceInterval: z.string().regex(/^\d*$/, "Interval must be a whole number"),
@@ -41,12 +42,31 @@ export const emptyEventForm: EventFormState = {
   notes: "",
   location: "",
   price: "0.00",
+  isFree: "false",
   recurring: "false",
   recurrenceFrequency: "",
   recurrenceInterval: "",
   recurrenceDays: "",
   recurrenceEndDate: "",
 };
+
+function pad(value: number) {
+  return String(value).padStart(2, "0");
+}
+
+function nextHalfHour(now: Date) {
+  const minutes = now.getMinutes();
+  const rounded = minutes < 30 ? 30 : 60;
+  const next = new Date(now);
+  next.setMinutes(rounded, 0, 0);
+  return `${pad(next.getHours())}:${pad(next.getMinutes())}`;
+}
+
+export function defaultEventForm(): EventFormState {
+  const now = new Date();
+  const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  return { ...emptyEventForm, date, time: nextHalfHour(now) };
+}
 
 export function eventToForm(event: EventDto): EventFormState {
   return {
@@ -63,7 +83,8 @@ export function eventToForm(event: EventDto): EventFormState {
     description: event.description ?? "",
     notes: event.notes ?? "",
     location: event.location ?? "",
-    price: event.price,
+    price: event.price ?? "0.00",
+    isFree: event.price === null ? "true" : "false",
     recurring: event.recurring ? "true" : "false",
     recurrenceFrequency: event.recurrenceFrequency ?? "",
     recurrenceInterval: event.recurrenceInterval === null ? "" : String(event.recurrenceInterval),
@@ -91,7 +112,7 @@ export function formToEventRequest(form: EventFormState): CreateEventRequest {
     description: form.description.trim() || null,
     notes: form.notes.trim() || null,
     location: form.location.trim() || null,
-    price: form.price,
+    price: form.isFree === "true" ? null : form.price,
     recurring: form.recurring === "true",
     recurrenceFrequency: form.recurrenceFrequency.trim() || null,
     recurrenceInterval: form.recurrenceInterval ? Number(form.recurrenceInterval) : null,

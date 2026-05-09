@@ -57,6 +57,13 @@
       "when": 1778101529070,
       "tag": "0007_jazzy_layla_miller",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1778306441126,
+      "tag": "0008_dashing_scourge",
+      "breakpoints": true
     }
   ]
 }

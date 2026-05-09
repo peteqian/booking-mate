@@ -15,7 +15,7 @@ import {
   SlidersHorizontal,
   X,
 } from "lucide-react";
-import type { EventDto, EventStatus, EventVisibility, ResourceDto } from "@workspace/contracts";
+import type { EventDto, EventStatus, EventVisibility } from "@workspace/contracts";
 import { AppShell } from "@/components/app-shell";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +23,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -52,8 +51,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { emptyEventForm, formToEventRequest, updateEvent, type EventFormState } from "@/lib/events";
+import {
+  defaultEventForm,
+  formToEventRequest,
+  updateEvent,
+  type EventFormState,
+} from "@/lib/events";
 import { getCurrentOrg } from "@/lib/org";
 import { canManageEvents } from "@/lib/permissions";
 import { eventKeys, eventsQueryOptions } from "@/queries/events";
@@ -61,6 +64,7 @@ import { useCreateEvent, useDuplicateEvent, usePatchEvent } from "@/hooks/use-ev
 import { resourcesQueryOptions } from "@/queries/resources";
 import { replaceEventResources } from "@/lib/resources";
 import { StatusBadge, VisibilityBadge } from "./~components/event-badges";
+import { EventForm } from "./~components/event-form";
 
 type ViewMode = "list" | "kanban";
 type SortKey =
@@ -120,7 +124,7 @@ function Events() {
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
-  const [form, setForm] = useState<EventFormState>(emptyEventForm);
+  const [form, setForm] = useState<EventFormState>(() => defaultEventForm());
   const [resourceAssignments, setResourceAssignments] = useState<ResourceAssignmentDraft[]>([]);
   const [error, setError] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
@@ -199,7 +203,7 @@ function Events() {
           })),
         });
       }
-      setForm(emptyEventForm);
+      setForm(defaultEventForm());
       setResourceAssignments([]);
       setCreateOpen(false);
     } catch (error) {
@@ -240,14 +244,12 @@ function Events() {
     >
       <div className="mx-auto max-w-5xl space-y-6">
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-2xl">
+          <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-3xl lg:max-w-4xl">
             <DialogHeader>
               <DialogTitle>Create event</DialogTitle>
-              <DialogDescription>
-                Add the schedule, capacity, visibility, and pricing.
-              </DialogDescription>
             </DialogHeader>
             <EventForm
+              key={createOpen ? "open" : "closed"}
               form={form}
               onChange={updateForm}
               onSubmit={handleCreate}
@@ -729,7 +731,9 @@ function EventRow({
       <TableCell className="hidden py-2 text-xs text-muted-foreground xl:table-cell">
         {event.location ?? "—"}
       </TableCell>
-      <TableCell className="py-2 text-xs font-medium tabular-nums">{event.price}</TableCell>
+      <TableCell className="py-2 text-xs font-medium tabular-nums">
+        {event.price === null ? "Free" : event.price}
+      </TableCell>
       <TableCell className="py-2">
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -909,7 +913,7 @@ function KanbanCard({ event, canManage }: { event: EventDto; canManage: boolean 
           </Badge>
         )}
         <Badge variant="outline" className="h-5 px-1.5 text-[10px]">
-          {event.price}
+          {event.price === null ? "Free" : event.price}
         </Badge>
         <Badge variant="outline" className="h-5 px-1.5 text-[10px]">
           {event.confirmedRegistrations}
@@ -921,423 +925,3 @@ function KanbanCard({ event, canManage }: { event: EventDto; canManage: boolean 
   );
 }
 
-function EventForm({
-  form,
-  onChange,
-  onSubmit,
-  submitLabel,
-  disabled,
-  resources,
-  resourceAssignments,
-  onResourceAssignmentsChange,
-}: {
-  form: EventFormState;
-  onChange: (field: keyof EventFormState, value: string) => void;
-  onSubmit: (event: React.FormEvent) => void;
-  submitLabel: string;
-  disabled: boolean;
-  resources: ResourceDto[];
-  resourceAssignments: ResourceAssignmentDraft[];
-  onResourceAssignmentsChange: (assignments: ResourceAssignmentDraft[]) => void;
-}) {
-  return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="create-title">Title</Label>
-        <Input
-          id="create-title"
-          value={form.title}
-          onChange={(event) => onChange("title", event.target.value)}
-          required
-        />
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="create-date">Date</Label>
-          <Input
-            id="create-date"
-            type="date"
-            value={form.date}
-            onChange={(event) => onChange("date", event.target.value)}
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="create-time">Time</Label>
-          <Input
-            id="create-time"
-            type="time"
-            value={form.time}
-            onChange={(event) => onChange("time", event.target.value)}
-            required
-          />
-        </div>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="create-duration">Duration</Label>
-          <Input
-            id="create-duration"
-            type="number"
-            min="1"
-            value={form.duration}
-            onChange={(event) => onChange("duration", event.target.value)}
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="create-capacity">Capacity</Label>
-          <Input
-            id="create-capacity"
-            type="number"
-            min="1"
-            value={form.maxCapacity}
-            onChange={(event) => onChange("maxCapacity", event.target.value)}
-          />
-        </div>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="create-category">Category</Label>
-          <Input
-            id="create-category"
-            value={form.category}
-            onChange={(event) => onChange("category", event.target.value)}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="create-price">Price</Label>
-          <Input
-            id="create-price"
-            value={form.price}
-            onChange={(event) => onChange("price", event.target.value)}
-            required
-          />
-        </div>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label>Visibility</Label>
-          <VisibilitySelect
-            value={form.visibility}
-            disabled={false}
-            onChange={(value) => onChange("visibility", value)}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>Status</Label>
-          <StatusSelect
-            value={form.status}
-            disabled={false}
-            onChange={(value) => onChange("status", value)}
-          />
-        </div>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="create-location">Location</Label>
-        <Input
-          id="create-location"
-          value={form.location}
-          onChange={(event) => onChange("location", event.target.value)}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="create-tags">Tags</Label>
-        <Input
-          id="create-tags"
-          value={form.tags}
-          onChange={(event) => onChange("tags", event.target.value)}
-          placeholder="urgent, vip, sponsor (comma separated)"
-        />
-        <p className="text-xs text-muted-foreground">
-          Free-form labels for filtering and color hints. Comma separated.
-        </p>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="create-description">Description</Label>
-        <Textarea
-          id="create-description"
-          value={form.description}
-          onChange={(event) => onChange("description", event.target.value)}
-          className="min-h-24"
-        />
-        <p className="text-xs text-muted-foreground">Public-facing copy.</p>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="create-notes">Internal notes</Label>
-        <Textarea
-          id="create-notes"
-          value={form.notes}
-          onChange={(event) => onChange("notes", event.target.value)}
-          className="min-h-20"
-          placeholder="Setup, dietary, AV requirements…"
-        />
-        <p className="text-xs text-muted-foreground">Only visible to your team.</p>
-      </div>
-      <div className="rounded-lg border p-4">
-        <h3 className="font-medium">Recurrence</h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Stored on the event; generated instances come later.
-        </p>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label>Repeats</Label>
-            <Select
-              value={form.recurring}
-              onValueChange={(value) => value && onChange("recurring", value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent alignItemWithTrigger={false}>
-                <SelectItem value="false">No</SelectItem>
-                <SelectItem value="true">Yes</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Frequency</Label>
-            <Select
-              value={form.recurrenceFrequency || "none"}
-              onValueChange={(value) =>
-                value && onChange("recurrenceFrequency", value === "none" ? "" : value)
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent alignItemWithTrigger={false}>
-                <SelectItem value="none">None</SelectItem>
-                <SelectItem value="daily">Daily</SelectItem>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="biweekly">Biweekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="yearly">Yearly</SelectItem>
-                <SelectItem value="custom">Custom</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="create-recurrence-interval">Interval</Label>
-            <Input
-              id="create-recurrence-interval"
-              type="number"
-              min="1"
-              value={form.recurrenceInterval}
-              onChange={(event) => onChange("recurrenceInterval", event.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="create-recurrence-end">End date</Label>
-            <Input
-              id="create-recurrence-end"
-              type="date"
-              value={form.recurrenceEndDate}
-              onChange={(event) => onChange("recurrenceEndDate", event.target.value)}
-            />
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="create-recurrence-days">Days of week</Label>
-            <Input
-              id="create-recurrence-days"
-              value={form.recurrenceDays}
-              onChange={(event) => onChange("recurrenceDays", event.target.value)}
-              placeholder="monday, wednesday"
-            />
-          </div>
-        </div>
-      </div>
-      <ResourceAssignmentEditor
-        resources={resources}
-        assignments={resourceAssignments}
-        onChange={onResourceAssignmentsChange}
-      />
-      <Button type="submit" disabled={disabled}>
-        {submitLabel}
-      </Button>
-    </form>
-  );
-}
-
-function ResourceAssignmentEditor({
-  resources,
-  assignments,
-  onChange,
-}: {
-  resources: ResourceDto[];
-  assignments: ResourceAssignmentDraft[];
-  onChange: (assignments: ResourceAssignmentDraft[]) => void;
-}) {
-  const updateAssignment = (
-    index: number,
-    field: keyof ResourceAssignmentDraft,
-    value: string | number,
-  ) => {
-    const next = [...assignments];
-    next[index] = {
-      ...next[index],
-      [field]: field === "quantity" ? Number(value) || 1 : value,
-    };
-    onChange(next);
-  };
-
-  const selectedResourceIds = new Set(
-    assignments.map((assignment) => assignment.resourceId).filter(Boolean),
-  );
-
-  return (
-    <div className="rounded-lg border p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h3 className="font-medium">Resources</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Assign instructors, locations, or materials after creation.
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => onChange([...assignments, { resourceId: "", role: "", quantity: 1 }])}
-          disabled={resources.length === 0}
-        >
-          Add resource
-        </Button>
-      </div>
-      {resources.length === 0 ? (
-        <p className="mt-3 text-sm text-muted-foreground">
-          Create resources first to assign them here.
-        </p>
-      ) : assignments.length > 0 ? (
-        <div className="mt-4 space-y-3">
-          {assignments.map((assignment, index) => {
-            const currentResource = resources.find(
-              (resource) => resource.id === assignment.resourceId,
-            );
-            const availableResources = resources.filter(
-              (resource) =>
-                resource.id === assignment.resourceId ||
-                (!resource.archivedAt && !selectedResourceIds.has(resource.id)),
-            );
-            return (
-              <div
-                key={index}
-                className="grid gap-3 rounded-md border bg-muted/20 p-3 sm:grid-cols-[1fr_1fr_90px_auto] sm:items-end"
-              >
-                <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">Resource</Label>
-                  <Select
-                    value={assignment.resourceId ?? ""}
-                    onValueChange={(value) => updateAssignment(index, "resourceId", value ?? "")}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select resource" />
-                    </SelectTrigger>
-                    <SelectContent alignItemWithTrigger={false}>
-                      {currentResource && (
-                        <SelectItem value={currentResource.id}>
-                          {currentResource.name} ({currentResource.type})
-                          {currentResource.archivedAt ? " · archived" : ""}
-                        </SelectItem>
-                      )}
-                      {availableResources
-                        .filter((resource) => resource.id !== currentResource?.id)
-                        .map((resource) => (
-                          <SelectItem key={resource.id} value={resource.id}>
-                            {resource.name} ({resource.type})
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">Role</Label>
-                  <Input
-                    value={assignment.role}
-                    onChange={(event) => updateAssignment(index, "role", event.target.value)}
-                    placeholder="instructor, location"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">Qty</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={assignment.quantity}
-                    onChange={(event) => updateAssignment(index, "quantity", event.target.value)}
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onChange(assignments.filter((_, i) => i !== index))}
-                >
-                  Remove
-                </Button>
-              </div>
-            );
-          })}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function StatusSelect({
-  value,
-  disabled,
-  onChange,
-}: {
-  value: EventStatus;
-  disabled: boolean;
-  onChange: (value: EventStatus) => void;
-}) {
-  return (
-    <Select
-      value={value}
-      onValueChange={(value) => onChange(value as EventStatus)}
-      disabled={disabled}
-    >
-      <SelectTrigger className="w-36">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent alignItemWithTrigger={false}>
-        {statuses.map((status) => (
-          <SelectItem key={status} value={status}>
-            {status}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
-
-function VisibilitySelect({
-  value,
-  disabled,
-  onChange,
-}: {
-  value: EventVisibility;
-  disabled: boolean;
-  onChange: (value: EventVisibility) => void;
-}) {
-  return (
-    <Select
-      value={value}
-      onValueChange={(value) => onChange(value as EventVisibility)}
-      disabled={disabled}
-    >
-      <SelectTrigger className="w-36">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent alignItemWithTrigger={false}>
-        {visibilities.map((visibility) => (
-          <SelectItem key={visibility} value={visibility}>
-            {visibility}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}

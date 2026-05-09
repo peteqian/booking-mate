@@ -48,7 +48,7 @@ function PublicEventDetailContent({ slug, eventId }: { slug: string; eventId: st
 
   const event = eventData.event;
   const currency = orgData.settings?.currency ?? "USD";
-  const isPaid = Number(event.price) > 0;
+  const isPaid = event.price !== null && Number(event.price) > 0;
   const remaining =
     event.maxCapacity === null
       ? null
@@ -85,7 +85,8 @@ function PublicEventDetailContent({ slug, eventId }: { slug: string; eventId: st
               </div>
             ) : null}
             <div>
-              <strong>Price:</strong> {isPaid ? formatPrice(event.price, currency) : "Free"}
+              <strong>Price:</strong>{" "}
+              {isPaid && event.price ? formatPrice(event.price, currency) : "Free"}
             </div>
             {remaining !== null ? (
               <div>

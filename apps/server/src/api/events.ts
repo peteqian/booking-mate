@@ -63,11 +63,21 @@ function parseEvent(
     }
   }
 
-  for (const field of ["date", "time", "price"] as const) {
+  for (const field of ["date", "time"] as const) {
     if (!partial || input[field] !== undefined) {
       if (typeof input[field] !== "string" || input[field].trim().length === 0)
         return `${field} is required`;
       parsed[field] = input[field].trim();
+    }
+  }
+
+  if (input.price !== undefined) {
+    if (input.price === null) {
+      parsed.price = null;
+    } else if (typeof input.price === "string" && input.price.trim().length > 0) {
+      parsed.price = input.price.trim();
+    } else {
+      return "price must be a string or null";
     }
   }
 

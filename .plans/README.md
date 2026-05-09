@@ -41,6 +41,7 @@ Build in user-value order, not file/folder order. Core platform work should be i
 - [Resources](02-product-features/06-resources.md)
 - [Attendees and Registrations](02-product-features/02-attendees-registrations.md)
 - [Public Booking Pages](02-product-features/03-public-booking-pages.md)
+- [Customer Accounts](02-product-features/07-customer-accounts.md)
 - [Calendar](02-product-features/04-calendar.md)
 - [Dashboard](02-product-features/05-dashboard.md)
 - [Plan Limits](04-commercial/01-plan-limits.md)

@@ -145,7 +145,7 @@ export async function createEvent(
       recurrenceDays: input.recurrenceDays ?? [],
       recurrenceInterval: input.recurrenceInterval ?? null,
       recurrenceEndDate: input.recurrenceEndDate ?? null,
-      price: input.price ?? "0",
+      price: input.price ?? null,
     })
     .returning();
 

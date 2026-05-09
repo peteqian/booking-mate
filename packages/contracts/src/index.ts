@@ -114,7 +114,7 @@ export interface EventDto {
   recurrenceDays: string[];
   recurrenceInterval: number | null;
   recurrenceEndDate: string | null;
-  price: string;
+  price: string | null;
   confirmedRegistrations: number;
   waitlistedRegistrations: number;
   createdAt: string;
@@ -226,7 +226,7 @@ export interface CreateEventRequest {
   recurrenceDays?: string[];
   recurrenceInterval?: number | null;
   recurrenceEndDate?: string | null;
-  price?: string;
+  price?: string | null;
 }
 
 export type UpdateEventRequest = Partial<CreateEventRequest> & {

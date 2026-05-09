@@ -5,7 +5,7 @@ export function NoSubdomainPlaceholder() {
         <h1 className="text-2xl font-semibold">Open via your booking subdomain</h1>
         <p className="text-muted-foreground">
           This page is served from your organization's booking host (e.g.{" "}
-          <code>your-org.traefik.me</code>).
+          <code>your-org.lvh.me</code>).
         </p>
       </div>
     </div>

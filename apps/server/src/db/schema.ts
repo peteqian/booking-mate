@@ -132,7 +132,7 @@ export const events = pgTable(
     recurrenceDays: jsonb("recurrence_days").$type<string[]>().notNull().default([]),
     recurrenceInterval: integer("recurrence_interval"),
     recurrenceEndDate: text("recurrence_end_date"),
-    price: numeric("price", { precision: 10, scale: 2 }).notNull().default("0"),
+    price: numeric("price", { precision: 10, scale: 2 }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

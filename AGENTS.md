@@ -93,6 +93,12 @@ Database schema lives in `apps/server/src/db/schema.ts`. After modifying:
 - **Server**: http://localhost:3456
 - **Database**: localhost:5433 (mapped from container's 5432)
 
+## Local Subdomain Testing
+
+- Use `lvh.me` for local org-subdomain testing because wildcard subdomains resolve to `127.0.0.1`.
+- Example: `http://demo-org-zt1fbr.lvh.me:5678/events`.
+- Do not rely on `traefik.me` for local development; public DNS can fail before the app receives the request.
+
 ## Conventions
 
 - Use `workspace:*` for internal package dependencies
