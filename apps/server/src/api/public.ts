@@ -10,6 +10,7 @@ import {
   listPublicEvents,
   registerForPublicEvent,
 } from "../services/public";
+import { createCheckoutForRegistration } from "../services/payments/checkout";
 
 function parsePublicRegistration(input: unknown): PublicRegistrationRequest | string {
   if (!isRecord(input)) return "Request body must be an object";
@@ -82,7 +83,36 @@ export const publicRoutes = new Hono()
     logEvent("registration.created", { registrationId: registration.id, eventId });
     return c.json({ registration }, 201);
   })
-  .post("/orgs/:slug/events/:eventId/checkout", (c) => {
+  .post("/orgs/:slug/events/:eventId/checkout", async (c) => {
     enrichLogger({ eventId: c.req.param("eventId") });
-    return c.json({ slug: c.req.param("slug"), eventId: c.req.param("eventId"), checkout: null }, 501);
+    const body = (await readJson(c)) as Record<string, unknown> | null;
+    if (!isRecord(body)) {
+      return apiError(c, 400, "invalid_checkout", "Body must be an object");
+    }
+    if (typeof body.registrationId !== "string" || body.registrationId.length === 0) {
+      return apiError(c, 400, "invalid_checkout", "registrationId is required");
+    }
+    if (typeof body.successUrl !== "string" || typeof body.cancelUrl !== "string") {
+      return apiError(c, 400, "invalid_checkout", "successUrl and cancelUrl are required");
+    }
+    const preferred = typeof body.provider === "string" ? body.provider : undefined;
+
+    const result = await createCheckoutForRegistration({
+      registrationId: body.registrationId,
+      orgSlug: c.req.param("slug"),
+      successUrl: body.successUrl,
+      cancelUrl: body.cancelUrl,
+      preferredProvider: preferred,
+    });
+
+    if (result.type === "error") {
+      const status = result.code === "registration_not_found" ? 404 : 400;
+      return apiError(c, status, result.code, result.message);
+    }
+
+    logEvent("payment.checkout.created", {
+      registrationId: body.registrationId,
+      sessionId: result.sessionId,
+    });
+    return c.json({ url: result.url, sessionId: result.sessionId });
   });

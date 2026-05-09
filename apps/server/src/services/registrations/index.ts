@@ -9,6 +9,7 @@ import { and, eq, inArray, ne } from "drizzle-orm";
 import { db } from "../../db";
 import { attendees, events, registrations } from "../../db/schema";
 import { toEventDto } from "../events";
+import { expireStalePendingPayments } from "../payments/expire";
 
 export interface RegistrationWithAttendeeDto extends RegistrationDto {
   attendee: AttendeeDto;
@@ -44,6 +45,7 @@ function toAttendeeDto(attendee: typeof attendees.$inferSelect): AttendeeDto {
 }
 
 export async function listRegistrations(orgId: string): Promise<RegistrationDto[]> {
+  await expireStalePendingPayments(orgId);
   const rows = await db.select().from(registrations).where(eq(registrations.orgId, orgId));
   return rows.map(toRegistrationDto);
 }
@@ -52,6 +54,7 @@ export async function listRegistrationsByEvent(
   orgId: string,
   eventId: string,
 ): Promise<RegistrationWithAttendeeDto[]> {
+  await expireStalePendingPayments(orgId, eventId);
   const rows = await db
     .select()
     .from(registrations)
