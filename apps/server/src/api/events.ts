@@ -72,13 +72,10 @@ function parseEvent(
   }
 
   if (input.price !== undefined) {
-    if (input.price === null) {
-      parsed.price = null;
-    } else if (typeof input.price === "string" && input.price.trim().length > 0) {
-      parsed.price = input.price.trim();
-    } else {
-      return "price must be a string or null";
+    if (typeof input.price !== "number" || !Number.isInteger(input.price) || input.price < 0) {
+      return "price must be a non-negative integer (minor units)";
     }
+    parsed.price = input.price;
   }
 
   if (!partial || input.duration !== undefined) {

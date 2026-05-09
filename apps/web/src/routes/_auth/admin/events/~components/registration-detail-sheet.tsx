@@ -17,6 +17,7 @@ import type { ConfirmFn } from "./confirm-dialog";
 type StatusVariant = "default" | "secondary" | "outline";
 
 const statusVariant: Record<RegistrationWithAttendeeDto["status"], StatusVariant> = {
+  pending: "secondary",
   confirmed: "default",
   waitlisted: "secondary",
   cancelled: "outline",

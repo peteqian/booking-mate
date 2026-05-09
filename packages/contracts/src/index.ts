@@ -12,8 +12,44 @@ export type OrgPlan = "free" | "pro";
 export type ResourceType = "instructor" | "material" | "location" | "equipment" | "custom";
 export type EventStatus = "upcoming" | "completed" | "cancelled";
 export type EventVisibility = "published" | "unpublished";
-export type RegistrationStatus = "confirmed" | "waitlisted" | "cancelled";
-export type PaymentStatus = "not_required" | "pending" | "paid" | "refunded" | "expired";
+export type RegistrationStatus = "pending" | "confirmed" | "waitlisted" | "cancelled";
+export type PaymentStatus = "not_required" | "pending" | "paid" | "refunded" | "expired" | "failed";
+
+export const PAYMENT_PROVIDERS = ["stripe", "square", "paypal"] as const;
+export type PaymentProvider = (typeof PAYMENT_PROVIDERS)[number];
+
+export function isPaymentProvider(value: unknown): value is PaymentProvider {
+  return typeof value === "string" && (PAYMENT_PROVIDERS as readonly string[]).includes(value);
+}
+
+export function parsePaymentProvider(value: unknown): PaymentProvider {
+  if (!isPaymentProvider(value)) {
+    throw new Error(`unknown payment provider: ${String(value)}`);
+  }
+  return value;
+}
+
+export interface Money {
+  amount: number;
+  currency: string;
+}
+
+export interface PaymentRefundDto {
+  id: string;
+  registrationId: string;
+  provider: PaymentProvider;
+  providerRefundId: string | null;
+  paymentReference: string;
+  requestedAmount: number;
+  settledAmount: number | null;
+  currency: string;
+  reason: string | null;
+  status: "pending" | "succeeded" | "failed" | "canceled";
+  failureReason: string | null;
+  requestedByUserId: string | null;
+  requestedAt: string;
+  settledAt: string | null;
+}
 export type WebhookDeliveryStatus = "pending" | "delivered" | "failed" | "dead_letter";
 
 export interface ApiErrorResponse {
@@ -114,7 +150,7 @@ export interface EventDto {
   recurrenceDays: string[];
   recurrenceInterval: number | null;
   recurrenceEndDate: string | null;
-  price: string | null;
+  price: number;
   confirmedRegistrations: number;
   waitlistedRegistrations: number;
   createdAt: string;
@@ -226,7 +262,7 @@ export interface CreateEventRequest {
   recurrenceDays?: string[];
   recurrenceInterval?: number | null;
   recurrenceEndDate?: string | null;
-  price?: string | null;
+  price?: number;
 }
 
 export type UpdateEventRequest = Partial<CreateEventRequest> & {

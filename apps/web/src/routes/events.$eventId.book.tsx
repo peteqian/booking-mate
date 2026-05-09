@@ -48,7 +48,7 @@ function PublicEventBookContent({ slug, eventId }: { slug: string; eventId: stri
   const { data: eventData } = useSuspenseQuery(publicEventQueryOptions(slug, eventId));
 
   const event = eventData.event;
-  const isPaid = event.price !== null && Number(event.price) > 0;
+  const isPaid = event.price > 0;
 
   const register = usePublicRegister(slug, eventId);
   const [name, setName] = useState("");

@@ -59,6 +59,7 @@ import {
 } from "@/lib/events";
 import { getCurrentOrg } from "@/lib/org";
 import { canManageEvents } from "@/lib/permissions";
+import { formatPrice } from "@/lib/public";
 import { eventKeys, eventsQueryOptions } from "@/queries/events";
 import { useCreateEvent, useDuplicateEvent, usePatchEvent } from "@/hooks/use-events";
 import { resourcesQueryOptions } from "@/queries/resources";
@@ -560,7 +561,7 @@ function compareEvents(a: EventDto, b: EventDto, sortKey: SortKey) {
     return registrationCount(a) - registrationCount(b);
   }
   if (sortKey === "price") {
-    return Number(a.price) - Number(b.price);
+    return a.price - b.price;
   }
   if (sortKey === "date") {
     return `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`);
@@ -732,7 +733,7 @@ function EventRow({
         {event.location ?? "—"}
       </TableCell>
       <TableCell className="py-2 text-xs font-medium tabular-nums">
-        {event.price === null ? "Free" : event.price}
+        {event.price === 0 ? "Free" : formatPrice(event.price, "USD")}
       </TableCell>
       <TableCell className="py-2">
         <DropdownMenu>
@@ -913,7 +914,7 @@ function KanbanCard({ event, canManage }: { event: EventDto; canManage: boolean 
           </Badge>
         )}
         <Badge variant="outline" className="h-5 px-1.5 text-[10px]">
-          {event.price === null ? "Free" : event.price}
+          {event.price === 0 ? "Free" : formatPrice(event.price, "USD")}
         </Badge>
         <Badge variant="outline" className="h-5 px-1.5 text-[10px]">
           {event.confirmedRegistrations}

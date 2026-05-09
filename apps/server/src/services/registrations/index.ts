@@ -5,7 +5,7 @@ import type {
   RegistrationWithEventDto,
   UpdateRegistrationRequest,
 } from "@workspace/contracts";
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, inArray, ne } from "drizzle-orm";
 import { db } from "../../db";
 import { attendees, events, registrations } from "../../db/schema";
 import { toEventDto } from "../events";
@@ -113,27 +113,32 @@ export async function createRegistration(
     .limit(1);
   if (existing[0]) return "duplicate_registration";
 
-  // Determine registration status based on capacity
-  let status = input.status ?? "confirmed";
-  if (status === "confirmed" && event.maxCapacity !== null && event.maxCapacity > 0) {
-    const confirmedCount = await db
+  // Paid events hold seat as `pending` until webhook confirms payment.
+  // Free events go straight to `confirmed`. Capacity counts include both.
+  const isPaid = Number(event.price) > 0;
+  let status = input.status ?? (isPaid ? "pending" : "confirmed");
+  if (
+    (status === "confirmed" || status === "pending") &&
+    event.maxCapacity !== null &&
+    event.maxCapacity > 0
+  ) {
+    const activeCount = await db
       .select({ count: registrations.id })
       .from(registrations)
       .where(
         and(
           eq(registrations.orgId, orgId),
           eq(registrations.eventId, input.eventId),
-          eq(registrations.status, "confirmed"),
+          inArray(registrations.status, ["confirmed", "pending"]),
         ),
       );
-    if (confirmedCount.length >= event.maxCapacity) {
+    if (activeCount.length >= event.maxCapacity) {
       status = "waitlisted";
     }
   }
 
-  // Determine payment status based on event price
   let paymentStatus = input.paymentStatus ?? "not_required";
-  if (paymentStatus === "not_required" && Number(event.price) > 0) {
+  if (paymentStatus === "not_required" && isPaid) {
     paymentStatus = "pending";
   }
 

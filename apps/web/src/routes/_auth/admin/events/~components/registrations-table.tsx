@@ -23,12 +23,13 @@ type SortKey = "name" | "status" | "payment" | "registeredAt";
 type SortDir = "asc" | "desc";
 
 const statusVariant: Record<RegStatus, "default" | "secondary" | "outline"> = {
+  pending: "secondary",
   confirmed: "default",
   waitlisted: "secondary",
   cancelled: "outline",
 };
 
-const STATUSES: RegStatus[] = ["confirmed", "waitlisted", "cancelled"];
+const STATUSES: RegStatus[] = ["pending", "confirmed", "waitlisted", "cancelled"];
 
 export function RegistrationsTable({
   eventId,
@@ -59,7 +60,12 @@ export function RegistrationsTable({
   const [sheetId, setSheetId] = useState<string | null>(null);
 
   const statusCounts = useMemo(() => {
-    const counts: Record<RegStatus, number> = { confirmed: 0, waitlisted: 0, cancelled: 0 };
+    const counts: Record<RegStatus, number> = {
+      pending: 0,
+      confirmed: 0,
+      waitlisted: 0,
+      cancelled: 0,
+    };
     for (const r of registrations) counts[r.status] += 1;
     return counts;
   }, [registrations]);

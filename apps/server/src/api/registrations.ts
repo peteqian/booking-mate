@@ -16,8 +16,15 @@ import {
   updateRegistration,
 } from "../services/registrations";
 
-const registrationStatuses = ["confirmed", "waitlisted", "cancelled"] as const;
-const paymentStatuses = ["not_required", "pending", "paid", "refunded", "expired"] as const;
+const registrationStatuses = ["pending", "confirmed", "waitlisted", "cancelled"] as const;
+const paymentStatuses = [
+  "not_required",
+  "pending",
+  "paid",
+  "refunded",
+  "expired",
+  "failed",
+] as const;
 
 function isRegistrationStatus(value: string): value is RegistrationStatus {
   return registrationStatuses.includes(value as RegistrationStatus);

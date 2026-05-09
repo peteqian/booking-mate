@@ -1,7 +1,9 @@
 export * from "./auth-schema";
 
 import {
+  bigint,
   boolean,
+  customType,
   index,
   integer,
   jsonb,
@@ -22,11 +24,18 @@ const id = () =>
 const createdAt = () => timestamp("created_at").notNull().defaultNow();
 const updatedAt = () => timestamp("updated_at").notNull().defaultNow();
 
+const byteaCol = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType() {
+    return "bytea";
+  },
+});
+
 export const orgRole = pgEnum("org_role", ["owner", "admin", "manager", "viewer"]);
 export const orgPlan = pgEnum("org_plan", ["free", "pro"]);
 export const eventStatus = pgEnum("event_status", ["upcoming", "completed", "cancelled"]);
 export const eventVisibility = pgEnum("event_visibility", ["published", "unpublished"]);
 export const registrationStatus = pgEnum("registration_status", [
+  "pending",
   "confirmed",
   "waitlisted",
   "cancelled",
@@ -37,6 +46,7 @@ export const paymentStatus = pgEnum("payment_status", [
   "paid",
   "refunded",
   "expired",
+  "failed",
 ]);
 export const resourceType = pgEnum("resource_type", [
   "instructor",
@@ -132,7 +142,7 @@ export const events = pgTable(
     recurrenceDays: jsonb("recurrence_days").$type<string[]>().notNull().default([]),
     recurrenceInterval: integer("recurrence_interval"),
     recurrenceEndDate: text("recurrence_end_date"),
-    price: numeric("price", { precision: 10, scale: 2 }),
+    price: bigint("price", { mode: "number" }).notNull().default(0),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -210,6 +220,8 @@ export const registrations = pgTable(
     paymentStatus: paymentStatus("payment_status").notNull().default("not_required"),
     checkoutSessionId: text("checkout_session_id"),
     paymentProvider: text("payment_provider"),
+    paymentExpiresAt: timestamp("payment_expires_at"),
+    paymentIdempotencyKey: text("payment_idempotency_key"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -217,6 +229,7 @@ export const registrations = pgTable(
     index("registrations_org_id_idx").on(table.orgId),
     index("registrations_event_id_idx").on(table.eventId),
     index("registrations_attendee_id_idx").on(table.attendeeId),
+    index("registrations_payment_expires_idx").on(table.paymentExpiresAt),
   ],
 );
 
@@ -229,12 +242,134 @@ export const paymentConnections = pgTable(
       .references(() => organization.id, { onDelete: "cascade" }),
     provider: text("provider").notNull(),
     accountId: text("account_id").notNull(),
+    currency: text("currency").notNull().default("USD"),
     status: text("status").notNull(),
     metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+    lastSyncedAt: timestamp("last_synced_at"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (table) => [uniqueIndex("payment_connections_org_provider_idx").on(table.orgId, table.provider)],
+);
+
+export const stripePaymentAccounts = pgTable(
+  "stripe_payment_accounts",
+  {
+    id: id(),
+    connectionId: text("connection_id")
+      .notNull()
+      .references(() => paymentConnections.id, { onDelete: "cascade" }),
+    stripeUserId: text("stripe_user_id").notNull(),
+    livemode: boolean("livemode").notNull(),
+    scope: text("scope"),
+    defaultCurrency: text("default_currency"),
+    country: text("country"),
+    chargesEnabled: boolean("charges_enabled").notNull().default(false),
+    payoutsEnabled: boolean("payouts_enabled").notNull().default(false),
+    detailsSubmitted: boolean("details_submitted").notNull().default(false),
+    email: text("email"),
+    rawAccount: jsonb("raw_account").$type<Record<string, unknown>>(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("stripe_payment_accounts_connection_idx").on(table.connectionId),
+    uniqueIndex("stripe_payment_accounts_user_idx").on(table.stripeUserId),
+  ],
+);
+
+export const squarePaymentAccounts = pgTable(
+  "square_payment_accounts",
+  {
+    id: id(),
+    connectionId: text("connection_id")
+      .notNull()
+      .references(() => paymentConnections.id, { onDelete: "cascade" }),
+    merchantId: text("merchant_id").notNull(),
+    locationId: text("location_id").notNull(),
+    accessTokenEncrypted: byteaCol("access_token_encrypted").notNull(),
+    refreshTokenEncrypted: byteaCol("refresh_token_encrypted").notNull(),
+    tokenExpiresAt: timestamp("token_expires_at").notNull(),
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+    scopes: jsonb("scopes").$type<string[]>().notNull().default([]),
+    shortLived: boolean("short_lived").notNull().default(false),
+    environment: text("environment").notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [uniqueIndex("square_payment_accounts_connection_idx").on(table.connectionId)],
+);
+
+export const paypalPaymentAccounts = pgTable(
+  "paypal_payment_accounts",
+  {
+    id: id(),
+    connectionId: text("connection_id")
+      .notNull()
+      .references(() => paymentConnections.id, { onDelete: "cascade" }),
+    merchantId: text("merchant_id").notNull(),
+    trackingId: text("tracking_id").notNull(),
+    grantedPermissions: jsonb("granted_permissions").$type<string[]>().notNull().default([]),
+    paymentsReceivable: boolean("payments_receivable").notNull().default(false),
+    primaryEmailConfirmed: boolean("primary_email_confirmed").notNull().default(false),
+    oauthIntegrations: jsonb("oauth_integrations").$type<Record<string, unknown>>(),
+    onboardingStatus: text("onboarding_status").notNull(),
+    environment: text("environment").notNull(),
+    lastStatusCheckAt: timestamp("last_status_check_at"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("paypal_payment_accounts_connection_idx").on(table.connectionId),
+    uniqueIndex("paypal_payment_accounts_tracking_idx").on(table.trackingId),
+  ],
+);
+
+export const webhookEvents = pgTable(
+  "webhook_events",
+  {
+    id: id(),
+    provider: text("provider").notNull(),
+    providerEventId: text("provider_event_id").notNull(),
+    receivedAt: timestamp("received_at").notNull().defaultNow(),
+    payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
+  },
+  (table) => [
+    uniqueIndex("webhook_events_provider_event_idx").on(table.provider, table.providerEventId),
+    index("webhook_events_provider_idx").on(table.provider),
+  ],
+);
+
+export const paymentRefunds = pgTable(
+  "payment_refunds",
+  {
+    id: id(),
+    registrationId: text("registration_id")
+      .notNull()
+      .references(() => registrations.id, { onDelete: "cascade" }),
+    provider: text("provider").notNull(),
+    providerRefundId: text("provider_refund_id"),
+    paymentReference: text("payment_reference").notNull(),
+    requestedAmount: bigint("requested_amount", { mode: "number" }).notNull(),
+    settledAmount: bigint("settled_amount", { mode: "number" }),
+    currency: text("currency").notNull(),
+    reason: text("reason"),
+    status: text("status").notNull(),
+    failureReason: text("failure_reason"),
+    rawRequest: jsonb("raw_request").$type<Record<string, unknown>>(),
+    rawResponse: jsonb("raw_response").$type<Record<string, unknown>>(),
+    requestedByUserId: text("requested_by_user_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    requestedAt: timestamp("requested_at").notNull().defaultNow(),
+    settledAt: timestamp("settled_at"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    index("payment_refunds_registration_idx").on(table.registrationId),
+    index("payment_refunds_payment_reference_idx").on(table.paymentReference),
+  ],
 );
 
 export const webhookDeliveries = pgTable(

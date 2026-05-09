@@ -110,7 +110,7 @@ function RegistrationsSection({
   title: string;
   registrations: Array<{
     id: string;
-    status: "confirmed" | "waitlisted" | "cancelled";
+    status: "pending" | "confirmed" | "waitlisted" | "cancelled";
     paymentStatus: string;
     event: {
       id: string;
@@ -178,9 +178,10 @@ function RegistrationsSection({
 function RegistrationStatusBadge({
   status,
 }: {
-  status: "confirmed" | "waitlisted" | "cancelled";
+  status: "pending" | "confirmed" | "waitlisted" | "cancelled";
 }) {
   const variant: Record<typeof status, "default" | "secondary" | "outline"> = {
+    pending: "secondary",
     confirmed: "default",
     waitlisted: "secondary",
     cancelled: "outline",

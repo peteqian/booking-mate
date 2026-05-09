@@ -82,7 +82,7 @@ export async function listEvents(orgId: string): Promise<EventDto[]> {
   for (const c of counts) {
     const existing = countMap.get(c.eventId);
     if (existing) {
-      if (c.status === "confirmed") existing.confirmed = c.count;
+      if (c.status === "confirmed" || c.status === "pending") existing.confirmed += c.count;
       if (c.status === "waitlisted") existing.waitlisted = c.count;
     }
   }
@@ -111,7 +111,9 @@ export async function getEvent(orgId: string, eventId: string): Promise<EventDto
     .where(and(eq(registrations.orgId, orgId), eq(registrations.eventId, eventId)))
     .groupBy(registrations.status);
 
-  const confirmed = counts.find((c) => c.status === "confirmed")?.count ?? 0;
+  const confirmed =
+    (counts.find((c) => c.status === "confirmed")?.count ?? 0) +
+    (counts.find((c) => c.status === "pending")?.count ?? 0);
   const waitlisted = counts.find((c) => c.status === "waitlisted")?.count ?? 0;
 
   return toEventDto(rows[0], confirmed, waitlisted);
@@ -145,7 +147,7 @@ export async function createEvent(
       recurrenceDays: input.recurrenceDays ?? [],
       recurrenceInterval: input.recurrenceInterval ?? null,
       recurrenceEndDate: input.recurrenceEndDate ?? null,
-      price: input.price ?? null,
+      price: input.price ?? 0,
     })
     .returning();
 
@@ -180,7 +182,9 @@ export async function updateEvent(
     .where(and(eq(registrations.orgId, orgId), eq(registrations.eventId, eventId)))
     .groupBy(registrations.status);
 
-  const confirmed = counts.find((c) => c.status === "confirmed")?.count ?? 0;
+  const confirmed =
+    (counts.find((c) => c.status === "confirmed")?.count ?? 0) +
+    (counts.find((c) => c.status === "pending")?.count ?? 0);
   const waitlisted = counts.find((c) => c.status === "waitlisted")?.count ?? 0;
 
   return toEventDto(rows[0], confirmed, waitlisted);

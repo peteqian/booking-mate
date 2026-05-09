@@ -1,6 +1,7 @@
 import type { CreateEventRequest, EventDto, UpdateEventRequest } from "@workspace/contracts";
 import { z } from "zod";
 import { api } from "./api";
+import { centsToMajorString, majorStringToCents } from "./public";
 
 export const eventFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -83,8 +84,8 @@ export function eventToForm(event: EventDto): EventFormState {
     description: event.description ?? "",
     notes: event.notes ?? "",
     location: event.location ?? "",
-    price: event.price ?? "0.00",
-    isFree: event.price === null ? "true" : "false",
+    price: centsToMajorString(event.price, "USD"),
+    isFree: event.price === 0 ? "true" : "false",
     recurring: event.recurring ? "true" : "false",
     recurrenceFrequency: event.recurrenceFrequency ?? "",
     recurrenceInterval: event.recurrenceInterval === null ? "" : String(event.recurrenceInterval),
@@ -112,7 +113,7 @@ export function formToEventRequest(form: EventFormState): CreateEventRequest {
     description: form.description.trim() || null,
     notes: form.notes.trim() || null,
     location: form.location.trim() || null,
-    price: form.isFree === "true" ? null : form.price,
+    price: form.isFree === "true" ? 0 : majorStringToCents(form.price, "USD"),
     recurring: form.recurring === "true",
     recurrenceFrequency: form.recurrenceFrequency.trim() || null,
     recurrenceInterval: form.recurrenceInterval ? Number(form.recurrenceInterval) : null,

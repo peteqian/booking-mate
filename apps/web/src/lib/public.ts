@@ -111,13 +111,37 @@ export function getPublicRequestInfo() {
   };
 }
 
-export function formatPrice(price: string, currency: string) {
-  const amount = Number(price);
-  if (!Number.isFinite(amount)) return price;
+const ZERO_DECIMAL = new Set(["JPY", "KRW", "VND", "HUF", "TWD", "CLP", "ISK"]);
+
+function decimalsFor(currency: string) {
+  return ZERO_DECIMAL.has(currency.toUpperCase()) ? 0 : 2;
+}
+
+export function centsToMajor(cents: number, currency: string) {
+  const factor = 10 ** decimalsFor(currency);
+  return cents / factor;
+}
+
+export function majorStringToCents(major: string, currency: string) {
+  const factor = 10 ** decimalsFor(currency);
+  const parsed = Number(String(major).trim());
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.round(parsed * factor);
+}
+
+export function centsToMajorString(cents: number, currency: string) {
+  const d = decimalsFor(currency);
+  if (d === 0) return String(cents);
+  return (cents / 10 ** d).toFixed(d);
+}
+
+export function formatPrice(cents: number, currency: string) {
+  const amount = centsToMajor(cents, currency);
+  if (!Number.isFinite(amount)) return String(cents);
   try {
     return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(amount);
   } catch {
-    return `${currency} ${amount.toFixed(2)}`;
+    return `${currency} ${amount.toFixed(decimalsFor(currency))}`;
   }
 }
 
