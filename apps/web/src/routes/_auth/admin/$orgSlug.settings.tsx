@@ -11,6 +11,7 @@ import { GeneralTab } from "./~components/settings/general-tab";
 import { CategoriesTab } from "./~components/settings/categories-tab";
 import { WebhooksTab } from "./~components/settings/webhooks-tab";
 import { MembersTab } from "./~components/settings/members-tab";
+import { PaymentsTab } from "./~components/settings/payments-tab";
 import { DangerTab } from "./~components/settings/danger-tab";
 
 export const Route = createFileRoute("/_auth/admin/$orgSlug/settings")({
@@ -62,6 +63,7 @@ function SettingsTabs({ orgSlug, role }: { orgSlug: string; role: OrgRole }) {
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
+          <TabsTrigger value="payments">Payments</TabsTrigger>
           <TabsTrigger value="members">Members</TabsTrigger>
           {showDanger && <TabsTrigger value="danger">Danger</TabsTrigger>}
         </TabsList>
@@ -74,6 +76,9 @@ function SettingsTabs({ orgSlug, role }: { orgSlug: string; role: OrgRole }) {
         </TabsContent>
         <TabsContent value="webhooks" className="mt-6">
           <WebhooksTab />
+        </TabsContent>
+        <TabsContent value="payments" className="mt-6">
+          <PaymentsTab />
         </TabsContent>
         <TabsContent value="members" className="mt-6">
           <MembersTab role={role} />

@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowUpCircle, Ban, Check, Copy, ExternalLink, Mail, Phone, Trash2 } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { ArrowUpCircle, Ban, Check, Copy, ExternalLink, Mail, Phone, RotateCcw, Trash2 } from "lucide-react";
 import type { PaymentStatus, RegistrationWithAttendeeDto } from "@workspace/contracts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { refundRegistration } from "@/lib/payments";
 import { PaymentStatusSelect } from "./registration-summary";
 import type { ConfirmFn } from "./confirm-dialog";
 
@@ -172,11 +174,16 @@ function DetailBody({
             </div>
           </Field>
           <Field label="Payment">
-            <PaymentStatusSelect
-              value={registration.paymentStatus}
-              onChange={(p) => onUpdatePayment(registration.id, p)}
-              disabled={!canManage}
-            />
+            <div className="flex items-center gap-2">
+              <PaymentStatusSelect
+                value={registration.paymentStatus}
+                onChange={(p) => onUpdatePayment(registration.id, p)}
+                disabled={!canManage}
+              />
+              {canManage && registration.paymentStatus === "paid" ? (
+                <RefundButton registrationId={registration.id} attendeeName={attendee.name} confirm={confirm} />
+              ) : null}
+            </div>
           </Field>
           <Field label="Registered">
             <span className="text-sm">{formatFullDate(registration.createdAt)}</span>
@@ -208,6 +215,52 @@ function DetailBody({
         </div>
       )}
     </>
+  );
+}
+
+function RefundButton({
+  registrationId,
+  attendeeName,
+  confirm,
+}: {
+  registrationId: string;
+  attendeeName: string;
+  confirm: ConfirmFn;
+}) {
+  const [submitted, setSubmitted] = useState(false);
+  const mutation = useMutation({
+    mutationFn: () => refundRegistration({ registrationId }),
+    onSuccess: () => setSubmitted(true),
+  });
+
+  if (submitted) {
+    return (
+      <Badge variant="outline" className="text-xs">
+        Refund pending
+      </Badge>
+    );
+  }
+
+  return (
+    <Button
+      size="sm"
+      variant="ghost"
+      className="h-7 gap-1 px-2 text-xs"
+      disabled={mutation.isPending}
+      onClick={async () => {
+        const ok = await confirm({
+          title: "Refund this payment?",
+          description: `Issue a full refund to ${attendeeName}. Status updates when the provider confirms.`,
+          confirmLabel: "Refund",
+          destructive: true,
+        });
+        if (!ok) return;
+        mutation.mutate();
+      }}
+    >
+      <RotateCcw className="size-3.5" />
+      Refund
+    </Button>
   );
 }
 
