@@ -239,7 +239,7 @@ function UsagesSection({ usages }: { usages: ResourceUsageDto[] }) {
                 <TableRow key={u.eventResourceId} className="hover:bg-muted/30">
                   <TableCell className="py-2 text-sm font-medium">
                     <Link
-                      to="/admin/events/$eventId"
+                      to="/admin/events/$eventId/edit"
                       params={{ eventId: u.eventId }}
                       className="underline-offset-4 hover:underline"
                     >

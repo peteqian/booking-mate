@@ -31,3 +31,19 @@ export function canInviteMembers(role: OrgRole | null | undefined) {
 export function canDeleteOrg(role: OrgRole | null | undefined) {
   return role === "owner";
 }
+
+export function canManagePayments(role: OrgRole | null | undefined) {
+  return role === "owner";
+}
+
+export function canManageWebhooks(role: OrgRole | null | undefined) {
+  return role === "owner";
+}
+
+export function canManageConnectedApps(role: OrgRole | null | undefined) {
+  return role === "owner";
+}
+
+export function canManageBilling(role: OrgRole | null | undefined) {
+  return role === "owner";
+}

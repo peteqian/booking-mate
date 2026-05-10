@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { updateOrgSettings } from "@/lib/org";
+import { getOrgPublicUrl } from "@/lib/public";
 import { currentOrgQueryOptions } from "@/queries/auth";
 import { orgKeys, orgSettingsQueryOptions } from "@/queries/org";
 
@@ -24,6 +25,8 @@ export function GeneralTab({ orgSlug }: { orgSlug: string }) {
   const [contactEmail, setContactEmail] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
+  const publicBookingUrl = getOrgPublicUrl(orgSlug);
 
   useEffect(() => {
     if (!settingsQuery.data) return;
@@ -49,6 +52,12 @@ export function GeneralTab({ orgSlug }: { orgSlug: string }) {
     });
   };
 
+  const copyPublicUrl = async () => {
+    await navigator.clipboard.writeText(publicBookingUrl);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -67,6 +76,28 @@ export function GeneralTab({ orgSlug }: { orgSlug: string }) {
             <div className="space-y-2">
               <Label>Slug</Label>
               <p className="text-sm text-muted-foreground">{orgSlug}</p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Public booking URL</Label>
+            <div className="flex flex-col gap-2 rounded-md border bg-muted/30 p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <a
+                  href={publicBookingUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block truncate text-sm font-medium underline-offset-4 hover:underline"
+                >
+                  {publicBookingUrl}
+                </a>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Published events appear on this public booking page.
+                </p>
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={copyPublicUrl}>
+                {copied ? "Copied" : "Copy"}
+              </Button>
             </div>
           </div>
 

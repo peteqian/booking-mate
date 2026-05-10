@@ -95,9 +95,7 @@ function AttendeesPage() {
           />
         </div>
 
-        {!canManage && (
-          <p className="text-xs text-muted-foreground">Viewer role — read-only</p>
-        )}
+        {!canManage && <p className="text-xs text-muted-foreground">Viewer role — read-only</p>}
 
         {sorted.length === 0 ? (
           <div className="rounded-xl border border-dashed bg-muted/30 p-12 text-center">
@@ -168,11 +166,7 @@ function AttendeesPage() {
       </div>
 
       {createOpen && (
-        <CreateAttendeeDialog
-          open={createOpen}
-          onOpenChange={setCreateOpen}
-          onError={setError}
-        />
+        <CreateAttendeeDialog open={createOpen} onOpenChange={setCreateOpen} onError={setError} />
       )}
 
       {editing && (

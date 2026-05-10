@@ -168,10 +168,7 @@ function Onboarding() {
 
               <div className="space-y-2">
                 <Label htmlFor="inviteRole">Role</Label>
-                <Select
-                  value={inviteRole}
-                  onValueChange={(v) => v && setInviteRole(v as OrgRole)}
-                >
+                <Select value={inviteRole} onValueChange={(v) => v && setInviteRole(v as OrgRole)}>
                   <SelectTrigger id="inviteRole" className="w-full">
                     <SelectValue />
                   </SelectTrigger>

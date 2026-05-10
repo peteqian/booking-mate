@@ -5,7 +5,12 @@ import type { OrgRole } from "@workspace/contracts";
 import { AppShell } from "@/components/app-shell";
 import { AccessDenied } from "@/components/access-denied";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { canDeleteOrg, canManageSettings } from "@/lib/permissions";
+import {
+  canDeleteOrg,
+  canManagePayments,
+  canManageSettings,
+  canManageWebhooks,
+} from "@/lib/permissions";
 import { currentOrgQueryOptions } from "@/queries/auth";
 import { GeneralTab } from "./~components/settings/general-tab";
 import { CategoriesTab } from "./~components/settings/categories-tab";
@@ -55,6 +60,8 @@ function OrganizationSettings() {
 function SettingsTabs({ orgSlug, role }: { orgSlug: string; role: OrgRole }) {
   const [tab, setTab] = useState("general");
   const showDanger = canDeleteOrg(role);
+  const showPayments = canManagePayments(role);
+  const showWebhooks = canManageWebhooks(role);
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -62,8 +69,8 @@ function SettingsTabs({ orgSlug, role }: { orgSlug: string; role: OrgRole }) {
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
-          <TabsTrigger value="payments">Payments</TabsTrigger>
+          {showWebhooks && <TabsTrigger value="webhooks">Webhooks</TabsTrigger>}
+          {showPayments && <TabsTrigger value="payments">Payments</TabsTrigger>}
           <TabsTrigger value="members">Members</TabsTrigger>
           {showDanger && <TabsTrigger value="danger">Danger</TabsTrigger>}
         </TabsList>
@@ -74,12 +81,16 @@ function SettingsTabs({ orgSlug, role }: { orgSlug: string; role: OrgRole }) {
         <TabsContent value="categories" className="mt-6">
           <CategoriesTab />
         </TabsContent>
-        <TabsContent value="webhooks" className="mt-6">
-          <WebhooksTab />
-        </TabsContent>
-        <TabsContent value="payments" className="mt-6">
-          <PaymentsTab />
-        </TabsContent>
+        {showWebhooks && (
+          <TabsContent value="webhooks" className="mt-6">
+            <WebhooksTab />
+          </TabsContent>
+        )}
+        {showPayments && (
+          <TabsContent value="payments" className="mt-6">
+            <PaymentsTab />
+          </TabsContent>
+        )}
         <TabsContent value="members" className="mt-6">
           <MembersTab role={role} />
         </TabsContent>
