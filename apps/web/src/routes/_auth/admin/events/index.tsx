@@ -2,36 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { DragDropProvider, useDraggable, useDroppable } from "@dnd-kit/react";
 import { useEffect, useMemo, useState } from "react";
-import {
-  Calendar,
-  Archive,
-  ArchiveRestore,
-  Copy,
-  LayoutGrid,
-  List,
-  MoreHorizontal,
-  Pencil,
-  Search,
-  SlidersHorizontal,
-  X,
-} from "lucide-react";
+import { Calendar, LayoutGrid, List, Search, SlidersHorizontal, X } from "lucide-react";
 import type { EventDto, EventStatus, EventVisibility } from "@workspace/contracts";
 import { AppShell } from "@/components/app-shell";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -42,14 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   defaultEventForm,
@@ -61,22 +30,14 @@ import { getCurrentOrg } from "@/lib/org";
 import { canManageEvents } from "@/lib/permissions";
 import { formatPrice } from "@/lib/public";
 import { eventKeys, eventsQueryOptions } from "@/queries/events";
-import { useCreateEvent, useDuplicateEvent, usePatchEvent } from "@/hooks/use-events";
+import { useCreateEvent, useDuplicateEvent } from "@/hooks/use-events";
 import { resourcesQueryOptions } from "@/queries/resources";
 import { replaceEventResources } from "@/lib/resources";
 import { StatusBadge, VisibilityBadge } from "./~components/event-badges";
+import { EventsTable, type SortKey } from "./~components/events-table";
 import { EventForm } from "./~components/event-form";
 
 type ViewMode = "list" | "kanban";
-type SortKey =
-  | "title"
-  | "date"
-  | "status"
-  | "visibility"
-  | "registrationCount"
-  | "category"
-  | "price"
-  | "location";
 type EventSegment = "active" | "archived";
 type ResourceAssignmentDraft = { resourceId: string; role: string; quantity: number };
 
@@ -99,14 +60,6 @@ function isArchived(event: Pick<EventDto, "archivedAt">) {
   return event.archivedAt !== null;
 }
 
-function getArchivePatch(event: Pick<EventDto, "archivedAt">) {
-  if (isArchived(event)) {
-    return { archivedAt: null };
-  }
-
-  return { archivedAt: new Date().toISOString() };
-}
-
 export const Route = createFileRoute("/_auth/admin/events/")({
   component: Events,
   loader: ({ context }) => context.queryClient.ensureQueryData(eventsQueryOptions),
@@ -115,6 +68,7 @@ export const Route = createFileRoute("/_auth/admin/events/")({
 function Events() {
   const orgContext = Route.useRouteContext() as Awaited<ReturnType<typeof getCurrentOrg>>;
   const role = orgContext.memberRole;
+  const orgSlug = orgContext.org.slug;
   const canManage = canManageEvents(role);
   const [view, setView] = useState<ViewMode>("list");
   const [segment, setSegment] = useState<EventSegment>("active");
@@ -270,7 +224,7 @@ function Events() {
         )}
 
         {/* Toolbar: tabs | search + filter + view + new */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-2xl border bg-background/80 p-3 shadow-xs sm:flex-row sm:items-center sm:justify-between">
           <Tabs value={segment} onValueChange={(v) => setSegment(v as EventSegment)}>
             <TabsList>
               <TabsTrigger value="active">
@@ -288,14 +242,14 @@ function Events() {
             </TabsList>
           </Tabs>
 
-          <div className="flex items-center gap-2">
-            <div className="relative">
+          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+            <div className="relative min-w-0 flex-1 sm:flex-none">
               <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search events..."
-                className="h-8 w-44 pl-8 text-sm"
+                placeholder="Search events"
+                className="h-8 min-w-40 pl-8 text-sm sm:w-48"
               />
             </div>
 
@@ -424,7 +378,7 @@ function Events() {
               </PopoverContent>
             </Popover>
 
-            <div className="flex items-center rounded-lg border p-[3px]">
+            <div className="flex items-center rounded-lg border bg-muted/30 p-[3px]">
               <Button
                 variant={view === "list" ? "secondary" : "ghost"}
                 size="sm"
@@ -487,7 +441,7 @@ function Events() {
 
         {/* Content */}
         {filteredEvents.length === 0 ? (
-          <div className="rounded-xl border border-dashed bg-muted/30 p-12 text-center">
+          <div className="rounded-2xl border border-dashed bg-background/70 p-12 text-center shadow-xs">
             <Calendar className="mx-auto size-8 text-muted-foreground/60" />
             <h2 className="mt-3 text-sm font-semibold tracking-tight">
               {segment === "active" ? "No active events" : "No archived events"}
@@ -501,6 +455,7 @@ function Events() {
         ) : view === "list" ? (
           <EventsTable
             events={paginatedEvents}
+            orgSlug={orgSlug}
             sortKey={sortKey}
             setSortKey={setSortKey}
             canManage={canManage}
@@ -513,12 +468,12 @@ function Events() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t pt-4">
+          <div className="flex flex-col gap-3 rounded-2xl border bg-background/80 p-3 shadow-xs sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-muted-foreground">
               Showing {(page - 1) * ITEMS_PER_PAGE + 1}–
               {Math.min(page * ITEMS_PER_PAGE, filteredEvents.length)} of {filteredEvents.length}
             </p>
-            <div className="flex items-center gap-1">
+            <div className="flex flex-wrap items-center gap-1 sm:justify-end">
               <Button
                 variant="outline"
                 size="sm"
@@ -575,215 +530,6 @@ function registrationCount(event: EventDto) {
   return event.confirmedRegistrations + event.waitlistedRegistrations;
 }
 
-function EventsTable({
-  events,
-  sortKey,
-  setSortKey,
-  canManage,
-  onDuplicate,
-  onError,
-}: {
-  events: EventDto[];
-  sortKey: SortKey;
-  setSortKey: (key: SortKey) => void;
-  canManage: boolean;
-  onDuplicate: (eventId: string) => void;
-  onError: (message: string) => void;
-}) {
-  return (
-    <div className="overflow-x-auto rounded-xl border bg-background">
-      <Table>
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <SortableHead label="Event" value="title" sortKey={sortKey} setSortKey={setSortKey} />
-            <SortableHead label="Date" value="date" sortKey={sortKey} setSortKey={setSortKey} />
-            <SortableHead label="Status" value="status" sortKey={sortKey} setSortKey={setSortKey} />
-            <SortableHead
-              label="Visibility"
-              value="visibility"
-              sortKey={sortKey}
-              setSortKey={setSortKey}
-            />
-            <SortableHead
-              label="Registrations"
-              value="registrationCount"
-              sortKey={sortKey}
-              setSortKey={setSortKey}
-            />
-            <SortableHead
-              label="Category"
-              value="category"
-              sortKey={sortKey}
-              setSortKey={setSortKey}
-              className="hidden lg:table-cell"
-            />
-            <SortableHead
-              label="Location"
-              value="location"
-              sortKey={sortKey}
-              setSortKey={setSortKey}
-              className="hidden xl:table-cell"
-            />
-            <SortableHead
-              label="Price"
-              value="price"
-              sortKey={sortKey}
-              setSortKey={setSortKey}
-              className="hidden md:table-cell"
-            />
-            <TableHead className="w-10"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {events.map((event) => (
-            <EventRow
-              key={event.id}
-              event={event}
-              canManage={canManage}
-              onDuplicate={onDuplicate}
-              onError={onError}
-            />
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-  );
-}
-
-function SortableHead({
-  label,
-  value,
-  sortKey,
-  setSortKey,
-  className,
-}: {
-  label: string;
-  value: SortKey;
-  sortKey: SortKey;
-  setSortKey: (key: SortKey) => void;
-  className?: string;
-}) {
-  return (
-    <TableHead className={`h-8 py-0 ${className ?? ""}`}>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-6 px-1 text-xs font-medium text-muted-foreground hover:text-foreground"
-        onClick={() => setSortKey(value)}
-      >
-        {label}
-        {sortKey === value && <span className="ml-0.5">↑</span>}
-      </Button>
-    </TableHead>
-  );
-}
-
-function EventRow({
-  event,
-  canManage,
-  onDuplicate,
-  onError,
-}: {
-  event: EventDto;
-  canManage: boolean;
-  onDuplicate: (eventId: string) => void;
-  onError: (message: string) => void;
-}) {
-  const patchMutation = usePatchEvent(event.id);
-  const updateEvent = (input: Partial<Pick<EventDto, "archivedAt" | "status" | "visibility">>) => {
-    patchMutation.mutate(input, {
-      onError: (error) =>
-        onError(error instanceof Error ? error.message : "Unable to update event"),
-    });
-  };
-  const archived = isArchived(event);
-
-  return (
-    <TableRow className="group hover:bg-muted/30">
-      <TableCell className="py-2">
-        <Link
-          to="/admin/events/$eventId/edit"
-          params={{ eventId: event.id }}
-          className="font-medium text-sm underline-offset-4 hover:underline"
-        >
-          {event.title}
-        </Link>
-      </TableCell>
-      <TableCell className="py-2 text-xs text-muted-foreground whitespace-nowrap">
-        {event.date}
-        <span className="text-muted-foreground/60"> · {event.time}</span>
-      </TableCell>
-      <TableCell className="py-2">
-        <StatusBadge status={event.status} />
-      </TableCell>
-      <TableCell className="py-2">
-        <VisibilityBadge visibility={event.visibility} />
-      </TableCell>
-      <TableCell className="py-2 text-xs text-muted-foreground">
-        <span className="tabular-nums">{event.confirmedRegistrations}</span>
-        {event.maxCapacity !== null && event.maxCapacity > 0 && (
-          <span className="text-muted-foreground/60"> /{event.maxCapacity}</span>
-        )}
-        {event.waitlistedRegistrations > 0 && (
-          <span className="text-yellow-600 ml-1">+{event.waitlistedRegistrations} waitlisted</span>
-        )}
-      </TableCell>
-      <TableCell className="py-2 text-xs text-muted-foreground">{event.category ?? "—"}</TableCell>
-      <TableCell className="hidden py-2 text-xs text-muted-foreground xl:table-cell">
-        {event.location ?? "—"}
-      </TableCell>
-      <TableCell className="py-2 text-xs font-medium tabular-nums">
-        {event.price === 0 ? "Free" : formatPrice(event.price, "USD")}
-      </TableCell>
-      <TableCell className="py-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-              />
-            }
-          >
-            <MoreHorizontal className="size-3.5" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            <Link
-              to="/admin/events/$eventId/edit"
-              params={{ eventId: event.id }}
-              className="relative flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-            >
-              <Pencil className="size-3.5" />
-              {canManage ? "Edit" : "View"}
-            </Link>
-            {canManage && (
-              <>
-                <DropdownMenuItem onClick={() => onDuplicate(event.id)} className="gap-2">
-                  <Copy className="size-3.5" />
-                  Duplicate
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => updateEvent(getArchivePatch(event))}
-                  disabled={patchMutation.isPending}
-                  className="gap-2"
-                >
-                  {archived ? (
-                    <ArchiveRestore className="size-3.5" />
-                  ) : (
-                    <Archive className="size-3.5" />
-                  )}
-                  {archived ? "Unarchive" : "Archive"}
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </TableCell>
-    </TableRow>
-  );
-}
-
 function EventsKanban({
   events,
   canManage,
@@ -827,7 +573,7 @@ function EventsKanban({
         );
       }}
     >
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-3">
         {statuses.map((status) => (
           <KanbanColumn
             key={status}
@@ -854,9 +600,9 @@ function KanbanColumn({
   return (
     <section
       ref={ref}
-      className={`min-h-80 rounded-xl border bg-background p-4 transition-[box-shadow,ring-color,transform] ${isDropTarget ? "-translate-y-0.5 shadow-md ring-2 ring-primary" : ""}`}
+      className={`min-h-80 rounded-2xl border bg-background/80 p-4 shadow-xs transition-[box-shadow,ring-color,transform] ${isDropTarget ? "-translate-y-0.5 shadow-md ring-2 ring-primary/70" : ""}`}
     >
-      <div className="mb-4 flex items-center justify-between border-b pb-3">
+      <div className="mb-4 flex items-center justify-between pb-1">
         <div className="flex items-center gap-2">
           <StatusBadge status={status} />
           <span className="text-xs text-muted-foreground">{events.length}</span>
@@ -881,7 +627,7 @@ function KanbanCard({ event, canManage }: { event: EventDto; canManage: boolean 
   return (
     <article
       ref={ref}
-      className={`rounded-lg border bg-background/90 p-4 shadow-[0_1px_0_rgba(0,0,0,0.04)] transition-[box-shadow,transform,opacity] hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(0,0,0,0.07)] ${isDragSource ? "scale-[0.99] opacity-50" : ""}`}
+      className={`rounded-xl border bg-card p-4 shadow-xs transition-[box-shadow,transform,opacity] hover:-translate-y-0.5 hover:shadow-md ${isDragSource ? "scale-[0.99] opacity-50" : ""}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -925,4 +671,3 @@ function KanbanCard({ event, canManage }: { event: EventDto; canManage: boolean 
     </article>
   );
 }
-

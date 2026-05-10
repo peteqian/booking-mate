@@ -1,16 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { getCurrentOrg } from "@/lib/org";
-import { eventQueryOptions } from "@/queries/events";
-import { EventDetailPage } from "../~components/event-detail-page";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_auth/admin/events/$eventId/")({
-  component: EventDetailRoute,
-  loader: ({ context, params }) =>
-    context.queryClient.ensureQueryData(eventQueryOptions(params.eventId)),
+  beforeLoad: ({ params }) => {
+    throw redirect({
+      to: "/admin/events/$eventId/edit",
+      params: { eventId: params.eventId },
+    });
+  },
 });
-
-function EventDetailRoute() {
-  const { eventId } = Route.useParams();
-  const orgContext = Route.useRouteContext() as Awaited<ReturnType<typeof getCurrentOrg>>;
-  return <EventDetailPage eventId={eventId} orgContext={orgContext} />;
-}

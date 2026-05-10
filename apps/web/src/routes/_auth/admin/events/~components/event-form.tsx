@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -170,10 +171,7 @@ function StepIndicator({
               </span>
             </button>
             {i < steps.length - 1 && (
-              <div
-                className={cn("h-px flex-1", done ? "bg-primary" : "bg-border")}
-                aria-hidden
-              />
+              <div className={cn("h-px flex-1", done ? "bg-primary" : "bg-border")} aria-hidden />
             )}
           </li>
         );
@@ -199,11 +197,10 @@ function BasicsSection({ form, onChange }: EventFormProps) {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="create-date">Date</Label>
-          <Input
+          <DatePicker
             id="create-date"
-            type="date"
             value={form.date}
-            onChange={(e) => onChange("date", e.target.value)}
+            onChange={(value) => onChange("date", value)}
             required
           />
         </div>
@@ -322,13 +319,21 @@ function DetailsSection({ form, onChange }: EventFormProps) {
               Free
             </label>
           </div>
-          <Input
-            id="create-price"
-            value={isFree ? "" : form.price}
-            onChange={(e) => onChange("price", e.target.value)}
-            disabled={isFree}
-            placeholder={isFree ? "Free" : "0.00"}
-          />
+          <div className="relative">
+            <Input
+              id="create-price"
+              value={isFree ? "" : form.price}
+              onChange={(e) => onChange("price", e.target.value)}
+              disabled={isFree}
+              placeholder={isFree ? "Free" : "0.00"}
+              className="pr-14"
+            />
+            {!isFree && (
+              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-medium text-muted-foreground">
+                USD
+              </span>
+            )}
+          </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="create-category">Category</Label>
@@ -445,11 +450,10 @@ function ScheduleSection({ form, onChange }: EventFormProps) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="create-recurrence-end">End date</Label>
-            <Input
+            <DatePicker
               id="create-recurrence-end"
-              type="date"
               value={form.recurrenceEndDate}
-              onChange={(e) => onChange("recurrenceEndDate", e.target.value)}
+              onChange={(value) => onChange("recurrenceEndDate", value)}
             />
           </div>
           <div className="space-y-2 sm:col-span-2">
@@ -522,10 +526,7 @@ function ResourceAssignmentEditor({
   }));
 
   const assignResource = (resource: ResourceDto) => {
-    onChange([
-      ...assignments,
-      { resourceId: resource.id, role: resource.type, quantity: 1 },
-    ]);
+    onChange([...assignments, { resourceId: resource.id, role: resource.type, quantity: 1 }]);
   };
 
   const updateQuantity = (index: number, value: string) => {
@@ -581,9 +582,7 @@ function ResourceAssignmentEditor({
         </div>
         <div className="max-h-72 overflow-y-auto rounded-md border bg-background">
           {available.length === 0 ? (
-            <p className="p-4 text-center text-sm text-muted-foreground">
-              No matching resources.
-            </p>
+            <p className="p-4 text-center text-sm text-muted-foreground">No matching resources.</p>
           ) : (
             <Table>
               <TableHeader>

@@ -12,5 +12,5 @@ export const Route = createFileRoute("/_auth/admin/events/$eventId/edit")({
 function EventEditRoute() {
   const { eventId } = Route.useParams();
   const orgContext = Route.useRouteContext() as Awaited<ReturnType<typeof getCurrentOrg>>;
-  return <EventDetailPage eventId={eventId} orgContext={orgContext} mode="edit" />;
+  return <EventDetailPage eventId={eventId} orgContext={orgContext} />;
 }
