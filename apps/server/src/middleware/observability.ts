@@ -6,7 +6,7 @@ import { als } from "../observability/request-context";
 const tracer = trace.getTracer("booking-mate-server");
 
 const PLATFORM_HOST_SUFFIXES = (
-  process.env.PLATFORM_HOST_SUFFIXES ?? ".traefik.me,.lvh.me,.localhost,localhost"
+  process.env.PLATFORM_HOST_SUFFIXES ?? ".lvh.me,.localhost,localhost"
 )
   .split(",")
   .map((s) => s.trim())

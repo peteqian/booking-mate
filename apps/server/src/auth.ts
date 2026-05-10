@@ -5,6 +5,7 @@ import { polar, checkout, portal, webhooks } from "@polar-sh/better-auth";
 import { Polar } from "@polar-sh/sdk";
 import { eq } from "drizzle-orm";
 import { db } from "./db";
+import * as schema from "./db/schema";
 import { member } from "./db/schema";
 import { ac, owner, admin, manager, viewer } from "./auth/permissions";
 import { sendInviteEmail } from "./auth/email";
@@ -88,6 +89,7 @@ const polarPlugin = polarClient
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
+    schema,
   }),
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL,

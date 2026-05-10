@@ -25,6 +25,9 @@ export function enrichLogger(fields: Record<string, unknown>): void {
   store.logger = store.logger.child(fields);
   for (const [key, value] of Object.entries(fields)) {
     if (value === null || value === undefined) continue;
-    store.span.setAttribute(`app.${key}`, typeof value === "object" ? JSON.stringify(value) : String(value));
+    store.span.setAttribute(
+      `app.${key}`,
+      typeof value === "object" ? JSON.stringify(value) : String(value),
+    );
   }
 }

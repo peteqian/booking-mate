@@ -14,6 +14,10 @@ export function logEvent(name: EventName, fields: Record<string, unknown> = {}):
   getLogger().info({ event: name, ...fields }, name);
 }
 
-export function logEventError(name: EventName, err: unknown, fields: Record<string, unknown> = {}): void {
+export function logEventError(
+  name: EventName,
+  err: unknown,
+  fields: Record<string, unknown> = {},
+): void {
   getLogger().error({ event: name, err, ...fields }, name);
 }
