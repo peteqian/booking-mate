@@ -71,15 +71,11 @@ export function EventListPanel({
     [filtered, todayKey, selectedDate],
   );
   const upcomingEvents = useMemo(
-    () =>
-      selectedDate
-        ? filtered
-        : filtered.filter((event) => event.date > todayKey),
+    () => (selectedDate ? filtered : filtered.filter((event) => event.date > todayKey)),
     [filtered, todayKey, selectedDate],
   );
   const pastEvents = useMemo(
-    () =>
-      selectedDate ? [] : filtered.filter((event) => event.date < todayKey),
+    () => (selectedDate ? [] : filtered.filter((event) => event.date < todayKey)),
     [filtered, todayKey, selectedDate],
   );
 
@@ -272,9 +268,7 @@ function EventRow({ event }: { event: EventDto }) {
             >
               {event.title}
             </p>
-            {event.recurring && (
-              <Repeat className="size-3 shrink-0 text-muted-foreground" />
-            )}
+            {event.recurring && <Repeat className="size-3 shrink-0 text-muted-foreground" />}
           </div>
           <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <Clock className="size-3" />

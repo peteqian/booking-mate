@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { EventDto } from "@workspace/contracts";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -91,11 +92,10 @@ export function InlineCreateForm({ prefill, onCreated }: InlineCreateFormProps) 
           <Label htmlFor="ic-date" className="text-xs text-muted-foreground">
             Date
           </Label>
-          <Input
+          <DatePicker
             id="ic-date"
-            type="date"
             value={form.date}
-            onChange={(e) => update("date", e.target.value)}
+            onChange={(value) => update("date", value)}
             required
             className="h-8 text-sm"
           />

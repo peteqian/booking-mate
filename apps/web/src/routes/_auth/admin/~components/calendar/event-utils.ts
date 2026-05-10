@@ -66,8 +66,7 @@ export function getEventTone(event: ColorEvent): EventTone {
     return { lineThrough: true, italic: false, opacity: "opacity-60" };
   if (event.status === "completed")
     return { lineThrough: false, italic: false, opacity: "opacity-70" };
-  if (event.visibility === "unpublished")
-    return { lineThrough: false, italic: true };
+  if (event.visibility === "unpublished") return { lineThrough: false, italic: true };
   return { lineThrough: false, italic: false };
 }
 
@@ -91,7 +90,9 @@ export function dateKey(date: Date): string {
   return format(date, "yyyy-MM-dd");
 }
 
-function frequencyStep(frequency: string): { kind: "day" | "month" | "year"; amount: number } | null {
+function frequencyStep(
+  frequency: string,
+): { kind: "day" | "month" | "year"; amount: number } | null {
   switch (frequency) {
     case "daily":
       return { kind: "day", amount: 1 };
@@ -141,7 +142,8 @@ export function expandEvent(event: EventDto, rangeStart: Date, rangeEnd: Date): 
     ];
   }
 
-  const interval = event.recurrenceInterval && event.recurrenceInterval > 0 ? event.recurrenceInterval : 1;
+  const interval =
+    event.recurrenceInterval && event.recurrenceInterval > 0 ? event.recurrenceInterval : 1;
   const limit = event.recurrenceEndDate
     ? parse(event.recurrenceEndDate, "yyyy-MM-dd", new Date())
     : rangeEnd;
@@ -236,9 +238,7 @@ export function layoutDay(instances: EventInstance[]): LaidOutInstance[] {
     }
 
     const usedColumns = new Set(
-      group.laid
-        .filter((item) => item.instance.end.getTime() > startMs)
-        .map((item) => item.column),
+      group.laid.filter((item) => item.instance.end.getTime() > startMs).map((item) => item.column),
     );
     let column = 0;
     while (usedColumns.has(column)) column += 1;

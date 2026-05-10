@@ -136,9 +136,7 @@ function DayCell({
       onClick={() => onSelect(key)}
       className={cn(
         "group/cell flex min-h-0 cursor-pointer flex-col gap-1 px-1.5 py-1 transition-colors",
-        isSelected
-          ? "bg-primary/8 ring-1 ring-inset ring-primary/40"
-          : "bg-card hover:bg-muted/40",
+        isSelected ? "bg-primary/8 ring-1 ring-inset ring-primary/40" : "bg-card hover:bg-muted/40",
         isDropTarget && "ring-2 ring-inset ring-primary/60",
       )}
     >
@@ -219,7 +217,9 @@ function MonthEventChip({ instance, canManage, onEventClick }: MonthEventChipPro
         aria-hidden
       />
       {!event.allDay && (
-        <span className="font-medium tabular-nums text-muted-foreground">{shortTime(event.time)}</span>
+        <span className="font-medium tabular-nums text-muted-foreground">
+          {shortTime(event.time)}
+        </span>
       )}
       <span
         className={cn("truncate font-medium text-foreground", tone.lineThrough && "line-through")}

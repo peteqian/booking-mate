@@ -50,12 +50,20 @@ export function HeatMapDialog({ open, onOpenChange, events }: HeatMapDialogProps
           <Legend />
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
             {Array.from({ length: 12 }, (_, idx) => (
-              <MonthHeatMap key={idx} year={year} monthIndex={idx} counts={counts} maxCount={maxCount} />
+              <MonthHeatMap
+                key={idx}
+                year={year}
+                monthIndex={idx}
+                counts={counts}
+                maxCount={maxCount}
+              />
             ))}
           </div>
           <div className="pt-4 border-t flex items-center justify-between text-sm text-muted-foreground">
             <span>Total events: {events.length}</span>
-            <span>Busiest day: {maxCount} event{maxCount !== 1 ? "s" : ""}</span>
+            <span>
+              Busiest day: {maxCount} event{maxCount !== 1 ? "s" : ""}
+            </span>
           </div>
         </div>
       </DialogContent>
@@ -100,7 +108,10 @@ function MonthHeatMap({ year, monthIndex, counts, maxCount }: MonthHeatMapProps)
           return (
             <div
               key={day}
-              className={cn("size-3 rounded-sm transition-transform hover:scale-125", intensityClass(count, maxCount))}
+              className={cn(
+                "size-3 rounded-sm transition-transform hover:scale-125",
+                intensityClass(count, maxCount),
+              )}
               title={`${MONTH_NAMES[monthIndex]} ${day}: ${count} event${count !== 1 ? "s" : ""}`}
             />
           );

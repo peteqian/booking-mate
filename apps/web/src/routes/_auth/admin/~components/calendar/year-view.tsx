@@ -82,7 +82,9 @@ function MiniMonth({ year, monthIndex, totalEvents, byDate, onSelectMonth }: Min
         key={day}
         className={cn(
           "flex aspect-square items-center justify-center rounded-sm text-[9px] tabular-nums",
-          hasEvents ? "bg-primary/90 font-semibold text-primary-foreground" : "text-muted-foreground/70",
+          hasEvents
+            ? "bg-primary/90 font-semibold text-primary-foreground"
+            : "text-muted-foreground/70",
         )}
       >
         {day}

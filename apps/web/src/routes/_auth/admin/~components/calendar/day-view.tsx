@@ -68,31 +68,34 @@ export function DayView({
         </div>
       )}
       <div className="flex">
-      <TimeGutter />
-      <div
-        className={cn("relative flex-1 border-l border-border/60", isToday && "bg-primary/[0.03]")}
-        style={{ height: HOURS.length * SLOT_PX }}
-      >
-        <HourGridLines />
-        <HourDroppables dateKey={key} canManage={canManage} onSlotClick={onSlotClick} />
-        {laidOut.map(({ instance, column, columnCount }) => (
-          <EventBlock
-            key={instance.instanceKey}
-            instance={instance}
-            column={column}
-            columnCount={columnCount}
-            canManage={canManage}
-            onClick={onEventClick}
-            onResizeStart={onResizeStart}
-            resizeOverrideMinutes={
-              resizeOverride?.instanceKey === instance.instanceKey
-                ? resizeOverride.minutes
-                : undefined
-            }
-          />
-        ))}
-        <NowIndicator visible={isToday} />
-      </div>
+        <TimeGutter />
+        <div
+          className={cn(
+            "relative flex-1 border-l border-border/60",
+            isToday && "bg-primary/[0.03]",
+          )}
+          style={{ height: HOURS.length * SLOT_PX }}
+        >
+          <HourGridLines />
+          <HourDroppables dateKey={key} canManage={canManage} onSlotClick={onSlotClick} />
+          {laidOut.map(({ instance, column, columnCount }) => (
+            <EventBlock
+              key={instance.instanceKey}
+              instance={instance}
+              column={column}
+              columnCount={columnCount}
+              canManage={canManage}
+              onClick={onEventClick}
+              onResizeStart={onResizeStart}
+              resizeOverrideMinutes={
+                resizeOverride?.instanceKey === instance.instanceKey
+                  ? resizeOverride.minutes
+                  : undefined
+              }
+            />
+          ))}
+          <NowIndicator visible={isToday} />
+        </div>
       </div>
     </div>
   );

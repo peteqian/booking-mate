@@ -138,17 +138,10 @@ export function WeekView({
             return (
               <div
                 key={key}
-                className={cn(
-                  "relative border-l border-border/60",
-                  isToday && "bg-primary/[0.03]",
-                )}
+                className={cn("relative border-l border-border/60", isToday && "bg-primary/[0.03]")}
               >
                 <HourGridLines />
-                <HourDroppables
-                  dateKey={key}
-                  canManage={canManage}
-                  onSlotClick={onSlotClick}
-                />
+                <HourDroppables dateKey={key} canManage={canManage} onSlotClick={onSlotClick} />
                 {laidOut.map(({ instance, column, columnCount }) => (
                   <EventBlock
                     key={instance.instanceKey}
