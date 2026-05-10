@@ -6,10 +6,7 @@ import { Select as SelectPrimitive } from "@base-ui/react/select";
 import { cn } from "@/lib/utils";
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react";
 
-function collectSelectItems(
-  node: React.ReactNode,
-  acc: Record<string, React.ReactNode>,
-): void {
+function collectSelectItems(node: React.ReactNode, acc: Record<string, React.ReactNode>): void {
   React.Children.forEach(node, (child) => {
     if (!React.isValidElement(child)) return;
     const props = child.props as { value?: unknown; children?: React.ReactNode };

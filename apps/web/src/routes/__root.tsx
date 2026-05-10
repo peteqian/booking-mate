@@ -1,9 +1,4 @@
-import {
-  createRootRouteWithContext,
-  HeadContent,
-  Outlet,
-  Scripts,
-} from "@tanstack/react-router";
+import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import type { QueryClient } from "@tanstack/react-query";
 import { makeHead } from "@workspace/seo";
 import { getPublicOrigin } from "@/lib/public";
@@ -60,10 +55,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         <p className="text-sm text-muted-foreground">
           {error instanceof Error ? error.message : "Unexpected error."}
         </p>
-        <button
-          onClick={reset}
-          className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted"
-        >
+        <button onClick={reset} className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted">
           Try again
         </button>
       </div>

@@ -19,6 +19,8 @@ import { Route as AuthOnboardingRouteImport } from './routes/_auth/onboarding'
 import { Route as AuthAdminRouteImport } from './routes/_auth/admin'
 import { Route as EventsEventIdIndexRouteImport } from './routes/events.$eventId.index'
 import { Route as AuthAdminIndexRouteImport } from './routes/_auth/admin/index'
+import { Route as EventsEventIdReturnRouteImport } from './routes/events.$eventId.return'
+import { Route as EventsEventIdResumeRouteImport } from './routes/events.$eventId.resume'
 import { Route as EventsEventIdBookRouteImport } from './routes/events.$eventId.book'
 import { Route as AuthAdminCalendarRouteImport } from './routes/_auth/admin/calendar'
 import { Route as AuthAdminResourcesIndexRouteImport } from './routes/_auth/admin/resources/index'
@@ -78,6 +80,16 @@ const AuthAdminIndexRoute = AuthAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthAdminRoute,
+} as any)
+const EventsEventIdReturnRoute = EventsEventIdReturnRouteImport.update({
+  id: '/events/$eventId/return',
+  path: '/events/$eventId/return',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventsEventIdResumeRoute = EventsEventIdResumeRouteImport.update({
+  id: '/events/$eventId/resume',
+  path: '/events/$eventId/resume',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const EventsEventIdBookRoute = EventsEventIdBookRouteImport.update({
   id: '/events/$eventId/book',
@@ -146,6 +158,8 @@ export interface FileRoutesByFullPath {
   '/events/': typeof EventsIndexRoute
   '/admin/calendar': typeof AuthAdminCalendarRoute
   '/events/$eventId/book': typeof EventsEventIdBookRoute
+  '/events/$eventId/resume': typeof EventsEventIdResumeRoute
+  '/events/$eventId/return': typeof EventsEventIdReturnRoute
   '/admin/': typeof AuthAdminIndexRoute
   '/events/$eventId/': typeof EventsEventIdIndexRoute
   '/admin/$orgSlug/settings': typeof AuthAdminOrgSlugSettingsRoute
@@ -167,6 +181,8 @@ export interface FileRoutesByTo {
   '/events': typeof EventsIndexRoute
   '/admin/calendar': typeof AuthAdminCalendarRoute
   '/events/$eventId/book': typeof EventsEventIdBookRoute
+  '/events/$eventId/resume': typeof EventsEventIdResumeRoute
+  '/events/$eventId/return': typeof EventsEventIdReturnRoute
   '/admin': typeof AuthAdminIndexRoute
   '/events/$eventId': typeof EventsEventIdIndexRoute
   '/admin/$orgSlug/settings': typeof AuthAdminOrgSlugSettingsRoute
@@ -190,6 +206,8 @@ export interface FileRoutesById {
   '/events/': typeof EventsIndexRoute
   '/_auth/admin/calendar': typeof AuthAdminCalendarRoute
   '/events/$eventId/book': typeof EventsEventIdBookRoute
+  '/events/$eventId/resume': typeof EventsEventIdResumeRoute
+  '/events/$eventId/return': typeof EventsEventIdReturnRoute
   '/_auth/admin/': typeof AuthAdminIndexRoute
   '/events/$eventId/': typeof EventsEventIdIndexRoute
   '/_auth/admin/$orgSlug/settings': typeof AuthAdminOrgSlugSettingsRoute
@@ -214,6 +232,8 @@ export interface FileRouteTypes {
     | '/events/'
     | '/admin/calendar'
     | '/events/$eventId/book'
+    | '/events/$eventId/resume'
+    | '/events/$eventId/return'
     | '/admin/'
     | '/events/$eventId/'
     | '/admin/$orgSlug/settings'
@@ -235,6 +255,8 @@ export interface FileRouteTypes {
     | '/events'
     | '/admin/calendar'
     | '/events/$eventId/book'
+    | '/events/$eventId/resume'
+    | '/events/$eventId/return'
     | '/admin'
     | '/events/$eventId'
     | '/admin/$orgSlug/settings'
@@ -257,6 +279,8 @@ export interface FileRouteTypes {
     | '/events/'
     | '/_auth/admin/calendar'
     | '/events/$eventId/book'
+    | '/events/$eventId/resume'
+    | '/events/$eventId/return'
     | '/_auth/admin/'
     | '/events/$eventId/'
     | '/_auth/admin/$orgSlug/settings'
@@ -276,6 +300,8 @@ export interface RootRouteChildren {
   InviteInvitationIdRoute: typeof InviteInvitationIdRoute
   EventsIndexRoute: typeof EventsIndexRoute
   EventsEventIdBookRoute: typeof EventsEventIdBookRoute
+  EventsEventIdResumeRoute: typeof EventsEventIdResumeRoute
+  EventsEventIdReturnRoute: typeof EventsEventIdReturnRoute
   EventsEventIdIndexRoute: typeof EventsEventIdIndexRoute
 }
 
@@ -350,6 +376,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthAdminIndexRouteImport
       parentRoute: typeof AuthAdminRoute
+    }
+    '/events/$eventId/return': {
+      id: '/events/$eventId/return'
+      path: '/events/$eventId/return'
+      fullPath: '/events/$eventId/return'
+      preLoaderRoute: typeof EventsEventIdReturnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/events/$eventId/resume': {
+      id: '/events/$eventId/resume'
+      path: '/events/$eventId/resume'
+      fullPath: '/events/$eventId/resume'
+      preLoaderRoute: typeof EventsEventIdResumeRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/events/$eventId/book': {
       id: '/events/$eventId/book'
@@ -475,6 +515,8 @@ const rootRouteChildren: RootRouteChildren = {
   InviteInvitationIdRoute: InviteInvitationIdRoute,
   EventsIndexRoute: EventsIndexRoute,
   EventsEventIdBookRoute: EventsEventIdBookRoute,
+  EventsEventIdResumeRoute: EventsEventIdResumeRoute,
+  EventsEventIdReturnRoute: EventsEventIdReturnRoute,
   EventsEventIdIndexRoute: EventsEventIdIndexRoute,
 }
 export const routeTree = rootRouteImport

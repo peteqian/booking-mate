@@ -18,6 +18,6 @@ export default defineConfig({
   server: {
     port: Number(process.env.WEB_PORT ?? 5678),
     host: true,
-    allowedHosts: [".traefik.me", ".lvh.me", "localhost"],
+    allowedHosts: [".lvh.me", "localhost"],
   },
 });

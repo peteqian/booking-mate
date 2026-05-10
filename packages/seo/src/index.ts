@@ -132,6 +132,7 @@ function normalizeImage(
   imageAlt: string | null | undefined,
 ): SocialImage {
   if (!image) return fallback;
-  if (typeof image === "string") return { ...fallback, url: image, alt: clean(imageAlt) ?? fallback.alt };
+  if (typeof image === "string")
+    return { ...fallback, url: image, alt: clean(imageAlt) ?? fallback.alt };
   return { ...fallback, ...image, alt: clean(image.alt) ?? clean(imageAlt) ?? fallback.alt };
 }

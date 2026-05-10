@@ -59,8 +59,10 @@ export function AppShell({ children, title, description, headerActions }: AppShe
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background text-foreground">
-      <aside className={`flex ${collapsed ? "w-14" : "w-64"} flex-shrink-0 flex-col border-r bg-background transition-all duration-200`}>
+    <div className="flex h-screen overflow-hidden bg-muted/20 text-foreground">
+      <aside
+        className={`flex ${collapsed ? "w-14" : "w-64"} flex-shrink-0 flex-col border-r bg-sidebar transition-all duration-200`}
+      >
         {/** @philosophy The sidebar header never has a bottom border. Visual separation from nav items is handled by whitespace. Never add border-bottom here. */}
         {!collapsed ? (
           <div className="flex h-12 w-full items-center justify-between px-3">
@@ -191,11 +193,7 @@ export function AppShell({ children, title, description, headerActions }: AppShe
               {description && <p className="sr-only">{description}</p>}
             </div>
           </div>
-          {headerActions && (
-            <div className="flex items-center gap-2">
-              {headerActions}
-            </div>
-          )}
+          {headerActions && <div className="flex items-center gap-2">{headerActions}</div>}
         </header>
 
         <main className="flex-1 overflow-y-auto overflow-x-hidden px-5 pt-4 pb-10 sm:px-8 lg:pt-6 lg:pb-14">
@@ -251,20 +249,13 @@ export function PageBreadcrumbSeparator() {
  * upstream parent links.
  */
 export function PageBreadcrumbCurrent({ children }: { children: ReactNode }) {
-  return (
-    <span className="min-w-0 truncate font-normal text-muted-foreground">
-      {children}
-    </span>
-  );
+  return <span className="min-w-0 truncate font-normal text-muted-foreground">{children}</span>;
 }
 
 /**
  * Circular back button rendered before breadcrumbs on detail pages.
  */
-export function PageBackButton({
-  label = "Back",
-  ...linkProps
-}: LinkProps & { label?: string }) {
+export function PageBackButton({ label = "Back", ...linkProps }: LinkProps & { label?: string }) {
   return (
     <Button
       render={<Link {...linkProps} />}
