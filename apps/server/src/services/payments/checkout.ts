@@ -1,10 +1,17 @@
 import { and, eq } from "drizzle-orm";
 import { isPaymentProvider, type PaymentProvider } from "@workspace/contracts";
 import { db } from "../../db";
-import { events, organization, paymentConnections, registrations } from "../../db/schema";
+import {
+  attendeePaymentProfiles,
+  attendees,
+  events,
+  organization,
+  paymentConnections,
+  registrations,
+} from "../../db/schema";
 import { getAdapter } from "../../payments/registry";
 
-const CHECKOUT_TTL_MS = 15 * 60 * 1000;
+const CHECKOUT_TTL_MS = 31 * 60 * 1000;
 
 export type CreateCheckoutOutcome =
   | { type: "ok"; url: string; sessionId: string }
@@ -103,6 +110,14 @@ export async function createCheckoutForRegistration(input: {
   const provider: PaymentProvider = connection.provider;
   const adapter = getAdapter(provider);
 
+  const customerId = await ensureCustomerProfile({
+    adapter,
+    accountId: connection.accountId,
+    orgId,
+    attendeeId: registration.attendeeId,
+    provider,
+  });
+
   const expiresAt = new Date(Date.now() + CHECKOUT_TTL_MS);
   const idempotencyKey = crypto.randomUUID();
 
@@ -117,6 +132,7 @@ export async function createCheckoutForRegistration(input: {
     cancelUrl: input.cancelUrl,
     expiresAt,
     idempotencyKey,
+    customerId,
   });
 
   await db
@@ -131,4 +147,51 @@ export async function createCheckoutForRegistration(input: {
     .where(eq(registrations.id, registration.id));
 
   return { type: "ok", url: session.url, sessionId: session.sessionId };
+}
+
+async function ensureCustomerProfile(input: {
+  adapter: ReturnType<typeof getAdapter>;
+  accountId: string;
+  orgId: string;
+  attendeeId: string;
+  provider: PaymentProvider;
+}): Promise<string | undefined> {
+  const existing = await db
+    .select()
+    .from(attendeePaymentProfiles)
+    .where(
+      and(
+        eq(attendeePaymentProfiles.attendeeId, input.attendeeId),
+        eq(attendeePaymentProfiles.provider, input.provider),
+      ),
+    )
+    .limit(1);
+  if (existing[0]) return existing[0].providerCustomerId;
+
+  const attendeeRows = await db
+    .select({ id: attendees.id, email: attendees.email, name: attendees.name })
+    .from(attendees)
+    .where(eq(attendees.id, input.attendeeId))
+    .limit(1);
+  const attendee = attendeeRows[0];
+  if (!attendee) return undefined;
+
+  const created = await input.adapter.getOrCreateCustomer(input.accountId, {
+    externalId: attendee.id,
+    email: attendee.email,
+    name: attendee.name,
+    metadata: { orgId: input.orgId },
+  });
+
+  await db
+    .insert(attendeePaymentProfiles)
+    .values({
+      attendeeId: attendee.id,
+      orgId: input.orgId,
+      provider: input.provider,
+      providerCustomerId: created.customerId,
+    })
+    .onConflictDoNothing();
+
+  return created.customerId;
 }

@@ -108,7 +108,9 @@ paymentRoutes.get("/callback/:provider", requireAuth, async (c) => {
 
   const webBase = Bun.env.WEB_URL || "http://localhost:5678";
   const slug = c.req.query("slug") ?? "";
-  const target = slug ? `${webBase}/admin/${slug}/settings?tab=payments&connected=${state.provider}` : `${webBase}/admin?connected=${state.provider}`;
+  const target = slug
+    ? `${webBase}/admin/${slug}/settings?tab=payments&connected=${state.provider}`
+    : `${webBase}/admin?connected=${state.provider}`;
   return c.redirect(target, 302);
 });
 

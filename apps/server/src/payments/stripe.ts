@@ -1,12 +1,15 @@
 import Stripe from "stripe";
 import type { Money } from "@workspace/contracts";
 import { requireStripeEnv } from "../env";
+import { getLogger } from "../observability/request-context";
 import {
   AdapterConfigError,
   InvalidSignatureError,
   type CheckoutSession,
   type CreateCheckoutInput,
   type ExchangedAccount,
+  type GetOrCreateCustomerInput,
+  type GetOrCreateCustomerResult,
   type NormalizedPaymentEvent,
   type PaymentProviderAdapter,
   type RefundInput,
@@ -19,10 +22,18 @@ function client(): Stripe {
   if (!cachedClient) {
     const { secretKey } = requireStripeEnv();
     cachedClient = new Stripe(secretKey, {
+      apiVersion: "2026-04-22.dahlia",
       typescript: true,
+      maxNetworkRetries: 2,
+      timeout: 20_000,
     });
   }
   return cachedClient;
+}
+
+function expectedLivemode(): boolean {
+  const { secretKey } = requireStripeEnv();
+  return secretKey.startsWith("sk_live_");
 }
 
 function moneyToStripeAmount(money: Money): number {
@@ -72,8 +83,16 @@ export function createStripeAdapter(): PaymentProviderAdapter {
       };
     },
 
-    async createCheckout(connectionAccountId, input: CreateCheckoutInput): Promise<CheckoutSession> {
+    async createCheckout(
+      connectionAccountId,
+      input: CreateCheckoutInput,
+    ): Promise<CheckoutSession> {
       const stripe = client();
+      const sharedMetadata = {
+        registrationId: input.registrationId,
+        eventId: input.eventId,
+        orgId: input.orgId,
+      };
       const session = await stripe.checkout.sessions.create(
         {
           mode: "payment",
@@ -94,17 +113,10 @@ export function createStripeAdapter(): PaymentProviderAdapter {
           cancel_url: input.cancelUrl,
           expires_at: Math.floor(input.expiresAt.getTime() / 1000),
           client_reference_id: input.registrationId,
-          metadata: {
-            registrationId: input.registrationId,
-            eventId: input.eventId,
-            orgId: input.orgId,
-          },
+          ...(input.customerId ? { customer: input.customerId } : {}),
+          metadata: sharedMetadata,
           payment_intent_data: {
-            metadata: {
-              registrationId: input.registrationId,
-              eventId: input.eventId,
-              orgId: input.orgId,
-            },
+            metadata: sharedMetadata,
           },
         },
         {
@@ -116,6 +128,28 @@ export function createStripeAdapter(): PaymentProviderAdapter {
         throw new AdapterConfigError("stripe checkout session created without url");
       }
       return { sessionId: session.id, url: session.url };
+    },
+
+    async getOrCreateCustomer(
+      connectionAccountId,
+      input: GetOrCreateCustomerInput,
+    ): Promise<GetOrCreateCustomerResult> {
+      const stripe = client();
+      const customer = await stripe.customers.create(
+        {
+          email: input.email,
+          ...(input.name ? { name: input.name } : {}),
+          metadata: {
+            attendeeId: input.externalId,
+            ...(input.metadata ?? {}),
+          },
+        },
+        {
+          stripeAccount: connectionAccountId,
+          idempotencyKey: `customer:${input.externalId}`,
+        },
+      );
+      return { customerId: customer.id };
     },
 
     async refundPayment(connectionAccountId, input: RefundInput): Promise<RefundResult> {
@@ -138,7 +172,7 @@ export function createStripeAdapter(): PaymentProviderAdapter {
       };
     },
 
-    verifyAndParse(headers, rawBody): NormalizedPaymentEvent | null {
+    async verifyAndParse(headers, rawBody): Promise<NormalizedPaymentEvent | null> {
       const { webhookSecret } = requireStripeEnv();
       const sig = headers["stripe-signature"];
       if (!sig) {
@@ -147,7 +181,7 @@ export function createStripeAdapter(): PaymentProviderAdapter {
       const stripe = client();
       let event: Stripe.Event;
       try {
-        event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
+        event = await stripe.webhooks.constructEventAsync(rawBody, sig, webhookSecret);
       } catch (err) {
         throw new InvalidSignatureError(
           err instanceof Error ? err.message : "invalid stripe signature",
@@ -158,30 +192,48 @@ export function createStripeAdapter(): PaymentProviderAdapter {
 
     async expireCheckout(connectionAccountId, sessionId) {
       const stripe = client();
-      await stripe.checkout.sessions.expire(
-        sessionId,
-        undefined,
-        { stripeAccount: connectionAccountId },
-      );
+      await stripe.checkout.sessions.expire(sessionId, undefined, {
+        stripeAccount: connectionAccountId,
+      });
     },
   };
 }
 
 function mapStripeEvent(event: Stripe.Event): NormalizedPaymentEvent | null {
+  const expectedLive = expectedLivemode();
+  if (event.livemode !== expectedLive) {
+    getLogger().warn(
+      { eventId: event.id, eventType: event.type, eventLivemode: event.livemode, expectedLive },
+      "webhook.livemodeMismatch",
+    );
+    return null;
+  }
   const providerEventId = event.id;
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
       if (session.payment_status !== "paid") return null;
-      const ref = paymentReferenceFromSession(session);
-      if (!ref) return null;
-      return { type: "payment.completed", paymentReference: ref, providerEventId };
+      const paymentIntentId = paymentIntentFromSession(session);
+      const registrationId = registrationIdFromMetadata(session.metadata);
+      return {
+        type: "payment.completed",
+        paymentReference: paymentIntentId ?? session.id,
+        providerEventId,
+        registrationId,
+        paymentIntentId,
+      };
     }
     case "checkout.session.expired": {
       const session = event.data.object as Stripe.Checkout.Session;
-      const ref = paymentReferenceFromSession(session);
-      if (!ref) return null;
-      return { type: "payment.expired", paymentReference: ref, providerEventId };
+      const paymentIntentId = paymentIntentFromSession(session);
+      const registrationId = registrationIdFromMetadata(session.metadata);
+      return {
+        type: "payment.expired",
+        paymentReference: paymentIntentId ?? session.id,
+        providerEventId,
+        registrationId,
+        paymentIntentId,
+      };
     }
     case "payment_intent.payment_failed": {
       const intent = event.data.object as Stripe.PaymentIntent;
@@ -189,6 +241,8 @@ function mapStripeEvent(event: Stripe.Event): NormalizedPaymentEvent | null {
         type: "payment.failed",
         paymentReference: intent.id,
         providerEventId,
+        registrationId: registrationIdFromMetadata(intent.metadata),
+        paymentIntentId: intent.id,
         reason: intent.last_payment_error?.message,
       };
     }
@@ -200,13 +254,16 @@ function mapStripeEvent(event: Stripe.Event): NormalizedPaymentEvent | null {
           ? extractRefundFromCharge(event.data.object as Stripe.Charge)
           : (event.data.object as Stripe.Refund);
       if (!refund) return null;
-      const ref = typeof refund.payment_intent === "string" ? refund.payment_intent : null;
-      if (!ref) return null;
+      const paymentIntentId =
+        typeof refund.payment_intent === "string" ? refund.payment_intent : null;
+      if (!paymentIntentId) return null;
       return {
         type: "payment.refunded",
-        paymentReference: ref,
+        paymentReference: paymentIntentId,
         providerEventId,
         providerRefundId: refund.id,
+        registrationId: registrationIdFromMetadata(refund.metadata),
+        paymentIntentId,
         amount: refund.amount
           ? { amount: refund.amount, currency: (refund.currency ?? "usd").toUpperCase() }
           : undefined,
@@ -218,10 +275,17 @@ function mapStripeEvent(event: Stripe.Event): NormalizedPaymentEvent | null {
   }
 }
 
-function paymentReferenceFromSession(session: Stripe.Checkout.Session): string | null {
+function paymentIntentFromSession(session: Stripe.Checkout.Session): string | undefined {
   if (typeof session.payment_intent === "string") return session.payment_intent;
   if (session.payment_intent && "id" in session.payment_intent) return session.payment_intent.id;
-  return session.id;
+  return undefined;
+}
+
+function registrationIdFromMetadata(
+  metadata: Stripe.Metadata | null | undefined,
+): string | undefined {
+  const value = metadata?.registrationId;
+  return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
 function extractRefundFromCharge(charge: Stripe.Charge): Stripe.Refund | null {

@@ -34,8 +34,5 @@ export function refundRegistration(input: {
   reason?: string;
 }) {
   const { registrationId, ...body } = input;
-  return api.post<RefundResponse>(
-    `/api/payments/registrations/${registrationId}/refund`,
-    body,
-  );
+  return api.post<RefundResponse>(`/api/payments/registrations/${registrationId}/refund`, body);
 }

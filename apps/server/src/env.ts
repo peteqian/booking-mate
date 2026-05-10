@@ -1,18 +1,10 @@
 import { z } from "zod";
 
-const stripeSchema = z
-  .object({
-    STRIPE_SECRET_KEY: z.string().min(1).optional(),
-    STRIPE_CLIENT_ID: z.string().min(1).optional(),
-    STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
-  })
-  .refine(
-    (v) => {
-      const present = [v.STRIPE_SECRET_KEY, v.STRIPE_CLIENT_ID, v.STRIPE_WEBHOOK_SECRET].filter(Boolean).length;
-      return present === 0 || present === 3;
-    },
-    { message: "STRIPE_* env vars must all be set together or all omitted" },
-  );
+const stripeSchema = z.object({
+  STRIPE_SECRET_KEY: z.string().min(1).optional(),
+  STRIPE_CLIENT_ID: z.string().min(1).optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
+});
 
 const paymentSchema = z.object({
   PAYMENT_ENCRYPTION_KEY: z
@@ -33,11 +25,15 @@ const paymentSchema = z.object({
 
 const schema = z.intersection(stripeSchema, paymentSchema);
 
+function blank(v: string | undefined) {
+  return v && v.length > 0 ? v : undefined;
+}
+
 const parsed = schema.safeParse({
-  STRIPE_SECRET_KEY: Bun.env.STRIPE_SECRET_KEY,
-  STRIPE_CLIENT_ID: Bun.env.STRIPE_CLIENT_ID,
-  STRIPE_WEBHOOK_SECRET: Bun.env.STRIPE_WEBHOOK_SECRET,
-  PAYMENT_ENCRYPTION_KEY: Bun.env.PAYMENT_ENCRYPTION_KEY,
+  STRIPE_SECRET_KEY: blank(Bun.env.STRIPE_SECRET_KEY),
+  STRIPE_CLIENT_ID: blank(Bun.env.STRIPE_CLIENT_ID),
+  STRIPE_WEBHOOK_SECRET: blank(Bun.env.STRIPE_WEBHOOK_SECRET),
+  PAYMENT_ENCRYPTION_KEY: blank(Bun.env.PAYMENT_ENCRYPTION_KEY),
 });
 
 if (!parsed.success) {
@@ -54,7 +50,9 @@ export const stripeEnabled = Boolean(
 
 export function requireStripeEnv() {
   if (!stripeEnabled) {
-    throw new Error("Stripe env vars required (STRIPE_SECRET_KEY, STRIPE_CLIENT_ID, STRIPE_WEBHOOK_SECRET)");
+    throw new Error(
+      "Stripe env vars required (STRIPE_SECRET_KEY, STRIPE_CLIENT_ID, STRIPE_WEBHOOK_SECRET)",
+    );
   }
   return {
     secretKey: env.STRIPE_SECRET_KEY!,

@@ -8,7 +8,12 @@ export type RefundOutcome =
   | { type: "ok"; refundId: string; refundStatus: string }
   | {
       type: "error";
-      code: "registration_not_found" | "not_paid" | "no_provider" | "unknown_provider" | "adapter_failed";
+      code:
+        | "registration_not_found"
+        | "not_paid"
+        | "no_provider"
+        | "unknown_provider"
+        | "adapter_failed";
       message: string;
     };
 
@@ -22,9 +27,7 @@ export async function refundRegistration(input: {
   const regRows = await db
     .select()
     .from(registrations)
-    .where(
-      and(eq(registrations.orgId, input.orgId), eq(registrations.id, input.registrationId)),
-    )
+    .where(and(eq(registrations.orgId, input.orgId), eq(registrations.id, input.registrationId)))
     .limit(1);
   const reg = regRows[0];
   if (!reg) {
@@ -33,7 +36,7 @@ export async function refundRegistration(input: {
   if (reg.paymentStatus !== "paid") {
     return { type: "error", code: "not_paid", message: "Registration is not paid" };
   }
-  if (!reg.paymentProvider || !reg.checkoutSessionId) {
+  if (!reg.paymentProvider || !reg.paymentIntentId) {
     return { type: "error", code: "no_provider", message: "Registration has no payment record" };
   }
   if (!isPaymentProvider(reg.paymentProvider)) {
@@ -61,7 +64,7 @@ export async function refundRegistration(input: {
 
   try {
     const result = await adapter.refundPayment(conn.accountId, {
-      paymentReference: reg.checkoutSessionId,
+      paymentReference: reg.paymentIntentId,
       amount:
         input.amount && input.amount > 0
           ? { amount: input.amount, currency: conn.currency }
@@ -74,7 +77,7 @@ export async function refundRegistration(input: {
       registrationId: reg.id,
       provider: reg.paymentProvider,
       providerRefundId: result.refundId,
-      paymentReference: reg.checkoutSessionId,
+      paymentReference: reg.paymentIntentId,
       requestedAmount,
       currency: conn.currency,
       reason: input.reason ?? null,
@@ -89,7 +92,7 @@ export async function refundRegistration(input: {
       registrationId: reg.id,
       provider: reg.paymentProvider,
       providerRefundId: null,
-      paymentReference: reg.checkoutSessionId,
+      paymentReference: reg.paymentIntentId,
       requestedAmount,
       currency: conn.currency,
       reason: input.reason ?? null,

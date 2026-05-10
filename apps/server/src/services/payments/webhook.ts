@@ -1,7 +1,8 @@
-import { and, eq, isNotNull } from "drizzle-orm";
+import { and, eq, isNotNull, or, type SQL } from "drizzle-orm";
 import { isPaymentProvider } from "@workspace/contracts";
 import { db } from "../../db";
 import { paymentRefunds, registrations, webhookEvents } from "../../db/schema";
+import { getLogger } from "../../observability/request-context";
 import { getAdapter, isAdapterAvailable } from "../../payments/registry";
 import { InvalidSignatureError, type NormalizedPaymentEvent } from "../../payments/adapter";
 
@@ -28,14 +29,19 @@ export async function handleWebhook(input: {
 
   let normalized: NormalizedPaymentEvent | null;
   try {
-    normalized = adapter.verifyAndParse(input.headers, input.rawBody);
+    normalized = await adapter.verifyAndParse(input.headers, input.rawBody);
   } catch (err) {
-    if (err instanceof InvalidSignatureError) return { type: "invalid_signature" };
+    if (err instanceof InvalidSignatureError) {
+      getLogger().warn(
+        { provider: input.provider, reason: err.message },
+        "webhook.invalidSignature",
+      );
+      return { type: "invalid_signature" };
+    }
     throw err;
   }
   if (!normalized) return { type: "ignored" };
 
-  // Dedupe + apply atomically.
   const result = await db.transaction(async (tx) => {
     const inserted = await tx
       .insert(webhookEvents)
@@ -60,20 +66,16 @@ export async function handleWebhook(input: {
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-async function applyEvent(
-  tx: Tx,
-  provider: string,
-  event: NormalizedPaymentEvent,
-): Promise<void> {
+async function applyEvent(tx: Tx, provider: string, event: NormalizedPaymentEvent): Promise<void> {
   switch (event.type) {
     case "payment.completed":
-      await markPaid(tx, event.paymentReference);
+      await markPaid(tx, event);
       break;
     case "payment.expired":
-      await markExpired(tx, event.paymentReference);
+      await markStatus(tx, event, { paymentStatus: "expired", status: "cancelled" });
       break;
     case "payment.failed":
-      await markFailed(tx, event.paymentReference);
+      await markStatus(tx, event, { paymentStatus: "failed", status: "cancelled" });
       break;
     case "payment.refunded":
       await applyRefund(tx, provider, event);
@@ -81,25 +83,40 @@ async function applyEvent(
   }
 }
 
-async function markPaid(tx: Tx, paymentReference: string) {
+async function markPaid(
+  tx: Tx,
+  event: Extract<NormalizedPaymentEvent, { type: "payment.completed" }>,
+) {
+  const where = matchRegistration(event);
+  if (!where) {
+    logMatchMiss(event);
+    return;
+  }
   await tx
     .update(registrations)
-    .set({ paymentStatus: "paid", status: "confirmed", updatedAt: new Date() })
-    .where(matchPaymentReference(paymentReference));
+    .set({
+      paymentStatus: "paid",
+      status: "confirmed",
+      ...(event.paymentIntentId ? { paymentIntentId: event.paymentIntentId } : {}),
+      updatedAt: new Date(),
+    })
+    .where(where);
 }
 
-async function markExpired(tx: Tx, paymentReference: string) {
+async function markStatus(
+  tx: Tx,
+  event: NormalizedPaymentEvent,
+  set: { paymentStatus: "expired" | "failed"; status: "cancelled" },
+) {
+  const where = matchRegistration(event);
+  if (!where) {
+    logMatchMiss(event);
+    return;
+  }
   await tx
     .update(registrations)
-    .set({ paymentStatus: "expired", status: "cancelled", updatedAt: new Date() })
-    .where(matchPaymentReference(paymentReference));
-}
-
-async function markFailed(tx: Tx, paymentReference: string) {
-  await tx
-    .update(registrations)
-    .set({ paymentStatus: "failed", status: "cancelled", updatedAt: new Date() })
-    .where(matchPaymentReference(paymentReference));
+    .set({ ...set, updatedAt: new Date() })
+    .where(where);
 }
 
 async function applyRefund(
@@ -133,18 +150,21 @@ async function applyRefund(
       })
       .where(eq(paymentRefunds.id, existing[0].id));
   } else {
-    // Refund originated from provider dashboard. Create row.
+    const where = matchRegistration(event);
+    if (!where) {
+      logMatchMiss(event);
+      return;
+    }
     const regRows = await tx
-      .select({
-        id: registrations.id,
-        paymentReference: registrations.checkoutSessionId,
-        paymentIntent: registrations.checkoutSessionId,
-      })
+      .select({ id: registrations.id })
       .from(registrations)
-      .where(matchPaymentReference(event.paymentReference))
+      .where(where)
       .limit(1);
     const reg = regRows[0];
-    if (!reg) return;
+    if (!reg) {
+      logMatchMiss(event);
+      return;
+    }
 
     await tx.insert(paymentRefunds).values({
       registrationId: reg.id,
@@ -159,19 +179,42 @@ async function applyRefund(
     });
   }
 
-  // Flip registration paymentStatus when refund succeeds AND amount equals full payment.
-  // v1 simple: any successful refund flips to refunded.
   if (status === "succeeded") {
+    const where = matchRegistration(event);
+    if (!where) return;
     await tx
       .update(registrations)
       .set({ paymentStatus: "refunded", updatedAt: new Date() })
-      .where(matchPaymentReference(event.paymentReference));
+      .where(where);
   }
 }
 
-function matchPaymentReference(paymentReference: string) {
-  return and(
-    isNotNull(registrations.checkoutSessionId),
-    eq(registrations.checkoutSessionId, paymentReference),
+function matchRegistration(event: NormalizedPaymentEvent): SQL | null {
+  const clauses: SQL[] = [];
+  if (event.registrationId) {
+    clauses.push(eq(registrations.id, event.registrationId));
+  }
+  if (event.paymentIntentId) {
+    clauses.push(
+      and(
+        isNotNull(registrations.paymentIntentId),
+        eq(registrations.paymentIntentId, event.paymentIntentId),
+      )!,
+    );
+  }
+  if (clauses.length === 0) return null;
+  if (clauses.length === 1) return clauses[0];
+  return or(...clauses)!;
+}
+
+function logMatchMiss(event: NormalizedPaymentEvent) {
+  getLogger().warn(
+    {
+      type: event.type,
+      providerEventId: event.providerEventId,
+      registrationId: event.registrationId,
+      paymentIntentId: event.paymentIntentId,
+    },
+    "webhook.matchMiss",
   );
 }

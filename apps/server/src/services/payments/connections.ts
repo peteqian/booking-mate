@@ -1,10 +1,7 @@
 import { eq } from "drizzle-orm";
 import type { PaymentProvider } from "@workspace/contracts";
 import { db } from "../../db";
-import {
-  paymentConnections,
-  stripePaymentAccounts,
-} from "../../db/schema";
+import { paymentConnections, stripePaymentAccounts } from "../../db/schema";
 import type { ExchangedAccount } from "../../payments/adapter";
 
 export async function upsertConnection(input: {

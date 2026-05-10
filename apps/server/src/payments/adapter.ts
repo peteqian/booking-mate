@@ -11,6 +11,18 @@ export type CreateCheckoutInput = {
   cancelUrl: string;
   expiresAt: Date;
   idempotencyKey: string;
+  customerId?: string;
+};
+
+export type GetOrCreateCustomerInput = {
+  externalId: string;
+  email: string;
+  name?: string | null;
+  metadata?: Record<string, string>;
+};
+
+export type GetOrCreateCustomerResult = {
+  customerId: string;
 };
 
 export type CheckoutSession = {
@@ -19,11 +31,19 @@ export type CheckoutSession = {
 };
 
 export type NormalizedPaymentEvent =
-  | { type: "payment.completed"; paymentReference: string; providerEventId: string }
+  | {
+      type: "payment.completed";
+      paymentReference: string;
+      providerEventId: string;
+      registrationId?: string;
+      paymentIntentId?: string;
+    }
   | {
       type: "payment.failed";
       paymentReference: string;
       providerEventId: string;
+      registrationId?: string;
+      paymentIntentId?: string;
       reason?: string;
     }
   | {
@@ -31,10 +51,18 @@ export type NormalizedPaymentEvent =
       paymentReference: string;
       providerEventId: string;
       providerRefundId: string;
+      registrationId?: string;
+      paymentIntentId?: string;
       amount?: Money;
       status: "pending" | "succeeded" | "failed" | "canceled";
     }
-  | { type: "payment.expired"; paymentReference: string; providerEventId: string };
+  | {
+      type: "payment.expired";
+      paymentReference: string;
+      providerEventId: string;
+      registrationId?: string;
+      paymentIntentId?: string;
+    };
 
 export type ExchangedAccount = {
   accountId: string;
@@ -60,11 +88,15 @@ export interface PaymentProviderAdapter {
   buildOnboardingUrl(input: { state: string; redirectUri: string }): string;
   exchangeOAuthCode(input: { code: string; redirectUri: string }): Promise<ExchangedAccount>;
   createCheckout(connectionAccountId: string, input: CreateCheckoutInput): Promise<CheckoutSession>;
+  getOrCreateCustomer(
+    connectionAccountId: string,
+    input: GetOrCreateCustomerInput,
+  ): Promise<GetOrCreateCustomerResult>;
   refundPayment(connectionAccountId: string, input: RefundInput): Promise<RefundResult>;
   verifyAndParse(
     headers: Record<string, string | undefined>,
     rawBody: string,
-  ): NormalizedPaymentEvent | null;
+  ): Promise<NormalizedPaymentEvent | null>;
   expireCheckout?(connectionAccountId: string, sessionId: string): Promise<void>;
 }
 
