@@ -186,7 +186,18 @@ export interface RegistrationDto {
   status: RegistrationStatus;
   paymentStatus: PaymentStatus;
   checkoutSessionId: string | null;
+  paymentIntentId: string | null;
   paymentProvider: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AttendeePaymentProfileDto {
+  id: string;
+  attendeeId: string;
+  orgId: string;
+  provider: string;
+  providerCustomerId: string;
   createdAt: string;
   updatedAt: string;
 }

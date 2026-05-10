@@ -219,6 +219,7 @@ export const registrations = pgTable(
     status: registrationStatus("status").notNull().default("confirmed"),
     paymentStatus: paymentStatus("payment_status").notNull().default("not_required"),
     checkoutSessionId: text("checkout_session_id"),
+    paymentIntentId: text("payment_intent_id"),
     paymentProvider: text("payment_provider"),
     paymentExpiresAt: timestamp("payment_expires_at"),
     paymentIdempotencyKey: text("payment_idempotency_key"),
@@ -230,6 +231,36 @@ export const registrations = pgTable(
     index("registrations_event_id_idx").on(table.eventId),
     index("registrations_attendee_id_idx").on(table.attendeeId),
     index("registrations_payment_expires_idx").on(table.paymentExpiresAt),
+    index("registrations_payment_intent_idx").on(table.paymentIntentId),
+  ],
+);
+
+export const attendeePaymentProfiles = pgTable(
+  "attendee_payment_profiles",
+  {
+    id: id(),
+    attendeeId: text("attendee_id")
+      .notNull()
+      .references(() => attendees.id, { onDelete: "cascade" }),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    provider: text("provider").notNull(),
+    providerCustomerId: text("provider_customer_id").notNull(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("attendee_payment_profiles_attendee_provider_idx").on(
+      table.attendeeId,
+      table.provider,
+    ),
+    index("attendee_payment_profiles_lookup_idx").on(
+      table.orgId,
+      table.provider,
+      table.providerCustomerId,
+    ),
   ],
 );
 

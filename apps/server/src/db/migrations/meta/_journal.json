@@ -5,71 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1777726850224,
-      "tag": "0000_daily_karma",
+      "when": 1778413015941,
+      "tag": "0000_short_miek",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1777730000000,
-      "tag": "0001_auth_schema",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1777730200000,
-      "tag": "0002_auth_cascade_constraints",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1777730300000,
-      "tag": "0003_drop_non_cascade_auth_constraints",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1777810225981,
-      "tag": "0004_domain_foundation",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1778056944359,
-      "tag": "0005_keen_dark_beast",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1778078341584,
-      "tag": "0006_first_mole_man",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1778101529070,
-      "tag": "0007_jazzy_layla_miller",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1778306441126,
-      "tag": "0008_dashing_scourge",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1778313874305,
-      "tag": "0009_tranquil_manta",
+      "when": 1778417717058,
+      "tag": "0001_strange_romulus",
       "breakpoints": true
     }
   ]

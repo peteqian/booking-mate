@@ -1,9 +1,150 @@
 {
-  "id": "3b02bc6d-b68d-456b-bb63-3d82d58fd3f0",
-  "prevId": "02793b50-8687-462d-ab9c-0ff35a1b6c7c",
+  "id": "c96e2080-dc68-4a6e-b980-e197c8e9fdad",
+  "prevId": "116560b3-521e-4e6a-9d02-845f076b44e9",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.attendee_payment_profiles": {
+      "name": "attendee_payment_profiles",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "attendee_id": {
+          "name": "attendee_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider_customer_id": {
+          "name": "provider_customer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "attendee_payment_profiles_attendee_provider_idx": {
+          "name": "attendee_payment_profiles_attendee_provider_idx",
+          "columns": [
+            {
+              "expression": "attendee_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "provider",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "attendee_payment_profiles_lookup_idx": {
+          "name": "attendee_payment_profiles_lookup_idx",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "provider",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "provider_customer_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "attendee_payment_profiles_attendee_id_attendees_id_fk": {
+          "name": "attendee_payment_profiles_attendee_id_attendees_id_fk",
+          "tableFrom": "attendee_payment_profiles",
+          "tableTo": "attendees",
+          "columnsFrom": [
+            "attendee_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "attendee_payment_profiles_org_id_organization_id_fk": {
+          "name": "attendee_payment_profiles_org_id_organization_id_fk",
+          "tableFrom": "attendee_payment_profiles",
+          "tableTo": "organization",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "org_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.attendees": {
       "name": "attendees",
       "schema": "",
@@ -96,6 +237,7 @@
           "name": "attendees_org_id_organization_id_fk",
           "tableFrom": "attendees",
           "tableTo": "organization",
+          "schemaTo": "auth",
           "columnsFrom": [
             "org_id"
           ],
@@ -232,6 +374,7 @@
           "name": "event_resources_org_id_organization_id_fk",
           "tableFrom": "event_resources",
           "tableTo": "organization",
+          "schemaTo": "auth",
           "columnsFrom": [
             "org_id"
           ],
@@ -546,6 +689,7 @@
           "name": "events_org_id_organization_id_fk",
           "tableFrom": "events",
           "tableTo": "organization",
+          "schemaTo": "auth",
           "columnsFrom": [
             "org_id"
           ],
@@ -559,6 +703,7 @@
           "name": "events_created_by_id_user_id_fk",
           "tableFrom": "events",
           "tableTo": "user",
+          "schemaTo": "auth",
           "columnsFrom": [
             "created_by_id"
           ],
@@ -682,6 +827,7 @@
           "name": "org_settings_org_id_organization_id_fk",
           "tableFrom": "org_settings",
           "tableTo": "organization",
+          "schemaTo": "auth",
           "columnsFrom": [
             "org_id"
           ],
@@ -795,6 +941,7 @@
           "name": "payment_connections_org_id_organization_id_fk",
           "tableFrom": "payment_connections",
           "tableTo": "organization",
+          "schemaTo": "auth",
           "columnsFrom": [
             "org_id"
           ],
@@ -977,6 +1124,7 @@
           "name": "payment_refunds_requested_by_user_id_user_id_fk",
           "tableFrom": "payment_refunds",
           "tableTo": "user",
+          "schemaTo": "auth",
           "columnsFrom": [
             "requested_by_user_id"
           ],
@@ -1184,6 +1332,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "payment_intent_id": {
+          "name": "payment_intent_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "payment_provider": {
           "name": "payment_provider",
           "type": "text",
@@ -1277,6 +1431,21 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "registrations_payment_intent_idx": {
+          "name": "registrations_payment_intent_idx",
+          "columns": [
+            {
+              "expression": "payment_intent_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -1284,6 +1453,7 @@
           "name": "registrations_org_id_organization_id_fk",
           "tableFrom": "registrations",
           "tableTo": "organization",
+          "schemaTo": "auth",
           "columnsFrom": [
             "org_id"
           ],
@@ -1495,6 +1665,7 @@
           "name": "resources_org_id_organization_id_fk",
           "tableFrom": "resources",
           "tableTo": "organization",
+          "schemaTo": "auth",
           "columnsFrom": [
             "org_id"
           ],
@@ -1921,6 +2092,7 @@
           "name": "webhook_deliveries_org_id_organization_id_fk",
           "tableFrom": "webhook_deliveries",
           "tableTo": "organization",
+          "schemaTo": "auth",
           "columnsFrom": [
             "org_id"
           ],
@@ -2018,9 +2190,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.account": {
+    "auth.account": {
       "name": "account",
-      "schema": "",
+      "schema": "auth",
       "columns": {
         "id": {
           "name": "id",
@@ -2107,6 +2279,7 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
+          "schemaTo": "auth",
           "columnsFrom": [
             "user_id"
           ],
@@ -2123,9 +2296,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.invitation": {
+    "auth.invitation": {
       "name": "invitation",
-      "schema": "",
+      "schema": "auth",
       "columns": {
         "id": {
           "name": "id",
@@ -2176,6 +2349,7 @@
           "name": "invitation_organization_id_organization_id_fk",
           "tableFrom": "invitation",
           "tableTo": "organization",
+          "schemaTo": "auth",
           "columnsFrom": [
             "organization_id"
           ],
@@ -2189,6 +2363,7 @@
           "name": "invitation_inviter_id_user_id_fk",
           "tableFrom": "invitation",
           "tableTo": "user",
+          "schemaTo": "auth",
           "columnsFrom": [
             "inviter_id"
           ],
@@ -2205,9 +2380,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.member": {
+    "auth.member": {
       "name": "member",
-      "schema": "",
+      "schema": "auth",
       "columns": {
         "id": {
           "name": "id",
@@ -2246,6 +2421,7 @@
           "name": "member_organization_id_organization_id_fk",
           "tableFrom": "member",
           "tableTo": "organization",
+          "schemaTo": "auth",
           "columnsFrom": [
             "organization_id"
           ],
@@ -2259,6 +2435,7 @@
           "name": "member_user_id_user_id_fk",
           "tableFrom": "member",
           "tableTo": "user",
+          "schemaTo": "auth",
           "columnsFrom": [
             "user_id"
           ],
@@ -2275,9 +2452,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.organization": {
+    "auth.organization": {
       "name": "organization",
-      "schema": "",
+      "schema": "auth",
       "columns": {
         "id": {
           "name": "id",
@@ -2332,9 +2509,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.session": {
+    "auth.session": {
       "name": "session",
-      "schema": "",
+      "schema": "auth",
       "columns": {
         "id": {
           "name": "id",
@@ -2391,6 +2568,7 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
+          "schemaTo": "auth",
           "columnsFrom": [
             "user_id"
           ],
@@ -2415,9 +2593,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.user": {
+    "auth.user": {
       "name": "user",
-      "schema": "",
+      "schema": "auth",
       "columns": {
         "id": {
           "name": "id",
@@ -2478,9 +2656,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.verification": {
+    "auth.verification": {
       "name": "verification",
-      "schema": "",
+      "schema": "auth",
       "columns": {
         "id": {
           "name": "id",
@@ -2608,7 +2786,9 @@
       ]
     }
   },
-  "schemas": {},
+  "schemas": {
+    "auth": "auth"
+  },
   "sequences": {},
   "roles": {},
   "policies": {},
