@@ -7,7 +7,7 @@ Public booking pages are a first-class distribution channel for each organizatio
 Included:
 
 - [~] Slug URL: `/book/:slug`. (superseded by clean `/events` paths under subdomain)
-- [x] Subdomain URL: `{org}.domain.com`. (works via `*.traefik.me` in dev; admin moved to `/admin/*` so public owns `/events`)
+- [x] Subdomain URL: `{org}.domain.com`. (works via `*.lvh.me` in dev; admin moved to `/admin/*` so public owns `/events`)
 - [ ] Custom domain support.
 - [x] Public event search/filter. (client-side title/description search + category filter)
 - [x] Public registration. (free events; paid events show contact-email alert)

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getPublicRequestInfo } from "@/lib/public";
+import { getPublicOrigin, getPublicRequestInfo, startPublicCheckout } from "@/lib/public";
 import { usePublicRegister } from "@/hooks/use-public-register";
 import { publicEventQueryOptions, publicOrgQueryOptions } from "@/queries/public";
 import { NoSubdomainPlaceholder } from "./~components/no-subdomain";
@@ -44,7 +44,6 @@ function PublicEventBook() {
 }
 
 function PublicEventBookContent({ slug, eventId }: { slug: string; eventId: string }) {
-  const { data: orgData } = useSuspenseQuery(publicOrgQueryOptions(slug));
   const { data: eventData } = useSuspenseQuery(publicEventQueryOptions(slug, eventId));
 
   const event = eventData.event;
@@ -55,16 +54,38 @@ function PublicEventBookContent({ slug, eventId }: { slug: string; eventId: stri
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [checkoutPending, setCheckoutPending] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     try {
-      await register.mutateAsync({
+      const result = await register.mutateAsync({
         name: name.trim(),
         email: email.trim(),
         phone: phone.trim() === "" ? null : phone.trim(),
       });
+
+      if (!isPaid) return;
+
+      setCheckoutPending(true);
+      const origin = getPublicOrigin();
+      const rid = result.registration.id;
+      try {
+        const checkout = await startPublicCheckout(slug, eventId, {
+          registrationId: rid,
+          successUrl: `${origin}/events/${eventId}/return?status=success&rid=${rid}`,
+          cancelUrl: `${origin}/events/${eventId}/return?status=cancel&rid=${rid}`,
+        });
+        window.location.assign(checkout.url);
+      } catch (checkoutErr) {
+        setCheckoutPending(false);
+        const msg =
+          checkoutErr instanceof ApiError ? checkoutErr.message : "Couldn't start payment.";
+        setError(
+          `Registered, but ${msg.toLowerCase()} Reach out to the organizer with reference ${rid}.`,
+        );
+      }
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -75,13 +96,13 @@ function PublicEventBookContent({ slug, eventId }: { slug: string; eventId: stri
   };
 
   return (
-    <div className="min-h-svh bg-background">
-      <header className="border-b bg-card">
+    <div className="min-h-svh bg-muted/20">
+      <header className="bg-background/85 backdrop-blur supports-backdrop-filter:bg-background/75">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-6">
           <Link
             to="/events/$eventId"
             params={{ eventId }}
-            className="text-sm underline"
+            className="text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
           >
             ← {event.title}
           </Link>
@@ -89,27 +110,11 @@ function PublicEventBookContent({ slug, eventId }: { slug: string; eventId: stri
       </header>
 
       <main className="mx-auto max-w-md px-6 py-8">
-        {isPaid ? (
+        {checkoutPending ? (
           <Alert>
-            <AlertDescription>
-              Paid registration is not available yet.{" "}
-              {orgData.settings?.contactEmail ? (
-                <>
-                  Contact{" "}
-                  <a
-                    href={`mailto:${orgData.settings.contactEmail}`}
-                    className="underline"
-                  >
-                    {orgData.settings.contactEmail}
-                  </a>{" "}
-                  to register.
-                </>
-              ) : (
-                "Contact the organizer to register."
-              )}
-            </AlertDescription>
+            <AlertDescription>Redirecting to payment…</AlertDescription>
           </Alert>
-        ) : register.data ? (
+        ) : !isPaid && register.data ? (
           <Alert>
             <AlertDescription>
               {register.data.registration.status === "confirmed"
@@ -120,9 +125,11 @@ function PublicEventBookContent({ slug, eventId }: { slug: string; eventId: stri
             </AlertDescription>
           </Alert>
         ) : (
-          <Card>
+          <Card className="shadow-sm">
             <CardHeader>
-              <CardTitle>Book {event.title}</CardTitle>
+              <CardTitle className="font-heading text-2xl tracking-[-0.03em]">
+                Book {event.title}
+              </CardTitle>
               <CardDescription>Enter your details to reserve a spot.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -162,8 +169,18 @@ function PublicEventBookContent({ slug, eventId }: { slug: string; eventId: stri
                   </Alert>
                 ) : null}
 
-                <Button type="submit" className="w-full" disabled={register.isPending}>
-                  {register.isPending ? "Registering…" : "Register"}
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={register.isPending || checkoutPending}
+                >
+                  {register.isPending
+                    ? "Registering…"
+                    : checkoutPending
+                      ? "Redirecting…"
+                      : isPaid
+                        ? `Continue to payment`
+                        : "Register"}
                 </Button>
               </form>
             </CardContent>

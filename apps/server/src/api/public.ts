@@ -11,6 +11,10 @@ import {
   registerForPublicEvent,
 } from "../services/public";
 import { createCheckoutForRegistration } from "../services/payments/checkout";
+import { verifyResumeToken } from "../services/payments/resume-token";
+import { db } from "../db";
+import { registrations, organization, events as eventsTable } from "../db/schema";
+import { and, eq } from "drizzle-orm";
 
 function parsePublicRegistration(input: unknown): PublicRegistrationRequest | string {
   if (!isRecord(input)) return "Request body must be an object";
@@ -61,16 +65,23 @@ export const publicRoutes = new Hono()
     const input = parsePublicRegistration(await readJson(c));
     if (typeof input === "string") return apiError(c, 400, "invalid_registration", input);
 
-    const registration = await registerForPublicEvent(c.req.param("slug"), eventId, input);
-    if (registration === "org_not_found") {
+    const reqUrl = new URL(c.req.url);
+    const publicOrigin = `${reqUrl.protocol}//${reqUrl.host}`;
+    const outcome = await registerForPublicEvent(
+      c.req.param("slug"),
+      eventId,
+      input,
+      publicOrigin,
+    );
+    if (outcome === "org_not_found") {
       getLogger().warn("tenant.notFound");
       return apiError(c, 404, "org_not_found", "Organization not found");
     }
-    if (registration === "event_not_found")
+    if (outcome === "event_not_found")
       return apiError(c, 404, "event_not_found", "Event not found");
-    if (registration === "attendee_not_found")
+    if (outcome === "attendee_not_found")
       return apiError(c, 404, "attendee_not_found", "Attendee not found");
-    if (registration === "duplicate_registration") {
+    if (outcome === "duplicate_registration") {
       logEvent("registration.duplicate", { eventId });
       return apiError(
         c,
@@ -80,8 +91,19 @@ export const publicRoutes = new Hono()
       );
     }
 
-    logEvent("registration.created", { registrationId: registration.id, eventId });
-    return c.json({ registration }, 201);
+    if (outcome.type === "resume") {
+      logEvent("registration.resume", {
+        registrationId: outcome.registration.id,
+        eventId,
+      });
+      return c.json({ registration: outcome.registration, resume: true }, 200);
+    }
+
+    logEvent("registration.created", {
+      registrationId: outcome.registration.id,
+      eventId,
+    });
+    return c.json({ registration: outcome.registration }, 201);
   })
   .post("/orgs/:slug/events/:eventId/checkout", async (c) => {
     enrichLogger({ eventId: c.req.param("eventId") });
@@ -112,6 +134,82 @@ export const publicRoutes = new Hono()
 
     logEvent("payment.checkout.created", {
       registrationId: body.registrationId,
+      sessionId: result.sessionId,
+    });
+    return c.json({ url: result.url, sessionId: result.sessionId });
+  })
+  .post("/orgs/:slug/events/:eventId/resume", async (c) => {
+    const slug = c.req.param("slug");
+    const eventId = c.req.param("eventId");
+    enrichLogger({ eventId });
+
+    const body = (await readJson(c)) as Record<string, unknown> | null;
+    if (!isRecord(body) || typeof body.token !== "string" || body.token.length === 0) {
+      return apiError(c, 400, "invalid_resume", "token is required");
+    }
+
+    let payload;
+    try {
+      payload = verifyResumeToken(body.token);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "invalid token";
+      return apiError(c, 400, "invalid_resume_token", msg);
+    }
+
+    if (payload.eventId !== eventId || payload.orgSlug !== slug) {
+      return apiError(c, 400, "invalid_resume_token", "token does not match event");
+    }
+
+    const orgRows = await db
+      .select({ id: organization.id })
+      .from(organization)
+      .where(eq(organization.slug, slug))
+      .limit(1);
+    if (!orgRows[0]) return apiError(c, 404, "org_not_found", "Organization not found");
+
+    const regRows = await db
+      .select()
+      .from(registrations)
+      .where(
+        and(
+          eq(registrations.id, payload.registrationId),
+          eq(registrations.orgId, orgRows[0].id),
+        ),
+      )
+      .limit(1);
+    const reg = regRows[0];
+    if (!reg) return apiError(c, 404, "registration_not_found", "Registration not found");
+
+    if (reg.paymentStatus === "paid" || reg.status === "confirmed") {
+      return c.json({ paid: true });
+    }
+    if (reg.status === "cancelled" || reg.paymentStatus === "expired") {
+      return c.json({ expired: true });
+    }
+
+    const eventRows = await db
+      .select({ id: eventsTable.id })
+      .from(eventsTable)
+      .where(eq(eventsTable.id, eventId))
+      .limit(1);
+    if (!eventRows[0]) return apiError(c, 404, "event_not_found", "Event not found");
+
+    const reqUrl = new URL(c.req.url);
+    const origin = `${reqUrl.protocol}//${reqUrl.host}`;
+    const result = await createCheckoutForRegistration({
+      registrationId: reg.id,
+      orgSlug: slug,
+      successUrl: `${origin}/events/${eventId}/return?status=success&rid=${reg.id}`,
+      cancelUrl: `${origin}/events/${eventId}/return?status=cancel&rid=${reg.id}`,
+    });
+
+    if (result.type === "error") {
+      const status = result.code === "registration_not_found" ? 404 : 400;
+      return apiError(c, status, result.code, result.message);
+    }
+
+    logEvent("payment.checkout.resumed", {
+      registrationId: reg.id,
       sessionId: result.sessionId,
     });
     return c.json({ url: result.url, sessionId: result.sessionId });

@@ -5,8 +5,7 @@ export const publicKeys = {
   all: ["public"] as const,
   org: (slug: string) => [...publicKeys.all, "org", slug] as const,
   events: (slug: string) => [...publicKeys.all, "events", slug] as const,
-  event: (slug: string, eventId: string) =>
-    [...publicKeys.all, "event", slug, eventId] as const,
+  event: (slug: string, eventId: string) => [...publicKeys.all, "event", slug, eventId] as const,
 };
 
 export const publicOrgQueryOptions = (slug: string) =>

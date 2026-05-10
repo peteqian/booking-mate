@@ -75,18 +75,20 @@ function PublicOrgEventsContent({ slug }: { slug: string }) {
   }, [eventsData.events, search, category]);
 
   return (
-    <div className="min-h-svh bg-background">
-      <header className="border-b bg-card">
+    <div className="min-h-svh bg-muted/20">
+      <header className="bg-background/85 backdrop-blur supports-backdrop-filter:bg-background/75">
         <div className="mx-auto flex max-w-5xl items-center gap-4 px-6 py-6">
           {orgData.org.logo ? (
             <img
               src={orgData.org.logo}
               alt={orgData.org.name}
-              className="h-12 w-12 rounded-md object-cover"
+              className="h-12 w-12 rounded-xl object-cover shadow-xs ring-1 ring-border"
             />
           ) : null}
-          <div>
-            <h1 className="text-2xl font-bold">{orgData.org.name}</h1>
+          <div className="min-w-0">
+            <h1 className="font-heading text-2xl font-semibold tracking-[-0.03em]">
+              {orgData.org.name}
+            </h1>
             {orgData.settings?.contactEmail ? (
               <p className="text-sm text-muted-foreground">
                 Contact:{" "}
@@ -100,7 +102,7 @@ function PublicOrgEventsContent({ slug }: { slug: string }) {
       </header>
 
       <main className="mx-auto max-w-5xl space-y-6 px-6 py-8">
-        <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="flex flex-col gap-3 rounded-2xl border bg-background/80 p-3 shadow-xs sm:flex-row">
           <Input
             placeholder="Search events"
             value={search}
@@ -124,9 +126,7 @@ function PublicOrgEventsContent({ slug }: { slug: string }) {
 
         {visibleEvents.length === 0 ? (
           <Alert>
-            <AlertDescription>
-              No events match your filters. Check back soon.
-            </AlertDescription>
+            <AlertDescription>No events match your filters. Check back soon.</AlertDescription>
           </Alert>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -142,19 +142,19 @@ function PublicOrgEventsContent({ slug }: { slug: string }) {
 
 function PublicEventCard({ event, currency }: { event: EventDto; currency: string }) {
   const remaining =
-    event.maxCapacity === null ? null : Math.max(0, event.maxCapacity - event.confirmedRegistrations);
+    event.maxCapacity === null
+      ? null
+      : Math.max(0, event.maxCapacity - event.confirmedRegistrations);
   const full = remaining !== null && remaining === 0;
 
   return (
-    <Link
-      to="/events/$eventId"
-      params={{ eventId: event.id }}
-      className="block focus:outline-none"
-    >
-      <Card className="h-full transition hover:border-primary">
+    <Link to="/events/$eventId" params={{ eventId: event.id }} className="block focus:outline-none">
+      <Card className="h-full transition hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-md">
         <CardHeader>
           <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-lg">{event.title}</CardTitle>
+            <CardTitle className="text-lg leading-tight tracking-[-0.02em]">
+              {event.title}
+            </CardTitle>
             {event.category ? <Badge variant="secondary">{event.category}</Badge> : null}
           </div>
           {event.description ? (

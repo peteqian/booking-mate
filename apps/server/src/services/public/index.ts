@@ -4,6 +4,8 @@ import { db } from "../../db";
 import { attendees, organization, orgSettings } from "../../db/schema";
 import { getEvent, listEvents } from "../events";
 import { createRegistration } from "../registrations";
+import { sendBookingResumeEmail } from "../registrations/email";
+import { createResumeToken } from "../payments/resume-token";
 
 export async function getPublicOrg(slug: string) {
   const rows = await db.select().from(organization).where(eq(organization.slug, slug)).limit(1);
@@ -65,6 +67,7 @@ export async function registerForPublicEvent(
   slug: string,
   eventId: string,
   input: PublicRegistrationRequest,
+  publicOrigin: string,
 ) {
   const publicOrg = await getPublicOrg(slug);
   if (!publicOrg) return "org_not_found";
@@ -87,8 +90,28 @@ export async function registerForPublicEvent(
     })
     .returning();
 
-  return createRegistration(publicOrg.org.id, {
+  const outcome = await createRegistration(publicOrg.org.id, {
     eventId,
     attendeeId: attendeeRows[0].id,
   });
+
+  if (typeof outcome === "string") return outcome;
+
+  const isPaid = event.price > 0;
+  if (isPaid) {
+    const token = createResumeToken({
+      registrationId: outcome.registration.id,
+      eventId,
+      orgSlug: slug,
+    });
+    const resumeUrl = `${publicOrigin}/events/${eventId}/resume?token=${encodeURIComponent(token)}`;
+    void sendBookingResumeEmail({
+      to: email,
+      eventTitle: event.title,
+      orgName: publicOrg.org.name,
+      resumeUrl,
+    });
+  }
+
+  return outcome;
 }

@@ -45,23 +45,69 @@ export function publicRegister(slug: string, eventId: string, input: PublicRegis
   );
 }
 
-const DEFAULT_PUBLIC_HOST_SUFFIXES = ".traefik.me,.lvh.me";
-
-export function getPublicHostSuffixes() {
-  const configured = import.meta.env.VITE_PUBLIC_HOST_SUFFIXES ?? DEFAULT_PUBLIC_HOST_SUFFIXES;
-  return configured
-    .split(",")
-    .map((suffix) => suffix.trim())
-    .filter(Boolean);
+export function startPublicCheckout(
+  slug: string,
+  eventId: string,
+  body: { registrationId: string; successUrl: string; cancelUrl: string; provider?: string },
+) {
+  return api.post<{ url: string; sessionId: string }>(
+    `/api/public/orgs/${encodeURIComponent(slug)}/events/${encodeURIComponent(eventId)}/checkout`,
+    body,
+  );
 }
 
-export function extractPublicSlug(hostname: string, suffixes = getPublicHostSuffixes()): string | null {
-  for (const suffix of suffixes) {
-    if (hostname.endsWith(suffix)) {
-      const label = hostname.slice(0, -suffix.length);
-      if (label && !label.includes(".")) return label;
-    }
+export type ResumeCheckoutResponse =
+  | { url: string; sessionId: string }
+  | { paid: true }
+  | { expired: true };
+
+export function resumePublicCheckout(slug: string, eventId: string, token: string) {
+  return api.post<ResumeCheckoutResponse>(
+    `/api/public/orgs/${encodeURIComponent(slug)}/events/${encodeURIComponent(eventId)}/resume`,
+    { token },
+  );
+}
+
+const DEFAULT_PUBLIC_SITE_URL = "http://lvh.me:5678";
+
+export function getPublicSiteUrl() {
+  const configured = import.meta.env.VITE_PUBLIC_SITE_URL ?? DEFAULT_PUBLIC_SITE_URL;
+  try {
+    return new URL(configured);
+  } catch {
+    return new URL(DEFAULT_PUBLIC_SITE_URL);
   }
+}
+
+export function getPublicSiteOrigin() {
+  return getPublicSiteUrl().origin;
+}
+
+export function getPublicSiteHost() {
+  return getPublicSiteUrl().host;
+}
+
+export function getPublicSiteHostname() {
+  return getPublicSiteUrl().hostname;
+}
+
+export function getOrgPublicOrigin(orgSlug: string) {
+  const siteUrl = getPublicSiteUrl();
+  return `${siteUrl.protocol}//${orgSlug}.${siteUrl.host}`;
+}
+
+export function getOrgPublicUrl(orgSlug: string, path = "/events") {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${getOrgPublicOrigin(orgSlug)}${normalizedPath}`;
+}
+
+export function extractPublicSlug(hostname: string): string | null {
+  const publicHostname = getPublicSiteHostname();
+  const suffix = `.${publicHostname}`;
+  if (!hostname.endsWith(suffix)) return null;
+
+  const label = hostname.slice(0, -suffix.length);
+  if (label && !label.includes(".")) return label;
   return null;
 }
 
@@ -72,7 +118,7 @@ export function getPublicHostname(): string | null {
 }
 
 export function getPublicOrigin(): string {
-  const fallback = import.meta.env.VITE_PUBLIC_SITE_URL ?? "http://localhost:5678";
+  const fallback = getPublicSiteOrigin();
   if (typeof window === "undefined") return fallback;
   return window.location.origin;
 }
@@ -91,7 +137,7 @@ export function getPublicRequestInfo() {
   if (serverInfo) {
     const host = cleanHostWithPort(serverInfo.forwardedHost ?? serverInfo.host);
     const hostname = cleanHost(host);
-    const fallback = import.meta.env.VITE_PUBLIC_SITE_URL ?? "http://localhost:5678";
+    const fallback = getPublicSiteOrigin();
 
     if (!host || !hostname) return { origin: fallback, hostname: null, slug: null };
 
@@ -161,7 +207,6 @@ function isLocalHost(host: string) {
     host.startsWith("localhost") ||
     host.startsWith("127.0.0.1") ||
     host.endsWith(".localhost") ||
-    host.endsWith(".lvh.me") ||
-    host.endsWith(".traefik.me")
+    host.endsWith(".lvh.me")
   );
 }
