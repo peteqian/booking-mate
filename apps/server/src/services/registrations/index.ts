@@ -11,6 +11,12 @@ import { attendees, events, registrations } from "../../db/schema";
 import { toEventDto } from "../events";
 import { expireStalePendingPayments } from "../payments/expire";
 
+export type CreateRegistrationOutcome =
+  | { type: "created" | "resume"; registration: RegistrationDto }
+  | "event_not_found"
+  | "attendee_not_found"
+  | "duplicate_registration";
+
 export interface RegistrationWithAttendeeDto extends RegistrationDto {
   attendee: AttendeeDto;
 }
@@ -26,6 +32,7 @@ export function toRegistrationDto(
     status: registration.status,
     paymentStatus: registration.paymentStatus,
     checkoutSessionId: registration.checkoutSessionId,
+    paymentIntentId: registration.paymentIntentId,
     paymentProvider: registration.paymentProvider,
     createdAt: registration.createdAt.toISOString(),
     updatedAt: registration.updatedAt.toISOString(),
@@ -86,7 +93,9 @@ export async function listRegistrationsByAttendee(
 export async function createRegistration(
   orgId: string,
   input: CreateRegistrationRequest,
-): Promise<RegistrationDto | "event_not_found" | "attendee_not_found" | "duplicate_registration"> {
+): Promise<CreateRegistrationOutcome> {
+  await expireStalePendingPayments(orgId, input.eventId);
+
   const eventRows = await db
     .select({ id: events.id, maxCapacity: events.maxCapacity, price: events.price })
     .from(events)
@@ -102,8 +111,8 @@ export async function createRegistration(
     .limit(1);
   if (!attendeeRows[0]) return "attendee_not_found";
 
-  const existing = await db
-    .select({ id: registrations.id })
+  const existingRows = await db
+    .select()
     .from(registrations)
     .where(
       and(
@@ -114,7 +123,19 @@ export async function createRegistration(
       ),
     )
     .limit(1);
-  if (existing[0]) return "duplicate_registration";
+
+  const existing = existingRows[0];
+  if (existing) {
+    const stillResumable =
+      existing.status === "pending" &&
+      existing.paymentStatus === "pending" &&
+      (!existing.paymentExpiresAt || existing.paymentExpiresAt.getTime() > Date.now());
+
+    if (stillResumable) {
+      return { type: "resume", registration: toRegistrationDto(existing) };
+    }
+    return "duplicate_registration";
+  }
 
   // Paid events hold seat as `pending` until webhook confirms payment.
   // Free events go straight to `confirmed`. Capacity counts include both.
@@ -156,7 +177,7 @@ export async function createRegistration(
     })
     .returning();
 
-  return toRegistrationDto(rows[0]);
+  return { type: "created", registration: toRegistrationDto(rows[0]) };
 }
 
 export async function updateRegistration(

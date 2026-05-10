@@ -88,12 +88,12 @@ export const registrationRoutes = new Hono<ApiEnv>()
     const input = parseCreateRegistration(await readJson(c));
     if (typeof input === "string") return apiError(c, 400, "invalid_registration", input);
 
-    const registration = await createRegistration(c.var.orgId, input);
-    if (registration === "event_not_found")
+    const outcome = await createRegistration(c.var.orgId, input);
+    if (outcome === "event_not_found")
       return apiError(c, 404, "event_not_found", "Event not found");
-    if (registration === "attendee_not_found")
+    if (outcome === "attendee_not_found")
       return apiError(c, 404, "attendee_not_found", "Attendee not found");
-    if (registration === "duplicate_registration") {
+    if (outcome === "duplicate_registration") {
       return apiError(
         c,
         409,
@@ -102,7 +102,7 @@ export const registrationRoutes = new Hono<ApiEnv>()
       );
     }
 
-    return c.json({ registration }, 201);
+    return c.json({ registration: outcome.registration }, outcome.type === "created" ? 201 : 200);
   })
   .patch("/:registrationId", requireRole("manager"), async (c) => {
     const input = parseUpdateRegistration(await readJson(c));
