@@ -27,9 +27,12 @@ export function StatusBadge({ status }: { status: EventStatus }) {
 }
 
 export function VisibilityBadge({ visibility }: { visibility: EventVisibility }) {
-  const variants: Record<EventVisibility, "default" | "secondary" | "destructive" | "outline"> = {
+  const variants: Record<
+    EventVisibility,
+    "default" | "secondary" | "destructive" | "outline" | "success"
+  > = {
     unpublished: "outline",
-    published: "default",
+    published: "success",
   };
   return (
     <Badge variant={variants[visibility]} className="h-5 px-1.5 text-[10px] capitalize">

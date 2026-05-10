@@ -1,10 +1,21 @@
 import { useMemo, useState } from "react";
-import { ArrowUpCircle, ArrowUpDown, Ban, Download, Plus, Search, Trash2, X } from "lucide-react";
+import {
+  ArrowUpCircle,
+  ArrowUpDown,
+  Ban,
+  Download,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 import type { PaymentStatus, RegistrationWithAttendeeDto } from "@workspace/contracts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Table,
   TableBody,
@@ -22,12 +33,29 @@ type RegStatus = RegistrationWithAttendeeDto["status"];
 type SortKey = "name" | "status" | "payment" | "registeredAt";
 type SortDir = "asc" | "desc";
 
-const statusVariant: Record<RegStatus, "default" | "secondary" | "outline"> = {
+const statusVariant: Record<RegStatus, "default" | "secondary" | "outline" | "success"> = {
   pending: "secondary",
-  confirmed: "default",
+  confirmed: "success",
   waitlisted: "secondary",
   cancelled: "outline",
 };
+
+const paymentVariant: Record<
+  PaymentStatus,
+  "default" | "secondary" | "outline" | "destructive" | "success"
+> = {
+  not_required: "outline",
+  pending: "secondary",
+  paid: "success",
+  refunded: "outline",
+  expired: "outline",
+  failed: "destructive",
+};
+
+function paymentLabel(status: PaymentStatus): string {
+  if (status === "not_required") return "not required";
+  return status;
+}
 
 const STATUSES: RegStatus[] = ["pending", "confirmed", "waitlisted", "cancelled"];
 
@@ -340,7 +368,7 @@ export function RegistrationsTable({
           {canManage && (
             <Button size="sm" className="h-8 gap-1" onClick={onAddClick}>
               <Plus className="size-3.5" />
-              Add registration
+              Add
             </Button>
           )}
         </div>
@@ -449,17 +477,46 @@ export function RegistrationsTable({
                     </button>
                   </TableCell>
                   <TableCell className="py-3">
-                    <PaymentStatusSelect
-                      value={registration.paymentStatus}
-                      onChange={(p) => updatePayment(registration.id, p)}
-                      disabled={!canManage || updateMutation.isPending}
-                    />
+                    <Badge
+                      variant={paymentVariant[registration.paymentStatus]}
+                      className="capitalize"
+                    >
+                      {paymentLabel(registration.paymentStatus)}
+                    </Badge>
                   </TableCell>
                   <TableCell className="hidden py-3 text-xs text-muted-foreground md:table-cell">
                     {formatDate(registration.createdAt)}
                   </TableCell>
                   <TableCell className="py-3 pr-3">
                     <div className="flex items-center justify-end gap-1">
+                      {canManage && (
+                        <Popover>
+                          <PopoverTrigger
+                            render={
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 gap-1 px-2 text-xs"
+                                title="Edit payment status"
+                                disabled={updateMutation.isPending}
+                              >
+                                <Pencil className="size-3.5" />
+                                Edit
+                              </Button>
+                            }
+                          />
+                          <PopoverContent align="end" className="w-56 p-3">
+                            <p className="mb-2 text-xs font-medium text-muted-foreground">
+                              Payment status
+                            </p>
+                            <PaymentStatusSelect
+                              value={registration.paymentStatus}
+                              onChange={(p) => updatePayment(registration.id, p)}
+                              disabled={updateMutation.isPending}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      )}
                       {registration.status === "waitlisted" && canManage && (
                         <Button
                           variant="ghost"

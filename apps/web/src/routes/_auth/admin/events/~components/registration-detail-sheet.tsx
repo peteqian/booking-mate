@@ -1,7 +1,17 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { ArrowUpCircle, Ban, Check, Copy, ExternalLink, Mail, Phone, RotateCcw, Trash2 } from "lucide-react";
+import {
+  ArrowUpCircle,
+  Ban,
+  Check,
+  Copy,
+  ExternalLink,
+  Mail,
+  Phone,
+  RotateCcw,
+  Trash2,
+} from "lucide-react";
 import type { PaymentStatus, RegistrationWithAttendeeDto } from "@workspace/contracts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,11 +26,11 @@ import { refundRegistration } from "@/lib/payments";
 import { PaymentStatusSelect } from "./registration-summary";
 import type { ConfirmFn } from "./confirm-dialog";
 
-type StatusVariant = "default" | "secondary" | "outline";
+type StatusVariant = "default" | "secondary" | "outline" | "success";
 
 const statusVariant: Record<RegistrationWithAttendeeDto["status"], StatusVariant> = {
   pending: "secondary",
-  confirmed: "default",
+  confirmed: "success",
   waitlisted: "secondary",
   cancelled: "outline",
 };
@@ -181,7 +191,11 @@ function DetailBody({
                 disabled={!canManage}
               />
               {canManage && registration.paymentStatus === "paid" ? (
-                <RefundButton registrationId={registration.id} attendeeName={attendee.name} confirm={confirm} />
+                <RefundButton
+                  registrationId={registration.id}
+                  attendeeName={attendee.name}
+                  confirm={confirm}
+                />
               ) : null}
             </div>
           </Field>

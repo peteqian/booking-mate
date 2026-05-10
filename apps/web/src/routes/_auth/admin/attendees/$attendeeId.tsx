@@ -17,19 +17,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  attendeeQueryOptions,
-  attendeeRegistrationsQueryOptions,
-} from "@/queries/attendees";
+import { attendeeQueryOptions, attendeeRegistrationsQueryOptions } from "@/queries/attendees";
 
 export const Route = createFileRoute("/_auth/admin/attendees/$attendeeId")({
   component: AttendeeDetailRoute,
   loader: ({ context, params }) =>
     Promise.all([
       context.queryClient.ensureQueryData(attendeeQueryOptions(params.attendeeId)),
-      context.queryClient.ensureQueryData(
-        attendeeRegistrationsQueryOptions(params.attendeeId),
-      ),
+      context.queryClient.ensureQueryData(attendeeRegistrationsQueryOptions(params.attendeeId)),
     ]),
 });
 
@@ -95,8 +90,16 @@ function AttendeeDetailRoute() {
           </dl>
         </section>
 
-        <RegistrationsSection title="Upcoming" registrations={upcoming} emptyText="No upcoming registrations." />
-        <RegistrationsSection title="Past" registrations={past} emptyText="No past registrations." />
+        <RegistrationsSection
+          title="Upcoming"
+          registrations={upcoming}
+          emptyText="No upcoming registrations."
+        />
+        <RegistrationsSection
+          title="Past"
+          registrations={past}
+          emptyText="No past registrations."
+        />
       </div>
     </AppShell>
   );
@@ -148,7 +151,7 @@ function RegistrationsSection({
                 <TableRow key={r.id} className="hover:bg-muted/30">
                   <TableCell className="py-2 text-sm font-medium">
                     <Link
-                      to="/admin/events/$eventId"
+                      to="/admin/events/$eventId/edit"
                       params={{ eventId: r.event.id }}
                       className="underline-offset-4 hover:underline"
                     >
@@ -180,9 +183,9 @@ function RegistrationStatusBadge({
 }: {
   status: "pending" | "confirmed" | "waitlisted" | "cancelled";
 }) {
-  const variant: Record<typeof status, "default" | "secondary" | "outline"> = {
+  const variant: Record<typeof status, "default" | "secondary" | "outline" | "success"> = {
     pending: "secondary",
-    confirmed: "default",
+    confirmed: "success",
     waitlisted: "secondary",
     cancelled: "outline",
   };

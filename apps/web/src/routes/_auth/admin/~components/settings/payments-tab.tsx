@@ -111,7 +111,7 @@ function ProviderRow({
               Server not configured
             </Badge>
           ) : connection ? (
-            <Badge variant="default" className="text-xs">
+            <Badge variant="success" className="text-xs">
               {connection.status}
             </Badge>
           ) : (
