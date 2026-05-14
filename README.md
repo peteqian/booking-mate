@@ -1,14 +1,14 @@
-# Booking Mate
+# Buching
 
-Booking Mate is a self-hostable event booking and registration platform for small teams, schools, studios, nonprofits, and service businesses.
+Buching is a self-hostable event booking and registration platform for small teams, schools, studios, nonprofits, and service businesses.
 
 Use it to publish events, manage attendees, accept registrations, organize resources, and run booking operations from your own infrastructure.
 
-Booking Mate is early-stage software. A public demo and production deployment guide are planned.
+Buching is early-stage software. A public demo and production deployment guide are planned.
 
 ## What You Can Use It For
 
-Booking Mate is designed for organizations that run scheduled events or services, such as:
+Buching is designed for organizations that run scheduled events or services, such as:
 
 - classes and workshops
 - school or community programs
@@ -17,7 +17,7 @@ Booking Mate is designed for organizations that run scheduled events or services
 - internal company events
 - paid or free registrations
 
-You can self-host Booking Mate for your own organization and use it to support real commercial operations.
+You can self-host Buching for your own organization and use it to support real commercial operations.
 
 ## Features
 
@@ -35,31 +35,31 @@ You can self-host Booking Mate for your own organization and use it to support r
 
 A public demo is planned.
 
-For now, you can run Booking Mate locally by following the development setup below.
+For now, you can run Buching locally by following the development setup below.
 
 ## License
 
-Booking Mate is licensed under the GNU Affero General Public License v3.0.
+Buching is licensed under the GNU Affero General Public License v3.0.
 
 You may use, study, modify, distribute, and run the software commercially, including for your own business operations.
 
-If you modify Booking Mate and provide it to users over a network, the AGPL requires you to make the corresponding source code for your modified version available to those users.
+If you modify Buching and provide it to users over a network, the AGPL requires you to make the corresponding source code for your modified version available to those users.
 
 See [`LICENSE`](./LICENSE) for the full license text.
 
 ## Commercial Use
 
-You may use Booking Mate to run your own business, including paid events, classes, workshops, or services.
+You may use Buching to run your own business, including paid events, classes, workshops, or services.
 
 The AGPL does not prohibit commercial use. It requires that modified network-deployed versions remain open under the same license.
 
 ## Trademarks
 
-The Booking Mate name and logo are not covered by the AGPL license. Forks and modified versions should use their own branding unless they have permission to use the Booking Mate name.
+The Buching name and logo are not covered by the AGPL license. Forks and modified versions should use their own branding unless they have permission to use the Buching name.
 
 ## Deployment Model
 
-Booking Mate supports two intended deployment models:
+Buching supports two intended deployment models:
 
 - Self-hosted/community deployments for one organization.
 - Hosted/cloud deployments where multiple organizations may be supported.
@@ -68,7 +68,7 @@ The self-hosted version is intended to be simple to operate: one deployment, one
 
 ## Tech Stack
 
-Booking Mate is built with:
+Buching is built with:
 
 - React and Vite for the web app
 - Hono and Bun for the API server
@@ -124,7 +124,7 @@ The default development environment uses PostgreSQL through Docker.
 Important variables:
 
 ```env
-DATABASE_URL=postgresql://booking_mate:booking_mate_password@localhost:5433/booking_mate
+DATABASE_URL=postgresql://buching:buching_password@localhost:5433/buching
 SERVER_PORT=3456
 WEB_PORT=5678
 WEB_URL=http://localhost:5678
@@ -137,7 +137,7 @@ For production, use strong secrets, HTTPS URLs, managed backups, and a properly 
 
 ## Production Status
 
-Booking Mate is not yet recommended for unattended production use.
+Buching is not yet recommended for unattended production use.
 
 Before using it in production, review:
 

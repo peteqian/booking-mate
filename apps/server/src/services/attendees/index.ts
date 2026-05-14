@@ -49,7 +49,12 @@ export async function createAttendee(
 ): Promise<AttendeeDto> {
   const rows = await db
     .insert(attendees)
-    .values({ orgId, name: input.name, email: input.email, phone: input.phone ?? null })
+    .values({
+      orgId,
+      name: input.name,
+      email: input.email.trim().toLowerCase(),
+      phone: input.phone ?? null,
+    })
     .returning();
 
   return toAttendeeDto(rows[0]);
@@ -60,9 +65,11 @@ export async function updateAttendee(
   attendeeId: string,
   input: UpdateAttendeeRequest,
 ): Promise<AttendeeDto | null> {
+  const patch: Partial<typeof attendees.$inferInsert> = { ...input, updatedAt: new Date() };
+  if (typeof input.email === "string") patch.email = input.email.trim().toLowerCase();
   const rows = await db
     .update(attendees)
-    .set({ ...input, updatedAt: new Date() })
+    .set(patch)
     .where(and(eq(attendees.orgId, orgId), eq(attendees.id, attendeeId)))
     .returning();
 

@@ -1,4 +1,10 @@
+import { createIsomorphicFn } from "@tanstack/react-start";
+import { getRequestHeader } from "@tanstack/react-start/server";
 import type { ApiErrorResponse } from "@workspace/contracts";
+
+const readCookieHeader = createIsomorphicFn()
+  .client((): string | null => null)
+  .server((): string | null => getRequestHeader("cookie") ?? null);
 
 const API_BASE_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3456";
 
@@ -16,27 +22,59 @@ export class ApiError extends Error {
 
 type RequestBody = object | unknown[] | null;
 
+type UnauthorizedHandler = () => void;
+let unauthorizedHandler: UnauthorizedHandler | null = null;
+
+export function setUnauthorizedHandler(handler: UnauthorizedHandler) {
+  unauthorizedHandler = handler;
+}
+
 async function parseResponse<T>(response: Response): Promise<T> {
   const text = await response.text();
-  const data = text ? JSON.parse(text) : null;
+  let data: unknown = null;
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = null;
+    }
+  }
 
   if (!response.ok) {
+    if (response.status === 401 && unauthorizedHandler) unauthorizedHandler();
     const apiError = data as ApiErrorResponse | null;
     throw new ApiError(
       response.status,
       apiError?.error?.code ?? "request_failed",
-      apiError?.error?.message ?? "Request failed",
+      apiError?.error?.message ?? (text || response.statusText || "Request failed"),
     );
   }
 
   return data as T;
 }
 
+function getHeaders(body: RequestBody | undefined) {
+  const headers = new Headers();
+  let hasHeaders = false;
+  if (body !== undefined) {
+    headers.set("Content-Type", "application/json");
+    hasHeaders = true;
+  }
+
+  const cookie = readCookieHeader();
+  if (cookie) {
+    headers.set("cookie", cookie);
+    hasHeaders = true;
+  }
+
+  return hasHeaders ? headers : undefined;
+}
+
 async function request<T>(method: string, path: string, body?: RequestBody): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method,
     credentials: "include",
-    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+    headers: getHeaders(body),
     body: body === undefined ? undefined : JSON.stringify(body),
   });
 

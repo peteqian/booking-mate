@@ -1,6 +1,7 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
+import { logger } from "../observability/logger";
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -12,13 +13,13 @@ const sql = postgres(connectionString, { max: 1 });
 const db = drizzle(sql);
 
 async function runMigrations() {
-  console.log("Running migrations...");
+  logger.info("running migrations");
   await migrate(db, { migrationsFolder: "./src/db/migrations" });
-  console.log("Migrations complete!");
+  logger.info("migrations complete");
   await sql.end();
 }
 
 runMigrations().catch((error) => {
-  console.error("Migration failed:", error);
+  logger.error({ err: error }, "migration failed");
   process.exit(1);
 });

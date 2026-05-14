@@ -6,58 +6,59 @@ Public booking pages are a first-class distribution channel for each organizatio
 
 Included:
 
-- Slug URL: `/book/:slug`.
-- Subdomain URL: `{org}.domain.com`.
-- Custom domain support.
-- Public event search/filter.
-- Public registration.
-- SEO metadata.
-- Org branding.
+- [~] Slug URL: `/book/:slug`. (superseded by clean `/events` paths under subdomain)
+- [x] Subdomain URL: `{org}.domain.com`. (works via `*.lvh.me` in dev; admin moved to `/admin/*` so public owns `/events`)
+- [ ] Custom domain support.
+- [x] Public event search/filter. (client-side title/description search + category filter)
+- [x] Public registration. (free events; paid events show contact-email alert)
+- [~] SEO metadata. (page title via `head()`; OG/canonical/JSON-LD deferred)
+- [~] Org branding. (logo + name in header; category color/icon deferred)
 
 ## Routing
 
 MVP:
 
-- `/book/:slug`: public org event list.
-- `/book/:slug/events/:eventId`: event detail.
+- [x] `/book/:slug`: public org event list. (now served at `/events` under subdomain)
+- [x] `/book/:slug/events/:eventId`: event detail. (now `/events/:eventId` under subdomain)
 
 Production target:
 
-- `{orgSlug}.bookingmate.app` resolves to the same public booking experience.
-- Custom domains resolve by host lookup.
+- [ ] `{orgSlug}.buching.app` resolves to the same public booking experience.
+- [ ] Custom domains resolve by host lookup.
 
 ## Public API
 
-- `GET /api/public/orgs/:slug`: returns safe org details and settings.
-- `GET /api/public/orgs/:slug/events`: returns published upcoming events with counts.
-- `GET /api/public/orgs/:slug/events/:eventId`: returns event detail.
-- `POST /api/public/orgs/:slug/events/:eventId/register`: creates registration.
+- [x] `GET /api/public/orgs/:slug`: returns safe org details and settings.
+- [x] `GET /api/public/orgs/:slug/events`: returns published upcoming events with counts.
+- [x] `GET /api/public/orgs/:slug/events/:eventId`: returns event detail.
+- [x] `POST /api/public/orgs/:slug/events/:eventId/register`: creates registration.
+- [x] (extra) `POST /api/public/orgs/:slug/events/:eventId/checkout`.
 
 ## Public Data Rules
 
 Expose only:
 
-- Org name, slug, logo.
-- Public-safe settings: categories, category configs, currency.
-- Published and upcoming event details.
-- Registration counts, not attendee lists.
-- Connected payment provider names, not account IDs.
+- [x] Org name, slug, logo.
+- [x] Public-safe settings: categories, category configs, currency.
+- [x] Published and upcoming event details.
+- [x] Registration counts, not attendee lists.
+- [x] Connected payment provider names, not account IDs.
 
 ## SEO
 
 Each public page should set:
 
-- Title.
-- Description.
-- Canonical URL.
-- Open Graph title/description.
-- Structured data for event detail pages.
+- [x] Title.
+- [~] Description. (list page only)
+- [ ] Canonical URL.
+- [ ] Open Graph title/description.
+- [ ] Structured data for event detail pages.
 
 ## Branding
 
 Public pages use:
 
-- Org logo.
-- Org name.
-- Category color/icon configuration.
-- Contact email where appropriate.
+- [x] Org logo.
+- [x] Org name.
+- [ ] Category color/icon configuration.
+- [x] Contact email where appropriate.

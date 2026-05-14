@@ -1,17 +1,20 @@
 import type {
   CreateEventRequest,
   EventDto,
+  EventImageDto,
   EventResourceDto,
   UpdateEventRequest,
 } from "@workspace/contracts";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "../../db";
-import { eventResources, events, resources, registrations } from "../../db/schema";
+import { eventResources, events, publicAssets, resources, registrations } from "../../db/schema";
+import { rewritePublicAssetUrl } from "../assets/public-url";
 
 export function toEventDto(
   event: typeof events.$inferSelect,
   confirmedCount = 0,
   waitlistedCount = 0,
+  detailImages: EventImageDto[] = [],
 ): EventDto {
   return {
     id: event.id,
@@ -19,25 +22,52 @@ export function toEventDto(
     createdById: event.createdById,
     title: event.title,
     description: event.description,
+    notes: event.notes,
     category: event.category,
+    tags: event.tags,
     date: event.date,
     time: event.time,
     duration: event.duration,
+    allDay: event.allDay,
     maxCapacity: event.maxCapacity,
     location: event.location,
     status: event.status,
     visibility: event.visibility,
+    archivedAt: event.archivedAt?.toISOString() ?? null,
     recurring: event.recurring,
     recurrenceFrequency: event.recurrenceFrequency,
     recurrenceDays: event.recurrenceDays,
     recurrenceInterval: event.recurrenceInterval,
     recurrenceEndDate: event.recurrenceEndDate,
     price: event.price,
+    imageUrl: rewritePublicAssetUrl(event.imageUrl),
+    detailImages,
     confirmedRegistrations: confirmedCount,
     waitlistedRegistrations: waitlistedCount,
     createdAt: event.createdAt.toISOString(),
     updatedAt: event.updatedAt.toISOString(),
   };
+}
+
+async function listEventDetailImages(orgId: string, eventId: string): Promise<EventImageDto[]> {
+  const rows = await db
+    .select({ id: publicAssets.id, publicUrl: publicAssets.publicUrl })
+    .from(publicAssets)
+    .where(
+      and(
+        eq(publicAssets.orgId, orgId),
+        eq(publicAssets.eventId, eventId),
+        eq(publicAssets.kind, "event_image"),
+        eq(publicAssets.assetRole, "detail"),
+        eq(publicAssets.status, "ready"),
+      ),
+    )
+    .orderBy(asc(publicAssets.createdAt));
+
+  return rows.map((row) => ({
+    id: row.id,
+    url: rewritePublicAssetUrl(row.publicUrl) ?? row.publicUrl,
+  }));
 }
 
 function toEventResourceDto(eventResource: typeof eventResources.$inferSelect): EventResourceDto {
@@ -78,7 +108,7 @@ export async function listEvents(orgId: string): Promise<EventDto[]> {
   for (const c of counts) {
     const existing = countMap.get(c.eventId);
     if (existing) {
-      if (c.status === "confirmed") existing.confirmed = c.count;
+      if (c.status === "confirmed" || c.status === "pending") existing.confirmed += c.count;
       if (c.status === "waitlisted") existing.waitlisted = c.count;
     }
   }
@@ -107,10 +137,13 @@ export async function getEvent(orgId: string, eventId: string): Promise<EventDto
     .where(and(eq(registrations.orgId, orgId), eq(registrations.eventId, eventId)))
     .groupBy(registrations.status);
 
-  const confirmed = counts.find((c) => c.status === "confirmed")?.count ?? 0;
+  const confirmed =
+    (counts.find((c) => c.status === "confirmed")?.count ?? 0) +
+    (counts.find((c) => c.status === "pending")?.count ?? 0);
   const waitlisted = counts.find((c) => c.status === "waitlisted")?.count ?? 0;
 
-  return toEventDto(rows[0], confirmed, waitlisted);
+  const detailImages = await listEventDetailImages(orgId, eventId);
+  return toEventDto(rows[0], confirmed, waitlisted, detailImages);
 }
 
 export async function createEvent(
@@ -125,10 +158,13 @@ export async function createEvent(
       createdById,
       title: input.title,
       description: input.description ?? null,
+      notes: input.notes ?? null,
       category: input.category ?? null,
+      tags: input.tags ?? [],
       date: input.date,
       time: input.time,
       duration: input.duration,
+      allDay: input.allDay ?? false,
       maxCapacity: input.maxCapacity ?? null,
       location: input.location ?? null,
       status: input.status ?? "upcoming",
@@ -138,7 +174,8 @@ export async function createEvent(
       recurrenceDays: input.recurrenceDays ?? [],
       recurrenceInterval: input.recurrenceInterval ?? null,
       recurrenceEndDate: input.recurrenceEndDate ?? null,
-      price: input.price ?? "0",
+      price: input.price ?? 0,
+      imageUrl: input.imageUrl ?? null,
     })
     .returning();
 
@@ -150,9 +187,15 @@ export async function updateEvent(
   eventId: string,
   input: UpdateEventRequest,
 ): Promise<EventDto | null> {
+  const { archivedAt, ...eventInput } = input;
+  const patch: Partial<typeof events.$inferInsert> = { ...eventInput, updatedAt: new Date() };
+  if (archivedAt !== undefined) {
+    patch.archivedAt = archivedAt === null ? null : new Date(archivedAt);
+  }
+
   const rows = await db
     .update(events)
-    .set({ ...input, updatedAt: new Date() })
+    .set(patch)
     .where(and(eq(events.orgId, orgId), eq(events.id, eventId)))
     .returning();
 
@@ -167,10 +210,13 @@ export async function updateEvent(
     .where(and(eq(registrations.orgId, orgId), eq(registrations.eventId, eventId)))
     .groupBy(registrations.status);
 
-  const confirmed = counts.find((c) => c.status === "confirmed")?.count ?? 0;
+  const confirmed =
+    (counts.find((c) => c.status === "confirmed")?.count ?? 0) +
+    (counts.find((c) => c.status === "pending")?.count ?? 0);
   const waitlisted = counts.find((c) => c.status === "waitlisted")?.count ?? 0;
 
-  return toEventDto(rows[0], confirmed, waitlisted);
+  const detailImages = await listEventDetailImages(orgId, eventId);
+  return toEventDto(rows[0], confirmed, waitlisted, detailImages);
 }
 
 export async function deleteEvent(orgId: string, eventId: string): Promise<boolean> {
@@ -193,10 +239,13 @@ export async function duplicateEvent(
   return createEvent(orgId, createdById, {
     title: `${source.title} Copy`,
     description: source.description,
+    notes: source.notes,
     category: source.category,
+    tags: source.tags,
     date: source.date,
     time: source.time,
     duration: source.duration,
+    allDay: source.allDay,
     maxCapacity: source.maxCapacity,
     location: source.location,
     status: source.status,
@@ -207,6 +256,7 @@ export async function duplicateEvent(
     recurrenceInterval: source.recurrenceInterval,
     recurrenceEndDate: source.recurrenceEndDate,
     price: source.price,
+    imageUrl: source.imageUrl,
   });
 }
 

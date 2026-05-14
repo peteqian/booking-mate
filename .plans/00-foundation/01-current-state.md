@@ -2,7 +2,7 @@
 
 ## Workspace
 
-Booking Mate is a Turborepo monorepo using Bun.
+Buching is a Turborepo monorepo using Bun.
 
 - `apps/web`: React, Vite, TanStack Router, Tailwind CSS, Base UI-style local components.
 - `apps/server`: Hono, Bun runtime, Better Auth, Drizzle, PostgreSQL.

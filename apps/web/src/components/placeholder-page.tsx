@@ -14,7 +14,7 @@ export function PlaceholderPage({ title, description }: PlaceholderPageProps) {
           00
         </div>
         <CardHeader className="border-b">
-          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          <p className="text-2xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             Planned workspace
           </p>
           <CardTitle className="text-2xl tracking-tight">{title}</CardTitle>

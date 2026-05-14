@@ -24,7 +24,7 @@ function run(command: string, args: string[], cwd?: string): Promise<void> {
 }
 
 async function setup() {
-  console.log("🚀 Setting up booking-mate...\n");
+  console.log("🚀 Setting up Buching...\n");
 
   // Step 1: Start database
   console.log("📦 Starting database...");

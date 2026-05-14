@@ -8,47 +8,47 @@ Events are the second product milestone after organization activation. The first
 
 Included:
 
-- CRUD.
-- Publish/unpublish/archive visibility.
-- Status lifecycle: upcoming, completed, cancelled.
-- Capacity.
-- Waitlist support through registrations.
-- Recurrence fields.
-- Kanban view.
-- Table filters and sorting.
-- Duplicate event.
-- Resource assignments.
-- Price field for paid events.
+- [x] CRUD.
+- [x] Publish/unpublish/archive visibility.
+- [x] Status lifecycle: upcoming, completed, cancelled.
+- [x] Capacity.
+- [x] Waitlist support through registrations.
+- [x] Recurrence fields. (schema only; expansion logic deferred)
+- [x] Kanban view.
+- [x] Table filters and sorting.
+- [x] Duplicate event.
+- [x] Resource assignments.
+- [x] Price field for paid events.
 
 ## Event Fields
 
 Required:
 
-- Title.
-- Date.
-- Time.
-- Duration.
-- Max capacity.
-- Category.
-- Visibility.
+- [x] Title. (max 127 chars — used as payment line item name; PayPal hard limit)
+- [x] Date.
+- [x] Time.
+- [x] Duration.
+- [x] Max capacity.
+- [x] Category.
+- [x] Visibility.
 
 Optional:
 
-- Description.
-- Location text.
-- Assigned location resource.
-- Assigned instructor resources.
-- Assigned material resources.
-- Price.
-- Recurrence settings.
+- [x] Description.
+- [x] Location text.
+- [x] Assigned location resource.
+- [x] Assigned instructor resources.
+- [x] Assigned material resources.
+- [x] Price.
+- [x] Recurrence settings. (fields stored)
 
 ## Behavior
 
-- New events default to `upcoming` and `unpublished`.
-- Published events appear on public booking pages if status is `upcoming`.
-- Archived events remain visible to team members but not public visitors.
-- Cancelled events are hidden from public booking by default.
-- Duplicate creates a new upcoming event with copied fields and no registrations.
+- [x] New events default to `upcoming` and `unpublished`.
+- [~] Published events appear on public booking pages if status is `upcoming`. (server-side rule present; public web pages missing)
+- [x] Archived events remain visible to team members but not public visitors.
+- [x] Cancelled events are hidden from public booking by default.
+- [x] Duplicate creates a new upcoming event with copied fields and no registrations.
 
 ## Recurrence
 
@@ -56,35 +56,35 @@ MVP stores recurrence configuration on the event. Expansion into individual gene
 
 Plan for:
 
-- `daily`, `weekly`, `biweekly`, `monthly`, `yearly`, `custom`.
-- Interval.
-- Days of week.
-- End date.
+- [x] `daily`, `weekly`, `biweekly`, `monthly`, `yearly`, `custom`. (recurrenceFrequency text field)
+- [x] Interval.
+- [x] Days of week.
+- [x] End date.
 
 ## UI
 
 Events page:
 
-- Search by title and description.
-- Filter by category.
-- Filter by status.
-- Filter by visibility.
-- Toggle table/kanban.
-- Create/edit modal.
-- Detail modal with registrations, resources, payment status, and actions.
+- [x] Search by title and description.
+- [x] Filter by category.
+- [x] Filter by status.
+- [x] Filter by visibility.
+- [x] Toggle table/kanban.
+- [x] Create/edit modal.
+- [x] Detail modal with registrations, resources, payment status, and actions.
 
 Kanban:
 
-- Columns: upcoming, completed, cancelled.
-- Drag/drop updates status.
+- [x] Columns: upcoming, completed, cancelled.
+- [x] Drag/drop updates status.
 
 Table:
 
-- Sort by title, date, status, registration count, visibility, category, price, location.
+- [x] Sort by title, date, status, registration count, visibility, category, price, location.
 
 ## Permissions
 
-- Viewer: read.
-- Manager: create/update/duplicate.
-- Admin: delete.
-- Owner: all.
+- [x] Viewer: read.
+- [x] Manager: create/update/duplicate.
+- [x] Admin: delete.
+- [x] Owner: all.

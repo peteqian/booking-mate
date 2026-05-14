@@ -5,10 +5,17 @@ import type {
   RegistrationWithEventDto,
   UpdateRegistrationRequest,
 } from "@workspace/contracts";
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, inArray, ne } from "drizzle-orm";
 import { db } from "../../db";
 import { attendees, events, registrations } from "../../db/schema";
 import { toEventDto } from "../events";
+import { expireStalePendingPayments } from "../payments/expire";
+
+export type CreateRegistrationOutcome =
+  | { type: "created" | "resume"; registration: RegistrationDto }
+  | "event_not_found"
+  | "attendee_not_found"
+  | "duplicate_registration";
 
 export interface RegistrationWithAttendeeDto extends RegistrationDto {
   attendee: AttendeeDto;
@@ -25,6 +32,7 @@ export function toRegistrationDto(
     status: registration.status,
     paymentStatus: registration.paymentStatus,
     checkoutSessionId: registration.checkoutSessionId,
+    paymentIntentId: registration.paymentIntentId,
     paymentProvider: registration.paymentProvider,
     createdAt: registration.createdAt.toISOString(),
     updatedAt: registration.updatedAt.toISOString(),
@@ -44,6 +52,7 @@ function toAttendeeDto(attendee: typeof attendees.$inferSelect): AttendeeDto {
 }
 
 export async function listRegistrations(orgId: string): Promise<RegistrationDto[]> {
+  await expireStalePendingPayments(orgId);
   const rows = await db.select().from(registrations).where(eq(registrations.orgId, orgId));
   return rows.map(toRegistrationDto);
 }
@@ -52,6 +61,7 @@ export async function listRegistrationsByEvent(
   orgId: string,
   eventId: string,
 ): Promise<RegistrationWithAttendeeDto[]> {
+  await expireStalePendingPayments(orgId, eventId);
   const rows = await db
     .select()
     .from(registrations)
@@ -83,7 +93,9 @@ export async function listRegistrationsByAttendee(
 export async function createRegistration(
   orgId: string,
   input: CreateRegistrationRequest,
-): Promise<RegistrationDto | "event_not_found" | "attendee_not_found" | "duplicate_registration"> {
+): Promise<CreateRegistrationOutcome> {
+  await expireStalePendingPayments(orgId, input.eventId);
+
   const eventRows = await db
     .select({ id: events.id, maxCapacity: events.maxCapacity, price: events.price })
     .from(events)
@@ -99,8 +111,8 @@ export async function createRegistration(
     .limit(1);
   if (!attendeeRows[0]) return "attendee_not_found";
 
-  const existing = await db
-    .select({ id: registrations.id })
+  const existingRows = await db
+    .select()
     .from(registrations)
     .where(
       and(
@@ -111,29 +123,46 @@ export async function createRegistration(
       ),
     )
     .limit(1);
-  if (existing[0]) return "duplicate_registration";
 
-  // Determine registration status based on capacity
-  let status = input.status ?? "confirmed";
-  if (status === "confirmed" && event.maxCapacity !== null && event.maxCapacity > 0) {
-    const confirmedCount = await db
+  const existing = existingRows[0];
+  if (existing) {
+    const stillResumable =
+      existing.status === "pending" &&
+      existing.paymentStatus === "pending" &&
+      (!existing.paymentExpiresAt || existing.paymentExpiresAt.getTime() > Date.now());
+
+    if (stillResumable) {
+      return { type: "resume", registration: toRegistrationDto(existing) };
+    }
+    return "duplicate_registration";
+  }
+
+  // Paid events hold seat as `pending` until webhook confirms payment.
+  // Free events go straight to `confirmed`. Capacity counts include both.
+  const isPaid = Number(event.price) > 0;
+  let status = input.status ?? (isPaid ? "pending" : "confirmed");
+  if (
+    (status === "confirmed" || status === "pending") &&
+    event.maxCapacity !== null &&
+    event.maxCapacity > 0
+  ) {
+    const activeCount = await db
       .select({ count: registrations.id })
       .from(registrations)
       .where(
         and(
           eq(registrations.orgId, orgId),
           eq(registrations.eventId, input.eventId),
-          eq(registrations.status, "confirmed"),
+          inArray(registrations.status, ["confirmed", "pending"]),
         ),
       );
-    if (confirmedCount.length >= event.maxCapacity) {
+    if (activeCount.length >= event.maxCapacity) {
       status = "waitlisted";
     }
   }
 
-  // Determine payment status based on event price
   let paymentStatus = input.paymentStatus ?? "not_required";
-  if (paymentStatus === "not_required" && Number(event.price) > 0) {
+  if (paymentStatus === "not_required" && isPaid) {
     paymentStatus = "pending";
   }
 
@@ -148,7 +177,7 @@ export async function createRegistration(
     })
     .returning();
 
-  return toRegistrationDto(rows[0]);
+  return { type: "created", registration: toRegistrationDto(rows[0]) };
 }
 
 export async function updateRegistration(

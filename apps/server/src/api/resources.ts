@@ -9,10 +9,13 @@ import { apiError } from "./errors";
 import type { ApiEnv } from "./types";
 import { requireAuth, requireOrg, requireRole } from "../middleware/auth";
 import {
+  archiveResource,
   createResource,
   deleteResource,
   getResource,
   listResources,
+  listResourceUsages,
+  unarchiveResource,
   updateResource,
 } from "../services/resources";
 
@@ -42,6 +45,31 @@ function numberOrNull(value: unknown) {
       : undefined;
 }
 
+function isNonNegativeNumericString(value: string) {
+  if (!/^-?\d+(\.\d+)?$/.test(value)) return false;
+  return Number.parseFloat(value) >= 0;
+}
+
+function costOrNull(value: unknown) {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
+    return value.toFixed(2);
+  }
+  if (typeof value === "string" && isNonNegativeNumericString(value)) {
+    return value;
+  }
+  return undefined;
+}
+
+function currencyOrNull(value: unknown) {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim().toUpperCase();
+  if (trimmed.length === 0) return null;
+  if (!/^[A-Z]{3}$/.test(trimmed)) return undefined;
+  return trimmed;
+}
+
 function parseCreateResource(input: unknown): CreateResourceRequest | string {
   if (!isRecord(input)) return "Request body must be an object";
   if (typeof input.type !== "string" || !isResourceType(input.type))
@@ -54,12 +82,18 @@ function parseCreateResource(input: unknown): CreateResourceRequest | string {
   const phone = stringOrNull(input.phone);
   const capacity = numberOrNull(input.capacity);
   const url = stringOrNull(input.url);
+  const notes = stringOrNull(input.notes);
+  const cost = costOrNull(input.cost);
+  const currency = currencyOrNull(input.currency);
 
   if (description === undefined) return "Description must be a string or null";
   if (email === undefined) return "Email must be a string or null";
   if (phone === undefined) return "Phone must be a string or null";
   if (capacity === undefined) return "Capacity must be an integer or null";
   if (url === undefined) return "URL must be a string or null";
+  if (notes === undefined) return "Notes must be a string or null";
+  if (cost === undefined) return "Cost must be a non-negative number or null";
+  if (currency === undefined) return "Currency must be a 3-letter ISO code or null";
   if (input.metadata !== undefined && !isRecord(input.metadata))
     return "Metadata must be an object";
 
@@ -71,6 +105,9 @@ function parseCreateResource(input: unknown): CreateResourceRequest | string {
     phone,
     capacity,
     url,
+    cost,
+    currency,
+    notes,
     metadata: input.metadata ?? {},
   };
 }
@@ -92,7 +129,7 @@ function parseUpdateResource(input: unknown): UpdateResourceRequest | string {
     parsed.name = input.name.trim();
   }
 
-  for (const field of ["description", "email", "phone", "url"] as const) {
+  for (const field of ["description", "email", "phone", "url", "notes"] as const) {
     if (input[field] !== undefined) {
       const value = stringOrNull(input[field]);
       if (value === undefined) return `${field} must be a string or null`;
@@ -104,6 +141,18 @@ function parseUpdateResource(input: unknown): UpdateResourceRequest | string {
     const capacity = numberOrNull(input.capacity);
     if (capacity === undefined) return "Capacity must be an integer or null";
     parsed.capacity = capacity;
+  }
+
+  if (input.cost !== undefined) {
+    const cost = costOrNull(input.cost);
+    if (cost === undefined) return "Cost must be a non-negative number or null";
+    parsed.cost = cost;
+  }
+
+  if (input.currency !== undefined) {
+    const currency = currencyOrNull(input.currency);
+    if (currency === undefined) return "Currency must be a 3-letter ISO code or null";
+    parsed.currency = currency;
   }
 
   if (input.metadata !== undefined) {
@@ -128,12 +177,31 @@ export const resourceRoutes = new Hono<ApiEnv>()
   .use("*", requireAuth, requireOrg)
   .get("/", async (c) => {
     const type = c.req.query("type") ?? null;
+    const includeArchived = c.req.query("includeArchived") === "true";
+    const eventIdsParam = c.req.query("eventIds");
+    const eventTagsParam = c.req.query("eventTags");
 
     if (type !== null && !isResourceType(type)) {
       return apiError(c, 400, "invalid_resource_type", "Resource type is invalid");
     }
 
-    const resources = await listResources(c.var.orgId, type);
+    const eventIds = eventIdsParam
+      ? eventIdsParam
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
+    const eventTags = eventTagsParam
+      ? eventTagsParam
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
+
+    const resources = await listResources(c.var.orgId, type, includeArchived, {
+      eventIds,
+      eventTags,
+    });
     return c.json({ resources });
   })
   .post("/", requireRole("manager"), async (c) => {
@@ -171,11 +239,42 @@ export const resourceRoutes = new Hono<ApiEnv>()
     return c.json({ resource });
   })
   .delete("/:resourceId", requireRole("admin"), async (c) => {
-    const deleted = await deleteResource(c.var.orgId, c.req.param("resourceId"));
+    try {
+      const deleted = await deleteResource(c.var.orgId, c.req.param("resourceId"));
 
-    if (!deleted) {
-      return apiError(c, 404, "resource_not_found", "Resource not found");
+      if (!deleted) {
+        return apiError(c, 404, "resource_not_found", "Resource not found");
+      }
+
+      return c.json({ deleted: true });
+    } catch (err) {
+      if (
+        err &&
+        typeof err === "object" &&
+        "code" in err &&
+        (err as { code: string }).code === "23503"
+      ) {
+        return apiError(
+          c,
+          409,
+          "resource_in_use",
+          "Resource is assigned to one or more events. Remove assignments before deleting, or archive instead.",
+        );
+      }
+      throw err;
     }
-
-    return c.json({ deleted: true });
+  })
+  .post("/:resourceId/archive", requireRole("manager"), async (c) => {
+    const resource = await archiveResource(c.var.orgId, c.req.param("resourceId"));
+    if (!resource) return apiError(c, 404, "resource_not_found", "Resource not found");
+    return c.json({ resource });
+  })
+  .post("/:resourceId/unarchive", requireRole("manager"), async (c) => {
+    const resource = await unarchiveResource(c.var.orgId, c.req.param("resourceId"));
+    if (!resource) return apiError(c, 404, "resource_not_found", "Resource not found");
+    return c.json({ resource });
+  })
+  .get("/:resourceId/events", async (c) => {
+    const usages = await listResourceUsages(c.var.orgId, c.req.param("resourceId"));
+    return c.json({ usages });
   });

@@ -15,8 +15,8 @@ export function useCreateEvent() {
 
   return useMutation({
     mutationFn: createEvent,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
     },
   });
 }

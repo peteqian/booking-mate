@@ -1,22 +1,24 @@
-import path from "path";
-import tailwindcss from "@tailwindcss/vite";
-import react from "@vitejs/plugin-react";
-import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 import { defineConfig } from "vite";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import viteReact from "@vitejs/plugin-react";
+import viteTsConfigPaths from "vite-tsconfig-paths";
+import tailwindcss from "@tailwindcss/vite";
+import { nitro } from "nitro/vite";
 
-// https://vite.dev/config/
 export default defineConfig({
+  envDir: "../..",
   plugins: [
-    TanStackRouterVite({ target: "react", autoCodeSplitting: true }),
-    react(),
+    nitro(),
+    viteTsConfigPaths({ projects: ["./tsconfig.json"] }),
     tailwindcss(),
+    tanstackStart({
+      router: { routeFileIgnorePattern: "~components" },
+    }),
+    viteReact(),
   ],
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
-  },
   server: {
     port: Number(process.env.WEB_PORT ?? 5678),
+    host: true,
+    allowedHosts: [".lvh.me", "localhost"],
   },
 });

@@ -5,7 +5,8 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": ["dist/**"]
+      "env": ["VITE_*"],
+      "outputs": ["dist/**", ".output/**", ".nitro/**", ".tanstack/**"]
     },
     "lint": {
       "dependsOn": ["^lint"]

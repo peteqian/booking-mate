@@ -1,17 +1,15 @@
-version: "3.8"
-
 services:
   db:
-    image: postgres:15-alpine
-    container_name: booking-mate-db
+    image: postgres:18-alpine
+    container_name: ${BUSINESS_SLUG:-insert-business-name}-db
     ports:
       - "5433:5432"
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-booking_mate}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-booking_mate_password}
-      POSTGRES_DB: ${POSTGRES_DB:-booking_mate}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app_password}
+      POSTGRES_DB: ${POSTGRES_DB:-app}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
 
 volumes:
   postgres_data:

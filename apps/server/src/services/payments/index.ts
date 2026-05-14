@@ -18,8 +18,16 @@ function toPaymentConnectionDto(
   };
 }
 
+import { isAdapterAvailable } from "../../payments/registry";
+
 export function listPaymentProviders() {
-  return { providers: [{ id: "stripe", name: "Stripe", enabled: false }] };
+  return {
+    providers: [
+      { id: "stripe", name: "Stripe", enabled: isAdapterAvailable("stripe") },
+      { id: "square", name: "Square", enabled: isAdapterAvailable("square") },
+      { id: "paypal", name: "PayPal", enabled: isAdapterAvailable("paypal") },
+    ],
+  };
 }
 
 export async function listPaymentConnections(orgId: string): Promise<PaymentConnectionDto[]> {

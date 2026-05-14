@@ -1,10 +1,10 @@
 # Product Description
 
-Booking Mate is a hybrid event booking SaaS for organizations that run classes, workshops, programs, sessions, or other scheduled offerings.
+Buching is a hybrid event booking SaaS for organizations that run classes, workshops, programs, sessions, or other scheduled offerings.
 
 The main public-facing object is an event: something people can browse and register for. Internally, the platform treats the things needed to run those events as resources, such as instructors, locations, materials, equipment, or other custom assets. This keeps the product event-first today while leaving room for future appointment-style or resource-availability booking later.
 
-Organizations use Booking Mate to create events, manage attendees, track registrations, assign resources, accept payments, share public booking pages, and monitor operational activity.
+Organizations use Buching to create events, manage attendees, track registrations, assign resources, accept payments, share public booking pages, and monitor operational activity.
 
 ## Target Users
 
@@ -56,7 +56,7 @@ Each organization gets a public-facing booking experience.
 Features:
 
 - Public booking page at `/book/:slug`.
-- Future support for `{org}.bookingmate.app` subdomains.
+- Future support for `{org}.buching.app` subdomains.
 - Future support for custom domains.
 - Public event browsing.
 - Search and filter public events.
@@ -121,7 +121,7 @@ Features:
 - Expired pending payment handling.
 - Payment status shown in event and registration views.
 
-Important distinction: Booking Mate is not planning SaaS subscription billing yet. It will have plan limits, but not Polar/Stripe billing for Booking Mate subscriptions in the first scope.
+Important distinction: Buching is not planning SaaS subscription billing yet. It will have plan limits, but not Polar/Stripe billing for Buching subscriptions in the first scope.
 
 ### Plan Limits
 
@@ -227,7 +227,7 @@ Sections:
 ## Deferred
 
 - Appointment scheduler as the main product.
-- SaaS subscription billing for Booking Mate itself.
+- SaaS subscription billing for Buching itself.
 - i18n.
 - Multi-org switcher.
 - Resource availability conflict detection.
@@ -237,7 +237,7 @@ Sections:
 
 ## Positioning
 
-Booking Mate is an event-first booking platform for organizations that need to manage public events, registrations, resources, payments, and team operations from one place.
+Buching is an event-first booking platform for organizations that need to manage public events, registrations, resources, payments, and team operations from one place.
 
 Tagline:
 

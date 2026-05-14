@@ -1,6 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createRegistration, deleteRegistration, updateRegistration } from "@/lib/registrations";
-import type { CreateRegistrationRequest, UpdateRegistrationRequest, RegistrationWithAttendeeDto } from "@workspace/contracts";
+import type {
+  CreateRegistrationRequest,
+  UpdateRegistrationRequest,
+  RegistrationWithAttendeeDto,
+} from "@workspace/contracts";
 import { registrationKeys } from "@/queries/registrations";
 import { eventKeys } from "@/queries/events";
 

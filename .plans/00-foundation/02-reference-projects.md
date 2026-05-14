@@ -15,7 +15,7 @@ Relevant patterns:
 
 Avoid copying directly:
 
-- TanStack Start server function architecture, because Booking Mate already uses separate Hono server and Vite web app.
+- TanStack Start server function architecture, because Buching already uses separate Hono server and Vite web app.
 - Any dependency choices that conflict with current workspace conventions.
 
 ## `../bookings-made-easy`
@@ -32,7 +32,7 @@ Relevant patterns:
 - Calendar UI: month/day/week views, drag/drop rescheduling, duration resize, heatmap.
 - Resource UI: instructors, materials, locations.
 
-Adaptations for Booking Mate:
+Adaptations for Buching:
 
 - Use single-org-per-user initially, not multi-org switcher.
 - Plan limits only; do not implement Polar subscription checkout now.

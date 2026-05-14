@@ -1,8 +1,8 @@
-# Booking Mate Plans
+# Buching Plans
 
 ## Product Direction
 
-Booking Mate is a hybrid event booking SaaS. Events are the primary user-facing object, but resources are first-class because instructors, materials, rooms, and future availability objects all behave like bookable or assignable resources.
+Buching is a hybrid event booking SaaS. Events are the primary user-facing object, but resources are first-class because instructors, materials, rooms, and future availability objects all behave like bookable or assignable resources.
 
 Appointment scheduling is not the initial product target. The architecture should leave room for later appointment-style bookings without optimizing the MVP around Calendly-like flows.
 
@@ -41,11 +41,14 @@ Build in user-value order, not file/folder order. Core platform work should be i
 - [Resources](02-product-features/06-resources.md)
 - [Attendees and Registrations](02-product-features/02-attendees-registrations.md)
 - [Public Booking Pages](02-product-features/03-public-booking-pages.md)
+- [Customer Accounts](02-product-features/07-customer-accounts.md)
 - [Calendar](02-product-features/04-calendar.md)
 - [Dashboard](02-product-features/05-dashboard.md)
 - [Plan Limits](04-commercial/01-plan-limits.md)
 - [Provider-Agnostic Payments](04-commercial/02-provider-agnostic-payments.md)
 - [Stripe Connect](04-commercial/03-stripe-connect.md)
+- [Square](04-commercial/04-square.md)
+- [PayPal](04-commercial/05-paypal.md)
 - [Webhook Delivery](05-integrations/01-webhook-delivery.md)
 - [Email Templates](05-integrations/02-email-templates.md)
 - [Subdomain and Custom Domains](05-integrations/03-subdomain-custom-domains.md)

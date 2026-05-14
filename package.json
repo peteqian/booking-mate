@@ -6,7 +6,7 @@
   "scripts": {
     "setup": "bun scripts/setup.ts",
     "build": "turbo build",
-    "dev": "turbo dev",
+    "dev": "bun run db:up && turbo dev",
     "lint": "turbo lint",
     "lint:fix": "turbo lint:fix",
     "format": "turbo format",
@@ -20,7 +20,8 @@
     "oxfmt": "^0.47.0",
     "oxlint": "^1.32.0",
     "turbo": "^2.8.17",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "wrangler": "^4.90.0"
   },
   "packageManager": "bun@1.3.11",
   "engines": {

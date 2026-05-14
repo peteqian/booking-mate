@@ -6,67 +6,69 @@ Attendees are people who register for events. Registrations link attendees to ev
 
 Included:
 
-- Email required.
-- Duplicate prevention.
-- Manual attendee creation.
-- Registration statuses.
-- Payment statuses.
-- Capacity and waitlist behavior.
+- [x] Email required.
+- [x] Duplicate prevention.
+- [x] Manual attendee creation.
+- [x] Registration statuses.
+- [x] Payment statuses.
+- [x] Capacity and waitlist behavior.
 
 ## Attendee Rules
 
-- Attendee email is required.
-- Email is normalized to lowercase.
-- `(orgId, email)` is unique.
-- Phone is optional.
+- [x] Attendee email is required.
+- [x] Email is normalized to lowercase.
+- [x] `(orgId, email)` is unique. (uniqueIndex `attendees_org_email_idx`)
+- [x] Phone is optional.
 
 ## Registration Rules
 
-- One active registration per attendee per event.
-- Cancelled registrations do not block future registration.
-- If confirmed registration count is below event capacity, new registration is `confirmed`.
-- If event is full, new registration is `waitlisted`.
-- Free events get `paymentStatus = not_required`.
-- Paid events get `paymentStatus = pending` until provider confirms payment.
+- [x] One active registration per attendee per event.
+- [x] Cancelled registrations do not block future registration.
+- [x] If confirmed registration count is below event capacity, new registration is `confirmed`.
+- [x] If event is full, new registration is `waitlisted`.
+- [x] Free events get `paymentStatus = not_required`.
+- [x] Paid events get `paymentStatus = pending` until provider confirms payment.
 
 ## Statuses
 
 Registration status:
 
-- `confirmed`.
-- `waitlisted`.
-- `cancelled`.
+- [x] `confirmed`.
+- [x] `waitlisted`.
+- [x] `cancelled`.
 
 Payment status:
 
-- `not_required`.
-- `pending`.
-- `paid`.
-- `refunded`.
-- `expired`.
+- [x] `not_required`.
+- [x] `pending`.
+- [x] `paid`.
+- [x] `refunded`.
+- [x] `expired`.
 
 ## Public Registration Flow
 
-1. Visitor opens public event.
-2. Visitor enters name, email, and optional phone.
-3. Server resolves or creates attendee by email.
-4. Server checks duplicate active registration.
-5. Server checks capacity and assigns registration status.
-6. Server assigns payment status.
-7. If paid and provider is connected, frontend proceeds to checkout.
+Server endpoint: [x] `POST /api/public/orgs/:slug/events/:eventId/register`. Public web pages: [x] implemented (`events.index.tsx`, `events.$eventId.index.tsx`, `events.$eventId.book.tsx`).
+
+1. [x] Visitor opens public event. (`/events/:eventId` under subdomain)
+2. [x] Visitor enters name, email, and optional phone. (`/events/:eventId/book` form)
+3. [x] Server resolves or creates attendee by email.
+4. [x] Server checks duplicate active registration.
+5. [x] Server checks capacity and assigns registration status.
+6. [x] Server assigns payment status.
+7. [ ] If paid and provider is connected, frontend proceeds to checkout. (book page shows "Paid registration is not available yet" alert; no checkout UI wired)
 
 ## Team Registration Flow
 
-Managers can manually create attendees and registrations from the dashboard.
+- [x] Managers can manually create attendees and registrations from the dashboard.
 
 ## Waitlist Promotion
 
 Initial behavior:
 
-- Cancelled confirmed registrations free capacity.
-- Manual promotion from waitlisted to confirmed is acceptable for MVP.
+- [x] Cancelled confirmed registrations free capacity.
+- [x] Manual promotion from waitlisted to confirmed is acceptable for MVP.
 
 Later behavior:
 
-- Auto-promote oldest waitlisted attendee when capacity opens.
-- Notify promoted attendee via email template.
+- [ ] Auto-promote oldest waitlisted attendee when capacity opens.
+- [ ] Notify promoted attendee via email template.

@@ -2,7 +2,7 @@
 
 ## High-Level Shape
 
-Booking Mate remains a monorepo with separate web and server apps.
+Buching remains a monorepo with separate web and server apps.
 
 - Web owns routes, UI state, forms, and data fetching.
 - Server owns auth, org authorization, validation, domain APIs, payment/webhook integrations, and database writes.

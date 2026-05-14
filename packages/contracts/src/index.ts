@@ -8,12 +8,51 @@ export interface RootResponse {
 }
 
 export type OrgRole = "owner" | "admin" | "manager" | "viewer";
-export type OrgPlan = "free" | "pro";
+export type OrgPlan = "free" | "team" | "enterprise";
 export type ResourceType = "instructor" | "material" | "location" | "equipment" | "custom";
 export type EventStatus = "upcoming" | "completed" | "cancelled";
-export type EventVisibility = "published" | "unpublished" | "archived";
-export type RegistrationStatus = "confirmed" | "waitlisted" | "cancelled";
-export type PaymentStatus = "not_required" | "pending" | "paid" | "refunded" | "expired";
+export type EventVisibility = "published" | "unpublished";
+export type RegistrationStatus = "pending" | "confirmed" | "waitlisted" | "cancelled";
+export type PaymentStatus = "not_required" | "pending" | "paid" | "refunded" | "expired" | "failed";
+export type PublicAssetKind = "org_logo" | "event_image";
+export type PublicAssetRole = "cover" | "detail";
+export type PublicAssetStatus = "pending" | "ready";
+
+export const PAYMENT_PROVIDERS = ["stripe", "square", "paypal"] as const;
+export type PaymentProvider = (typeof PAYMENT_PROVIDERS)[number];
+
+export function isPaymentProvider(value: unknown): value is PaymentProvider {
+  return typeof value === "string" && (PAYMENT_PROVIDERS as readonly string[]).includes(value);
+}
+
+export function parsePaymentProvider(value: unknown): PaymentProvider {
+  if (!isPaymentProvider(value)) {
+    throw new Error(`unknown payment provider: ${String(value)}`);
+  }
+  return value;
+}
+
+export interface Money {
+  amount: number;
+  currency: string;
+}
+
+export interface PaymentRefundDto {
+  id: string;
+  registrationId: string;
+  provider: PaymentProvider;
+  providerRefundId: string | null;
+  paymentReference: string;
+  requestedAmount: number;
+  settledAmount: number | null;
+  currency: string;
+  reason: string | null;
+  status: "pending" | "succeeded" | "failed" | "canceled";
+  failureReason: string | null;
+  requestedByUserId: string | null;
+  requestedAt: string;
+  settledAt: string | null;
+}
 export type WebhookDeliveryStatus = "pending" | "delivered" | "failed" | "dead_letter";
 
 export interface ApiErrorResponse {
@@ -31,6 +70,13 @@ export interface OrganizationDto {
   createdAt: string;
 }
 
+export interface CategoryConfig {
+  color?: string;
+  icon?: string;
+}
+
+export type CategoryConfigs = Record<string, CategoryConfig>;
+
 export interface OrgSettingsDto {
   id: string;
   orgId: string;
@@ -38,8 +84,9 @@ export interface OrgSettingsDto {
   contactEmail: string | null;
   currency: string;
   categories: string[];
-  categoryConfigs: Record<string, unknown>;
+  categoryConfigs: CategoryConfigs;
   webhookUrl: string | null;
+  webhookSecret: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -64,9 +111,23 @@ export interface ResourceDto {
   phone: string | null;
   capacity: number | null;
   url: string | null;
+  cost: string | null;
+  currency: string | null;
+  notes: string | null;
+  archivedAt: string | null;
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ResourceUsageDto {
+  eventResourceId: string;
+  eventId: string;
+  eventTitle: string;
+  eventDate: string;
+  eventStatus: EventStatus;
+  role: string;
+  quantity: number;
 }
 
 export interface EventDto {
@@ -75,22 +136,48 @@ export interface EventDto {
   createdById: string | null;
   title: string;
   description: string | null;
+  notes: string | null;
   category: string | null;
+  tags: string[];
   date: string;
   time: string;
   duration: number;
+  allDay: boolean;
   maxCapacity: number | null;
   location: string | null;
   status: EventStatus;
   visibility: EventVisibility;
+  archivedAt: string | null;
   recurring: boolean;
   recurrenceFrequency: string | null;
   recurrenceDays: string[];
   recurrenceInterval: number | null;
   recurrenceEndDate: string | null;
-  price: string;
+  price: number;
+  imageUrl: string | null;
+  detailImages: EventImageDto[];
   confirmedRegistrations: number;
   waitlistedRegistrations: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EventImageDto {
+  id: string;
+  url: string;
+}
+
+export interface PublicAssetDto {
+  id: string;
+  orgId: string;
+  eventId: string | null;
+  kind: PublicAssetKind;
+  role: PublicAssetRole;
+  key: string;
+  publicUrl: string;
+  contentType: string;
+  size: number;
+  status: PublicAssetStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -124,7 +211,18 @@ export interface RegistrationDto {
   status: RegistrationStatus;
   paymentStatus: PaymentStatus;
   checkoutSessionId: string | null;
+  paymentIntentId: string | null;
   paymentProvider: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AttendeePaymentProfileDto {
+  id: string;
+  attendeeId: string;
+  orgId: string;
+  provider: string;
+  providerCustomerId: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -173,6 +271,9 @@ export interface CreateResourceRequest {
   phone?: string | null;
   capacity?: number | null;
   url?: string | null;
+  cost?: string | null;
+  currency?: string | null;
+  notes?: string | null;
   metadata?: Record<string, unknown>;
 }
 
@@ -181,10 +282,13 @@ export type UpdateResourceRequest = Partial<CreateResourceRequest>;
 export interface CreateEventRequest {
   title: string;
   description?: string | null;
+  notes?: string | null;
   category?: string | null;
+  tags?: string[];
   date: string;
   time: string;
   duration: number;
+  allDay?: boolean;
   maxCapacity?: number | null;
   location?: string | null;
   status?: EventStatus;
@@ -194,10 +298,13 @@ export interface CreateEventRequest {
   recurrenceDays?: string[];
   recurrenceInterval?: number | null;
   recurrenceEndDate?: string | null;
-  price?: string;
+  price?: number;
+  imageUrl?: string | null;
 }
 
-export type UpdateEventRequest = Partial<CreateEventRequest>;
+export type UpdateEventRequest = Partial<CreateEventRequest> & {
+  archivedAt?: string | null;
+};
 
 export interface CreateAttendeeRequest {
   name: string;
@@ -236,9 +343,25 @@ export interface UpdateOrgSettingsRequest {
   contactEmail?: string | null;
   currency?: string;
   categories?: string[];
-  categoryConfigs?: Record<string, unknown>;
+  categoryConfigs?: CategoryConfigs;
   webhookUrl?: string | null;
   emailTemplates?: Record<string, unknown>;
+}
+
+export interface CreatePublicAssetUploadRequest {
+  kind: PublicAssetKind;
+  role?: PublicAssetRole;
+  fileName: string;
+  contentType: string;
+  size: number;
+  eventId?: string | null;
+}
+
+export interface CreatePublicAssetUploadResponse {
+  assetId: string;
+  uploadUrl: string;
+  publicUrl: string;
+  expiresAt: string;
 }
 
 export interface ListEventsResponse {

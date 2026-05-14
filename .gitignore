@@ -3,6 +3,9 @@ node_modules
 .pnp
 .pnp.js
 
+# Agents
+settings.local.json
+
 # Local env files
 .env
 .env.local
@@ -21,6 +24,9 @@ coverage
 
 # Build Outputs
 dist
+.output
+.nitro
+.tanstack
 
 # Debug
 npm-debug.log*
@@ -34,3 +40,4 @@ npm-debug.log*
 current-ui.png
 events-list.png
 logged-in-dashboard.png
+.tmp-screens/
