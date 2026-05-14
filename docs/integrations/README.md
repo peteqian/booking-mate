@@ -1,6 +1,6 @@
 # Integrations
 
-Reference for developers and tenants building custom integrations against Booking Mate. Audience: technical users at customer organizations.
+Reference for developers and tenants building custom integrations against Buching. Audience: technical users at customer organizations.
 
 ## Planned
 

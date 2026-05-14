@@ -1,6 +1,6 @@
 # Roles and permissions
 
-Booking Mate has four organization roles. Each member of an organization is assigned exactly one role, which controls what they can see and do inside that organization. Roles are scoped per organization — being an owner of one org does not grant access to another.
+Buching has four organization roles. Each member of an organization is assigned exactly one role, which controls what they can see and do inside that organization. Roles are scoped per organization — being an owner of one org does not grant access to another.
 
 ## At a glance
 

@@ -48,7 +48,9 @@ export function CategoriesTab() {
         )}
         {mutation.isError && (
           <p className="mt-3 text-xs text-destructive">
-            {mutation.error instanceof Error ? mutation.error.message : "Failed to save"}
+            {mutation.error instanceof Error
+              ? mutation.error.message
+              : "Couldn't save categories. Try again."}
           </p>
         )}
       </CardContent>

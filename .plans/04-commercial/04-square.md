@@ -4,7 +4,7 @@
 
 Square is a v1 payment provider alongside Stripe Connect and PayPal.
 
-Tenants connect their own Square seller account via OAuth. Booking Mate creates Square Payment Links with ad-hoc line items at checkout time. Tenants do **not** create Square Catalog items.
+Tenants connect their own Square seller account via OAuth. Buching creates Square Payment Links with ad-hoc line items at checkout time. Tenants do **not** create Square Catalog items.
 
 ## Square Concepts To Track Per Tenant
 
@@ -56,13 +56,13 @@ Tenants connect their own Square seller account via OAuth. Booking Mate creates 
 
 ## Platform Fees
 
-- Set `app_fee_money` on the underlying payment to capture Booking Mate's platform fee.
+- Set `app_fee_money` on the underlying payment to capture Buching's platform fee.
 - Tenant must have onboarded via the Square partner program for the app to collect fees.
 - Fee percentage stored on the org's plan.
 
 ## Webhooks
 
-- Single Booking Mate endpoint: `POST /webhooks/square`.
+- Single Buching endpoint: `POST /webhooks/square`.
 - Verify `x-square-hmacsha256-signature` header using `SQUARE_WEBHOOK_SIGNATURE_KEY` and the request URL + body.
 - Persist `(provider, providerEventId)` for idempotent processing.
 - Handle (with mapping to normalized events):

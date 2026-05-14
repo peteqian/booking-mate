@@ -1,8 +1,8 @@
-# Booking Mate Plans
+# Buching Plans
 
 ## Product Direction
 
-Booking Mate is a hybrid event booking SaaS. Events are the primary user-facing object, but resources are first-class because instructors, materials, rooms, and future availability objects all behave like bookable or assignable resources.
+Buching is a hybrid event booking SaaS. Events are the primary user-facing object, but resources are first-class because instructors, materials, rooms, and future availability objects all behave like bookable or assignable resources.
 
 Appointment scheduling is not the initial product target. The architecture should leave room for later appointment-style bookings without optimizing the MVP around Calendly-like flows.
 

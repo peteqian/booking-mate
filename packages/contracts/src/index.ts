@@ -8,12 +8,15 @@ export interface RootResponse {
 }
 
 export type OrgRole = "owner" | "admin" | "manager" | "viewer";
-export type OrgPlan = "free" | "pro";
+export type OrgPlan = "free" | "team" | "enterprise";
 export type ResourceType = "instructor" | "material" | "location" | "equipment" | "custom";
 export type EventStatus = "upcoming" | "completed" | "cancelled";
 export type EventVisibility = "published" | "unpublished";
 export type RegistrationStatus = "pending" | "confirmed" | "waitlisted" | "cancelled";
 export type PaymentStatus = "not_required" | "pending" | "paid" | "refunded" | "expired" | "failed";
+export type PublicAssetKind = "org_logo" | "event_image";
+export type PublicAssetRole = "cover" | "detail";
+export type PublicAssetStatus = "pending" | "ready";
 
 export const PAYMENT_PROVIDERS = ["stripe", "square", "paypal"] as const;
 export type PaymentProvider = (typeof PAYMENT_PROVIDERS)[number];
@@ -151,8 +154,30 @@ export interface EventDto {
   recurrenceInterval: number | null;
   recurrenceEndDate: string | null;
   price: number;
+  imageUrl: string | null;
+  detailImages: EventImageDto[];
   confirmedRegistrations: number;
   waitlistedRegistrations: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EventImageDto {
+  id: string;
+  url: string;
+}
+
+export interface PublicAssetDto {
+  id: string;
+  orgId: string;
+  eventId: string | null;
+  kind: PublicAssetKind;
+  role: PublicAssetRole;
+  key: string;
+  publicUrl: string;
+  contentType: string;
+  size: number;
+  status: PublicAssetStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -274,6 +299,7 @@ export interface CreateEventRequest {
   recurrenceInterval?: number | null;
   recurrenceEndDate?: string | null;
   price?: number;
+  imageUrl?: string | null;
 }
 
 export type UpdateEventRequest = Partial<CreateEventRequest> & {
@@ -320,6 +346,22 @@ export interface UpdateOrgSettingsRequest {
   categoryConfigs?: CategoryConfigs;
   webhookUrl?: string | null;
   emailTemplates?: Record<string, unknown>;
+}
+
+export interface CreatePublicAssetUploadRequest {
+  kind: PublicAssetKind;
+  role?: PublicAssetRole;
+  fileName: string;
+  contentType: string;
+  size: number;
+  eventId?: string | null;
+}
+
+export interface CreatePublicAssetUploadResponse {
+  assetId: string;
+  uploadUrl: string;
+  publicUrl: string;
+  expiresAt: string;
 }
 
 export interface ListEventsResponse {

@@ -2,7 +2,7 @@
 
 ## Scope
 
-Booking Mate should start with one organization per user account in the product experience.
+Buching should start with one organization per user account in the product experience.
 
 The database and APIs remain org-scoped to support future multi-org behavior.
 

@@ -58,7 +58,7 @@ export function InlineCreateForm({ prefill, onCreated }: InlineCreateFormProps) 
         </Alert>
       )}
       {success && (
-        <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-200">
+        <div className="rounded-md border border-success/30 bg-success/10 px-3 py-2 text-xs text-success dark:bg-success/15">
           {success}
         </div>
       )}
@@ -193,7 +193,7 @@ export function InlineCreateForm({ prefill, onCreated }: InlineCreateFormProps) 
         {createMutation.isPending ? "Creating…" : "Add to calendar"}
       </Button>
 
-      <p className="text-[11px] text-muted-foreground leading-relaxed">
+      <p className="text-2xs text-muted-foreground leading-relaxed">
         Add the basics here, then open the event to set capacity, resources, and recurrence.
       </p>
     </form>

@@ -1,6 +1,6 @@
 # Docs
 
-Source for the Booking Mate user manual, integrator reference, and internal support runbooks. Markdown lives here in the repo; a public help site can render from this tree later.
+Source for the Buching user manual, integrator reference, and internal support runbooks. Markdown lives here in the repo; a public help site can render from this tree later.
 
 ## Categories
 
@@ -10,7 +10,7 @@ Source for the Booking Mate user manual, integrator reference, and internal supp
 
 ## Background
 
-- [Product description](./product-description.md) — what Booking Mate is and who it's for.
+- [Product description](./product-description.md) — what Buching is and who it's for.
 - [Design philosophy](./design-philosophy.md) — UX and product principles.
 - [Best practices](./best-practices.md) — engineering conventions.
 

@@ -62,7 +62,9 @@ function DatePicker({
           disabled={disabled}
         />
       </PopoverContent>
-      {required && <input value={value} required readOnly aria-hidden className="sr-only" tabIndex={-1} />}
+      {required && (
+        <input value={value} required readOnly aria-hidden className="sr-only" tabIndex={-1} />
+      )}
     </Popover>
   );
 }

@@ -18,9 +18,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { attendeeQueryOptions, attendeeRegistrationsQueryOptions } from "@/queries/attendees";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/_auth/admin/attendees/$attendeeId")({
   component: AttendeeDetailRoute,
+  head: () => pageHead("Attendee"),
   loader: ({ context, params }) =>
     Promise.all([
       context.queryClient.ensureQueryData(attendeeQueryOptions(params.attendeeId)),

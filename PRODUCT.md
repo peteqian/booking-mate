@@ -2,7 +2,7 @@
 
 ### Users
 
-Booking Mate is used by teams that run classes, workshops, programs, sessions, and scheduled offerings. Users are operators: owners, admins, managers, and staff who need to create events, track status, manage registrations, and later coordinate resources, attendees, payments, and public booking pages.
+Buching is used by teams that run classes, workshops, programs, sessions, and scheduled offerings. Users are operators: owners, admins, managers, and staff who need to create events, track status, manage registrations, and later coordinate resources, attendees, payments, and public booking pages.
 
 ### Brand Personality
 

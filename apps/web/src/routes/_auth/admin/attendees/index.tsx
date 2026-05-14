@@ -8,6 +8,8 @@ import type { AttendeeDto } from "@workspace/contracts";
 import { getCurrentOrg } from "@/lib/org";
 import { canManageAttendees } from "@/lib/permissions";
 import { AppShell } from "@/components/app-shell";
+import { pageHead } from "@/lib/seo";
+import { EmptyState } from "@/components/empty-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +40,7 @@ import {
 
 export const Route = createFileRoute("/_auth/admin/attendees/")({
   component: AttendeesPage,
+  head: () => pageHead("Attendees"),
   loader: ({ context }) => context.queryClient.ensureQueryData(attendeesQueryOptions()),
 });
 
@@ -98,19 +101,17 @@ function AttendeesPage() {
         {!canManage && <p className="text-xs text-muted-foreground">Viewer role — read-only</p>}
 
         {sorted.length === 0 ? (
-          <div className="rounded-xl border border-dashed bg-muted/30 p-12 text-center">
-            <Users className="mx-auto size-8 text-muted-foreground/60" />
-            <h2 className="mt-3 text-sm font-semibold tracking-tight">
-              {search ? "No matching attendees" : "No attendees yet"}
-            </h2>
-            <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-              {search
+          <EmptyState
+            icon={<Users className="size-8" />}
+            title={search ? "No matching attendees" : "No attendees yet"}
+            description={
+              search
                 ? "Try a different name or email."
-                : "Attendees appear here once they register, or you add them manually."}
-            </p>
-          </div>
+                : "Attendees appear here once they register, or you add them manually."
+            }
+          />
         ) : (
-          <div className="overflow-hidden rounded-xl border bg-background">
+          <div className="overflow-x-auto rounded-xl border bg-background">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">

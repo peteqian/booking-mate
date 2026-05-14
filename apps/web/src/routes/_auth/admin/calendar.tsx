@@ -31,12 +31,14 @@ import { YearView } from "./~components/calendar/year-view";
 import { CategoryConfigsProvider, type EventInstance } from "./~components/calendar/event-utils";
 import { orgSettingsQueryOptions } from "@/queries/org";
 import { SLOT_PX } from "./~components/calendar/time-grid";
+import { pageHead } from "@/lib/seo";
 
 type ViewType = "day" | "week" | "month" | "year";
 
 export const Route = createFileRoute("/_auth/admin/calendar")({
   ssr: false,
   component: CalendarPage,
+  head: () => pageHead("Calendar"),
   loader: ({ context }) => context.queryClient.ensureQueryData(eventsQueryOptions),
 });
 
@@ -140,7 +142,7 @@ function CalendarPage() {
         queryClient.invalidateQueries({ queryKey: eventKeys.detail(eventId) }),
       ]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to reschedule event");
+      setError(err instanceof Error ? err.message : "Couldn't reschedule event. Try again.");
     }
   };
 
@@ -182,7 +184,7 @@ function CalendarPage() {
           queryClient.invalidateQueries({ queryKey: eventKeys.detail(ctx.eventId) }),
         ]);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to resize event");
+        setError(err instanceof Error ? err.message : "Couldn't resize event. Try again.");
       }
     };
 
@@ -373,7 +375,7 @@ function CalendarPage() {
                 </div>
               )}
               {!canManage && (
-                <div className="border-b bg-muted/40 px-3 py-1 text-[11px] text-muted-foreground">
+                <div className="border-b bg-muted/40 px-3 py-1 text-2xs text-muted-foreground">
                   Viewer role — drag/create disabled.
                 </div>
               )}

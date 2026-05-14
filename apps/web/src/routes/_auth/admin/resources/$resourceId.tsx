@@ -28,9 +28,11 @@ import { resourceQueryOptions, resourceUsagesQueryOptions } from "@/queries/reso
 import { useArchiveResource, useUnarchiveResource } from "@/hooks/use-resources";
 import { EditResourceDialog } from "./~components/resource-dialog";
 import { DeleteResourceDialog } from "./~components/delete-resource-dialog";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/_auth/admin/resources/$resourceId")({
   component: ResourceDetailRoute,
+  head: () => pageHead("Resource"),
   loader: ({ context, params }) =>
     Promise.all([
       context.queryClient.ensureQueryData(resourceQueryOptions(params.resourceId)),

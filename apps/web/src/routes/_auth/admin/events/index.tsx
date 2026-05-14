@@ -2,9 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { DragDropProvider, useDraggable, useDroppable } from "@dnd-kit/react";
 import { useEffect, useMemo, useState } from "react";
-import { Calendar, LayoutGrid, List, Search, SlidersHorizontal, X } from "lucide-react";
+import { Calendar, LayoutGrid, List, Search, SlidersHorizontal } from "lucide-react";
 import type { EventDto, EventStatus, EventVisibility } from "@workspace/contracts";
 import { AppShell } from "@/components/app-shell";
+import { pageHead } from "@/lib/seo";
+import { EmptyState } from "@/components/empty-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,8 +34,10 @@ import { formatPrice } from "@/lib/public";
 import { eventKeys, eventsQueryOptions } from "@/queries/events";
 import { useCreateEvent, useDuplicateEvent } from "@/hooks/use-events";
 import { resourcesQueryOptions } from "@/queries/resources";
+import { uploadPublicAsset } from "@/lib/assets";
 import { replaceEventResources } from "@/lib/resources";
 import { StatusBadge, VisibilityBadge } from "./~components/event-badges";
+import { FilterChip } from "./~components/filter-chip";
 import { EventsTable, type SortKey } from "./~components/events-table";
 import { EventForm } from "./~components/event-form";
 
@@ -62,6 +66,7 @@ function isArchived(event: Pick<EventDto, "archivedAt">) {
 
 export const Route = createFileRoute("/_auth/admin/events/")({
   component: Events,
+  head: () => pageHead("Events"),
   loader: ({ context }) => context.queryClient.ensureQueryData(eventsQueryOptions),
 });
 
@@ -80,9 +85,12 @@ function Events() {
   const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState<EventFormState>(() => defaultEventForm());
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [detailFiles, setDetailFiles] = useState<File[]>([]);
   const [resourceAssignments, setResourceAssignments] = useState<ResourceAssignmentDraft[]>([]);
   const [error, setError] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const {
     data: { events },
@@ -158,9 +166,44 @@ function Events() {
           })),
         });
       }
+      const uploadErrors: string[] = [];
+      if (coverFile) {
+        try {
+          await uploadPublicAsset({
+            file: coverFile,
+            kind: "event_image",
+            role: "cover",
+            eventId: createdEvent.id,
+          });
+        } catch (error) {
+          uploadErrors.push(
+            error instanceof Error ? error.message : "Unable to upload cover image",
+          );
+        }
+      }
+      for (const file of detailFiles) {
+        try {
+          await uploadPublicAsset({
+            file,
+            kind: "event_image",
+            role: "detail",
+            eventId: createdEvent.id,
+          });
+        } catch (error) {
+          uploadErrors.push(
+            error instanceof Error ? error.message : `Unable to upload ${file.name}`,
+          );
+        }
+      }
+      queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
       setForm(defaultEventForm());
+      setCoverFile(null);
+      setDetailFiles([]);
       setResourceAssignments([]);
       setCreateOpen(false);
+      if (uploadErrors.length > 0) {
+        setError(`Event created, but some images failed to upload: ${uploadErrors.join(", ")}`);
+      }
     } catch (error) {
       setError(error instanceof Error ? error.message : "Unable to create event");
     }
@@ -213,6 +256,10 @@ function Events() {
               resources={resourcesData?.resources ?? []}
               resourceAssignments={resourceAssignments}
               onResourceAssignmentsChange={setResourceAssignments}
+              coverFile={coverFile}
+              detailFiles={detailFiles}
+              onCoverFileChange={setCoverFile}
+              onDetailFilesChange={setDetailFiles}
             />
           </DialogContent>
         </Dialog>
@@ -229,13 +276,13 @@ function Events() {
             <TabsList>
               <TabsTrigger value="active">
                 Active
-                <Badge variant="secondary" className="ml-1.5 h-4 px-1 text-[10px]">
+                <Badge variant="secondary" className="ml-1.5 h-4 px-1 text-3xs">
                   {eventCounts.active}
                 </Badge>
               </TabsTrigger>
               <TabsTrigger value="archived">
                 Archived
-                <Badge variant="secondary" className="ml-1.5 h-4 px-1 text-[10px]">
+                <Badge variant="secondary" className="ml-1.5 h-4 px-1 text-3xs">
                   {eventCounts.archived}
                 </Badge>
               </TabsTrigger>
@@ -260,7 +307,7 @@ function Events() {
                     <SlidersHorizontal className="size-3.5" />
                     Filter
                     {activeFilterCount > 0 && (
-                      <Badge variant="secondary" className="ml-0.5 h-4 px-1 text-[10px]">
+                      <Badge variant="secondary" className="ml-0.5 h-4 px-1 text-3xs">
                         {activeFilterCount}
                       </Badge>
                     )}
@@ -277,7 +324,7 @@ function Events() {
                       </p>
                     </div>
                     {activeFilterCount > 0 && (
-                      <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                      <Badge variant="secondary" className="h-5 px-1.5 text-3xs">
                         {activeFilterCount} active
                       </Badge>
                     )}
@@ -378,10 +425,17 @@ function Events() {
               </PopoverContent>
             </Popover>
 
-            <div className="flex items-center rounded-lg border bg-muted/30 p-[3px]">
+            <div
+              role="radiogroup"
+              aria-label="Event view"
+              className="flex items-center rounded-lg border bg-muted/30 p-1"
+            >
               <Button
                 variant={view === "list" ? "secondary" : "ghost"}
                 size="sm"
+                role="radio"
+                aria-checked={view === "list"}
+                aria-label="List view"
                 className="h-7 w-7 p-0"
                 onClick={() => setView("list")}
               >
@@ -390,6 +444,9 @@ function Events() {
               <Button
                 variant={view === "kanban" ? "secondary" : "ghost"}
                 size="sm"
+                role="radio"
+                aria-checked={view === "kanban"}
+                aria-label="Kanban view"
                 className="h-7 w-7 p-0"
                 onClick={() => setView("kanban")}
               >
@@ -403,33 +460,22 @@ function Events() {
         {activeFilterCount > 0 && (
           <div className="flex flex-wrap items-center gap-1.5">
             {category !== "all" && (
-              <Badge variant="outline" className="h-5 gap-1 px-1.5 text-[10px]">
-                Category: {category}
-                <button onClick={() => setCategory("all")} className="ml-0.5">
-                  <X className="size-2.5" />
-                </button>
-              </Badge>
+              <FilterChip label="Category" value={category} onClear={() => setCategory("all")} />
             )}
             {status !== "all" && (
-              <Badge variant="outline" className="h-5 gap-1 px-1.5 text-[10px]">
-                Status: {status}
-                <button onClick={() => setStatus("all")} className="ml-0.5">
-                  <X className="size-2.5" />
-                </button>
-              </Badge>
+              <FilterChip label="Status" value={status} onClear={() => setStatus("all")} />
             )}
             {visibility !== "all" && (
-              <Badge variant="outline" className="h-5 gap-1 px-1.5 text-[10px]">
-                Visibility: {visibility}
-                <button onClick={() => setVisibility("all")} className="ml-0.5">
-                  <X className="size-2.5" />
-                </button>
-              </Badge>
+              <FilterChip
+                label="Visibility"
+                value={visibility}
+                onClear={() => setVisibility("all")}
+              />
             )}
             <Button
               variant="ghost"
               size="sm"
-              className="h-5 px-1.5 text-[10px]"
+              className="h-5 px-1.5 text-3xs"
               onClick={clearFilters}
             >
               Clear all
@@ -441,17 +487,16 @@ function Events() {
 
         {/* Content */}
         {filteredEvents.length === 0 ? (
-          <div className="rounded-2xl border border-dashed bg-background/70 p-12 text-center shadow-xs">
-            <Calendar className="mx-auto size-8 text-muted-foreground/60" />
-            <h2 className="mt-3 text-sm font-semibold tracking-tight">
-              {segment === "active" ? "No active events" : "No archived events"}
-            </h2>
-            <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-              {segment === "active"
+          <EmptyState
+            icon={<Calendar className="size-8" />}
+            title={segment === "active" ? "No active events" : "No archived events"}
+            description={
+              segment === "active"
                 ? "Create a new event to get started."
-                : "Archived events appear here."}
-            </p>
-          </div>
+                : "Archived events appear here."
+            }
+            className="rounded-2xl bg-background/70 shadow-xs"
+          />
         ) : view === "list" ? (
           <EventsTable
             events={paginatedEvents}
@@ -655,14 +700,14 @@ function KanbanCard({ event, canManage }: { event: EventDto; canManage: boolean 
       <div className="mt-3 flex flex-wrap gap-2">
         <VisibilityBadge visibility={event.visibility} />
         {event.category && (
-          <Badge variant="outline" className="h-5 px-1.5 text-[10px]">
+          <Badge variant="outline" className="h-5 px-1.5 text-3xs">
             {event.category}
           </Badge>
         )}
-        <Badge variant="outline" className="h-5 px-1.5 text-[10px]">
+        <Badge variant="outline" className="h-5 px-1.5 text-3xs">
           {event.price === 0 ? "Free" : formatPrice(event.price, "USD")}
         </Badge>
-        <Badge variant="outline" className="h-5 px-1.5 text-[10px]">
+        <Badge variant="outline" className="h-5 px-1.5 text-3xs">
           {event.confirmedRegistrations}
           {event.maxCapacity !== null && event.maxCapacity > 0 && `/${event.maxCapacity}`}
           {event.waitlistedRegistrations > 0 && ` +${event.waitlistedRegistrations} waitlisted`}

@@ -1,6 +1,6 @@
 # User guide
 
-How to use the Booking Mate dashboard. Audience: org owners, admins, managers, and viewers.
+How to use the Buching dashboard. Audience: org owners, admins, managers, and viewers.
 
 ## Topics
 

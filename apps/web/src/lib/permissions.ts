@@ -43,7 +43,3 @@ export function canManageWebhooks(role: OrgRole | null | undefined) {
 export function canManageConnectedApps(role: OrgRole | null | undefined) {
   return role === "owner";
 }
-
-export function canManageBilling(role: OrgRole | null | undefined) {
-  return role === "owner";
-}

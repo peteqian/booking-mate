@@ -23,7 +23,7 @@ MVP:
 
 Production target:
 
-- [ ] `{orgSlug}.bookingmate.app` resolves to the same public booking experience.
+- [ ] `{orgSlug}.buching.app` resolves to the same public booking experience.
 - [ ] Custom domains resolve by host lookup.
 
 ## Public API

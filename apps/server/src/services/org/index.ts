@@ -8,6 +8,7 @@ import { and, eq } from "drizzle-orm";
 import type { AuthOrg } from "../../api/types";
 import { db } from "../../db";
 import { invitation, member, orgSettings, user } from "../../db/schema";
+import { rewritePublicAssetUrl } from "../assets/public-url";
 
 export interface CurrentOrgContext {
   org: AuthOrg;
@@ -15,7 +16,7 @@ export interface CurrentOrgContext {
 }
 
 export function getCurrentOrgContext(org: AuthOrg, memberRole: OrgRole): CurrentOrgContext {
-  return { org, memberRole };
+  return { org: { ...org, logo: rewritePublicAssetUrl(org.logo) }, memberRole };
 }
 
 function toOrgSettingsDto(settings: typeof orgSettings.$inferSelect): OrgSettingsDto {

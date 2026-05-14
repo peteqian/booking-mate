@@ -61,6 +61,30 @@ export type ResumeCheckoutResponse =
   | { paid: true }
   | { expired: true };
 
+export interface MyRegistrationItem {
+  registration: RegistrationDto;
+  event: {
+    id: string;
+    title: string;
+    date: string;
+    time: string;
+    location: string | null;
+    imageUrl: string | null;
+  };
+  org: { id: string; name: string; slug: string | null };
+}
+
+export function listMyRegistrations() {
+  return api.get<{ registrations: MyRegistrationItem[] }>(`/api/public/me/registrations`);
+}
+
+export function cancelMyRegistration(registrationId: string) {
+  return api.post<{ registration: RegistrationDto }>(
+    `/api/public/me/registrations/${encodeURIComponent(registrationId)}/cancel`,
+    {},
+  );
+}
+
 export function resumePublicCheckout(slug: string, eventId: string, token: string) {
   return api.post<ResumeCheckoutResponse>(
     `/api/public/orgs/${encodeURIComponent(slug)}/events/${encodeURIComponent(eventId)}/resume`,
@@ -130,6 +154,11 @@ export function getPublicSlug(): string | null {
 
 export function getPublicSlugFromWindow(): string | null {
   return getPublicSlug();
+}
+
+export function isPublicSubdomain(hostname: string | null): boolean {
+  if (!hostname) return false;
+  return extractPublicSlug(hostname) !== null;
 }
 
 export function getPublicRequestInfo() {

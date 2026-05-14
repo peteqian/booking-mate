@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { updateOrgSettings } from "@/lib/org";
 import { orgKeys, orgSettingsQueryOptions } from "@/queries/org";
+import { BUSINESS_SLUG } from "@/lib/branding";
 
 export function WebhooksTab() {
   const settingsQuery = useQuery(orgSettingsQueryOptions);
@@ -28,7 +29,8 @@ export function WebhooksTab() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: orgKeys.settings() });
     },
-    onError: (err) => setError(err instanceof Error ? err.message : "Save failed"),
+    onError: (err) =>
+      setError(err instanceof Error ? err.message : "Couldn't save webhook. Try again."),
   });
 
   const submit = (e: React.FormEvent) => {
@@ -61,7 +63,7 @@ export function WebhooksTab() {
               type="url"
               value={webhookUrl}
               onChange={(e) => setWebhookUrl(e.target.value)}
-              placeholder="https://example.com/webhooks/booking-mate"
+              placeholder={`https://example.com/webhooks/${BUSINESS_SLUG}`}
             />
           </div>
 

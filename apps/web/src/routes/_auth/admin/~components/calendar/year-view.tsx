@@ -81,7 +81,7 @@ function MiniMonth({ year, monthIndex, totalEvents, byDate, onSelectMonth }: Min
       <div
         key={day}
         className={cn(
-          "flex aspect-square items-center justify-center rounded-sm text-[9px] tabular-nums",
+          "flex aspect-square items-center justify-center rounded-sm text-3xs tabular-nums",
           hasEvents
             ? "bg-primary/90 font-semibold text-primary-foreground"
             : "text-muted-foreground/70",
@@ -100,7 +100,7 @@ function MiniMonth({ year, monthIndex, totalEvents, byDate, onSelectMonth }: Min
     >
       <div className="mb-2 flex items-center justify-between">
         <h4 className="text-xs font-semibold uppercase tracking-wide">{MONTH_NAMES[monthIndex]}</h4>
-        <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-muted-foreground">
+        <span className="rounded-full bg-muted px-1.5 py-0.5 text-3xs font-medium tabular-nums text-muted-foreground">
           {totalEvents}
         </span>
       </div>

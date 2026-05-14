@@ -10,9 +10,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTheme, type Theme } from "@/components/theme-provider";
+import { BUSINESS_NAME } from "@/lib/branding";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/_auth/settings")({
   component: UserSettings,
+  head: () => pageHead("Settings"),
 });
 
 function UserSettings() {
@@ -32,7 +35,7 @@ export function ThemeSettingsCard() {
     <Card>
       <CardHeader>
         <CardTitle>Appearance</CardTitle>
-        <CardDescription>Choose how Booking Mate looks on this device.</CardDescription>
+        <CardDescription>Choose how {BUSINESS_NAME} looks on this device.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
         <Label htmlFor="theme">Theme</Label>

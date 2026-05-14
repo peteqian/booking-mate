@@ -1,4 +1,4 @@
-# Booking Mate - Agent Instructions
+# Buching - Agent Instructions
 
 ## Project Overview
 
@@ -36,10 +36,10 @@ Copy `.env.example` to `.env` and configure:
 
 ```bash
 # Database
-POSTGRES_USER=booking_mate
-POSTGRES_PASSWORD=booking_mate_password
-POSTGRES_DB=booking_mate
-DATABASE_URL=postgresql://booking_mate:booking_mate_password@localhost:5433/booking_mate
+POSTGRES_USER=buching
+POSTGRES_PASSWORD=buching_password
+POSTGRES_DB=buching
+DATABASE_URL=postgresql://buching:buching_password@localhost:5433/buching
 
 # Application Ports
 SERVER_PORT=3456

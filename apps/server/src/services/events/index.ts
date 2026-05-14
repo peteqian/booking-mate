@@ -1,17 +1,20 @@
 import type {
   CreateEventRequest,
   EventDto,
+  EventImageDto,
   EventResourceDto,
   UpdateEventRequest,
 } from "@workspace/contracts";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "../../db";
-import { eventResources, events, resources, registrations } from "../../db/schema";
+import { eventResources, events, publicAssets, resources, registrations } from "../../db/schema";
+import { rewritePublicAssetUrl } from "../assets/public-url";
 
 export function toEventDto(
   event: typeof events.$inferSelect,
   confirmedCount = 0,
   waitlistedCount = 0,
+  detailImages: EventImageDto[] = [],
 ): EventDto {
   return {
     id: event.id,
@@ -37,11 +40,34 @@ export function toEventDto(
     recurrenceInterval: event.recurrenceInterval,
     recurrenceEndDate: event.recurrenceEndDate,
     price: event.price,
+    imageUrl: rewritePublicAssetUrl(event.imageUrl),
+    detailImages,
     confirmedRegistrations: confirmedCount,
     waitlistedRegistrations: waitlistedCount,
     createdAt: event.createdAt.toISOString(),
     updatedAt: event.updatedAt.toISOString(),
   };
+}
+
+async function listEventDetailImages(orgId: string, eventId: string): Promise<EventImageDto[]> {
+  const rows = await db
+    .select({ id: publicAssets.id, publicUrl: publicAssets.publicUrl })
+    .from(publicAssets)
+    .where(
+      and(
+        eq(publicAssets.orgId, orgId),
+        eq(publicAssets.eventId, eventId),
+        eq(publicAssets.kind, "event_image"),
+        eq(publicAssets.assetRole, "detail"),
+        eq(publicAssets.status, "ready"),
+      ),
+    )
+    .orderBy(asc(publicAssets.createdAt));
+
+  return rows.map((row) => ({
+    id: row.id,
+    url: rewritePublicAssetUrl(row.publicUrl) ?? row.publicUrl,
+  }));
 }
 
 function toEventResourceDto(eventResource: typeof eventResources.$inferSelect): EventResourceDto {
@@ -116,7 +142,8 @@ export async function getEvent(orgId: string, eventId: string): Promise<EventDto
     (counts.find((c) => c.status === "pending")?.count ?? 0);
   const waitlisted = counts.find((c) => c.status === "waitlisted")?.count ?? 0;
 
-  return toEventDto(rows[0], confirmed, waitlisted);
+  const detailImages = await listEventDetailImages(orgId, eventId);
+  return toEventDto(rows[0], confirmed, waitlisted, detailImages);
 }
 
 export async function createEvent(
@@ -148,6 +175,7 @@ export async function createEvent(
       recurrenceInterval: input.recurrenceInterval ?? null,
       recurrenceEndDate: input.recurrenceEndDate ?? null,
       price: input.price ?? 0,
+      imageUrl: input.imageUrl ?? null,
     })
     .returning();
 
@@ -187,7 +215,8 @@ export async function updateEvent(
     (counts.find((c) => c.status === "pending")?.count ?? 0);
   const waitlisted = counts.find((c) => c.status === "waitlisted")?.count ?? 0;
 
-  return toEventDto(rows[0], confirmed, waitlisted);
+  const detailImages = await listEventDetailImages(orgId, eventId);
+  return toEventDto(rows[0], confirmed, waitlisted, detailImages);
 }
 
 export async function deleteEvent(orgId: string, eventId: string): Promise<boolean> {
@@ -227,6 +256,7 @@ export async function duplicateEvent(
     recurrenceInterval: source.recurrenceInterval,
     recurrenceEndDate: source.recurrenceEndDate,
     price: source.price,
+    imageUrl: source.imageUrl,
   });
 }
 

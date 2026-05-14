@@ -1,12 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/app-shell";
+import { pageHead } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { eventsQueryOptions } from "@/queries/events";
 
 export const Route = createFileRoute("/_auth/admin/")({
   component: Index,
+  head: () => pageHead("Dashboard"),
   loader: ({ context }) => context.queryClient.ensureQueryData(eventsQueryOptions),
 });
 
@@ -73,7 +75,7 @@ function Index() {
 
         <aside className="border-t pt-6">
           <div className="grid gap-6 sm:grid-cols-[12rem_12rem_minmax(0,1fr)]">
-            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            <p className="text-2xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
               Event loop
             </p>
             <div>

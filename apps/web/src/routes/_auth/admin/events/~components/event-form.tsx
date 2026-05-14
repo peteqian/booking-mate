@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Check, ChevronDown, Plus, Search, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Check, ChevronDown, ImageIcon, Plus, Search, Upload, X } from "lucide-react";
 import type { EventStatus, EventVisibility, ResourceDto, ResourceType } from "@workspace/contracts";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -31,10 +31,11 @@ type ResourceAssignmentDraft = { resourceId: string; role: string; quantity: num
 const statuses: EventStatus[] = ["upcoming", "completed", "cancelled"];
 const visibilities: EventVisibility[] = ["unpublished", "published"];
 
-type StepKey = "basics" | "details" | "schedule" | "resources";
+type StepKey = "basics" | "images" | "details" | "schedule" | "resources";
 
 const steps: { key: StepKey; label: string; optional?: boolean }[] = [
   { key: "basics", label: "Basics" },
+  { key: "images", label: "Images", optional: true },
   { key: "details", label: "Details" },
   { key: "resources", label: "Resources", optional: true },
   { key: "schedule", label: "Schedule", optional: true },
@@ -49,6 +50,10 @@ type EventFormProps = {
   resources: ResourceDto[];
   resourceAssignments: ResourceAssignmentDraft[];
   onResourceAssignmentsChange: (assignments: ResourceAssignmentDraft[]) => void;
+  coverFile: File | null;
+  detailFiles: File[];
+  onCoverFileChange: (file: File | null) => void;
+  onDetailFilesChange: (files: File[]) => void;
 };
 
 export function EventForm(props: EventFormProps) {
@@ -78,6 +83,7 @@ export function EventForm(props: EventFormProps) {
 
       <div className="min-h-[260px]">
         {currentStep === "basics" && <BasicsSection {...props} />}
+        {currentStep === "images" && <ImagesSection {...props} />}
         {currentStep === "details" && <DetailsSection {...props} />}
         {currentStep === "schedule" && <ScheduleSection {...props} />}
         {currentStep === "resources" && <ResourcesSection {...props} />}
@@ -150,7 +156,7 @@ function StepIndicator({
             >
               <span
                 className={cn(
-                  "flex size-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-medium tabular-nums",
+                  "flex size-6 shrink-0 items-center justify-center rounded-full border text-2xs font-medium tabular-nums",
                   done && "border-primary bg-primary text-primary-foreground",
                   current && "border-primary text-primary",
                   !done && !current && "border-border text-muted-foreground",
@@ -166,7 +172,7 @@ function StepIndicator({
               >
                 {step.label}
                 {step.optional && (
-                  <span className="ml-1 text-[10px] text-muted-foreground/70">(Optional)</span>
+                  <span className="ml-1 text-3xs text-muted-foreground/70">(Optional)</span>
                 )}
               </span>
             </button>
@@ -287,6 +293,148 @@ function BasicsSection({ form, onChange }: EventFormProps) {
           </Select>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ImagesSection({
+  coverFile,
+  detailFiles,
+  onCoverFileChange,
+  onDetailFilesChange,
+  disabled,
+}: EventFormProps) {
+  const addDetailFiles = (files: FileList | null) => {
+    if (!files) return;
+    const imageFiles = Array.from(files).filter((file) => file.type.startsWith("image/"));
+    onDetailFilesChange([...detailFiles, ...imageFiles]);
+  };
+
+  const removeDetailFile = (index: number) => {
+    onDetailFilesChange(detailFiles.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="space-y-2">
+        <Label>Cover image</Label>
+        <p className="text-sm text-muted-foreground">
+          Shown on event cards and at the top of the event page.
+        </p>
+        <ImageFilePicker
+          file={coverFile}
+          disabled={disabled}
+          emptyTitle="Choose a cover image"
+          emptyDescription="This is the main image people see before opening the event."
+          onChange={onCoverFileChange}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Event detail images</Label>
+        <p className="text-sm text-muted-foreground">Shown in the event page gallery.</p>
+        <div className="rounded-lg border bg-muted/20 p-3">
+          <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed bg-background px-4 py-6 text-center hover:bg-muted/30">
+            <Upload className="size-5 text-muted-foreground" />
+            <span className="text-sm font-medium">Add detail images</span>
+            <span className="text-xs text-muted-foreground">JPG, PNG, WebP, or GIF.</span>
+            <Input
+              type="file"
+              multiple
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              disabled={disabled}
+              onChange={(event) => {
+                addDetailFiles(event.target.files);
+                event.target.value = "";
+              }}
+            />
+          </label>
+
+          {detailFiles.length > 0 ? (
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              {detailFiles.map((file, index) => (
+                <FilePreview key={`${file.name}-${file.lastModified}-${index}`} file={file}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="icon-sm"
+                    className="absolute right-2 top-2 rounded-full"
+                    disabled={disabled}
+                    onClick={() => removeDetailFile(index)}
+                    aria-label="Remove detail image"
+                  >
+                    <X className="size-4" />
+                  </Button>
+                </FilePreview>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ImageFilePicker({
+  file,
+  disabled,
+  emptyTitle,
+  emptyDescription,
+  onChange,
+}: {
+  file: File | null;
+  disabled: boolean;
+  emptyTitle: string;
+  emptyDescription: string;
+  onChange: (file: File | null) => void;
+}) {
+  return (
+    <div className="rounded-lg border bg-muted/20 p-3">
+      {file ? (
+        <FilePreview file={file}>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="absolute right-2 top-2"
+            disabled={disabled}
+            onClick={() => onChange(null)}
+          >
+            Remove
+          </Button>
+        </FilePreview>
+      ) : (
+        <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed bg-background px-4 py-8 text-center hover:bg-muted/30">
+          <ImageIcon className="size-6 text-muted-foreground" />
+          <span className="text-sm font-medium">{emptyTitle}</span>
+          <span className="text-xs text-muted-foreground">{emptyDescription}</span>
+          <Input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="hidden"
+            disabled={disabled}
+            onChange={(event) => onChange(event.target.files?.[0] ?? null)}
+          />
+        </label>
+      )}
+    </div>
+  );
+}
+
+function FilePreview({ file, children }: { file: File; children: React.ReactNode }) {
+  const [url, setUrl] = useState("");
+
+  useEffect(() => {
+    const nextUrl = URL.createObjectURL(file);
+    setUrl(nextUrl);
+    return () => URL.revokeObjectURL(nextUrl);
+  }, [file]);
+
+  return (
+    <div className="relative aspect-[16/9] overflow-hidden rounded-md border bg-background">
+      {url ? <img src={url} alt="" className="h-full w-full object-cover" /> : null}
+      {children}
     </div>
   );
 }

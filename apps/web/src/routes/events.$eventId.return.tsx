@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
-import { makeHead } from "@workspace/seo";
+import { makeAppHead } from "@/lib/seo";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/events/$eventId/return")({
     return { slug, baseUrl, eventId: params.eventId };
   },
   head: ({ loaderData }) => {
-    return makeHead({
+    return makeAppHead({
       title: "Booking status",
       description: "Result of your booking payment.",
       baseUrl: loaderData?.baseUrl,

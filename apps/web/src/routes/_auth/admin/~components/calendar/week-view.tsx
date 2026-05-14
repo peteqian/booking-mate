@@ -83,7 +83,7 @@ export function WeekView({
                     : "hover:bg-muted/40",
               )}
             >
-              <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              <span className="text-3xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                 {day.toLocaleDateString("en-US", { weekday: "short" })}
               </span>
               <span
@@ -101,7 +101,7 @@ export function WeekView({
       </div>
 
       <div className="sticky top-[57px] z-20 grid grid-cols-[56px_repeat(7,minmax(0,1fr))] border-b bg-card">
-        <div className="px-2 py-1 text-right text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <div className="px-2 py-1 text-right text-3xs font-semibold uppercase tracking-wider text-muted-foreground">
           all-day
         </div>
         {weekDays.map((day) => {

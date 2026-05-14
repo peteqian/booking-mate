@@ -6,14 +6,14 @@ Public booking pages should support slug routes, subdomains, and custom domains.
 
 The intended production model is a single multi-tenant app that resolves the
 organization from the request host. Each organization can have the default
-Booking Mate subdomain, and Pro organizations can add one or more custom
+Buching subdomain, and Pro organizations can add one or more custom
 domains.
 
 ## Recommended Architecture
 
 - Use Coolify or Dokploy to deploy the app, server, workers, and database on a
   VPS.
-- Use Cloudflare DNS for `bookingmate.app`.
+- Use Cloudflare DNS for `buching.app`.
 - Use Cloudflare for SaaS / SSL for SaaS for Pro custom domains.
 - Keep tenant routing inside the app by reading the `Host` header.
 - Do not create one app deployment per tenant.
@@ -22,7 +22,7 @@ Request flow:
 
 ```txt
 Visitor
-  -> org1.bookingmate.app or events.customer.com
+  -> org1.buching.app or events.customer.com
   -> Cloudflare
   -> VPS origin
   -> Hono server / React app
@@ -35,23 +35,23 @@ layer, not as the full custom-domain product.
 
 ## Free Plan Domains
 
-Free organizations use Booking Mate-owned subdomains:
+Free organizations use Buching-owned subdomains:
 
 ```txt
-org1.bookingmate.app
-coffee-shop.bookingmate.app
+org1.buching.app
+coffee-shop.buching.app
 ```
 
 DNS:
 
 ```txt
-*.bookingmate.app -> origin.bookingmate.app or VPS/load balancer IP
+*.buching.app -> origin.buching.app or VPS/load balancer IP
 ```
 
 The app should parse the subdomain slug and resolve the organization:
 
 ```txt
-org1.bookingmate.app -> organization.slug = org1
+org1.buching.app -> organization.slug = org1
 ```
 
 ## Pro Custom Domains
@@ -78,7 +78,7 @@ Example customer DNS instruction:
 ```txt
 Type: CNAME
 Name: events
-Value: cname.bookingmate.app
+Value: cname.buching.app
 ```
 
 Cloudflare keeps the original host on the request, so the app can resolve:
@@ -132,7 +132,7 @@ Rules:
 The server should resolve tenant context early from the request host:
 
 1. Normalize the host by removing port and lowercasing it.
-2. If host matches `*.bookingmate.app`, resolve by organization slug.
+2. If host matches `*.buching.app`, resolve by organization slug.
 3. Otherwise, resolve by `tenant_domains.hostname`.
 4. If no tenant is found, return a public 404 or unknown-domain page.
 5. Attach the tenant context before loading public events or registration pages.
@@ -150,7 +150,7 @@ around the same tenant lookup.
 
 ### Phase 2: Subdomains
 
-- `{orgSlug}.bookingmate.app`.
+- `{orgSlug}.buching.app`.
 - Detect host on web app.
 - Resolve org by subdomain slug.
 - Keep path fallback for local development.

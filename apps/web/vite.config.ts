@@ -6,6 +6,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { nitro } from "nitro/vite";
 
 export default defineConfig({
+  envDir: "../..",
   plugins: [
     nitro(),
     viteTsConfigPaths({ projects: ["./tsconfig.json"] }),

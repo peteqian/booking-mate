@@ -18,9 +18,11 @@ import { WebhooksTab } from "./~components/settings/webhooks-tab";
 import { MembersTab } from "./~components/settings/members-tab";
 import { PaymentsTab } from "./~components/settings/payments-tab";
 import { DangerTab } from "./~components/settings/danger-tab";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/_auth/admin/$orgSlug/settings")({
   component: OrganizationSettings,
+  head: () => pageHead("Organization settings"),
 });
 
 function OrganizationSettings() {

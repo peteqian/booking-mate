@@ -18,7 +18,13 @@ export function useEventDetailsForm({
       onChange: eventFormSchema,
       onSubmit: eventFormSchema,
     },
-    onSubmit: ({ value, formApi }: { value: EventFormState; formApi: { reset: (v: EventFormState) => void } }) => {
+    onSubmit: ({
+      value,
+      formApi,
+    }: {
+      value: EventFormState;
+      formApi: { reset: (v: EventFormState) => void };
+    }) => {
       saveMutation.mutate(value, {
         onSuccess: (data) => formApi.reset(eventToForm(data.event)),
         onError: (err) => onError(err instanceof Error ? err.message : "Unable to save event"),

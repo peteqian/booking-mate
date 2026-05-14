@@ -80,7 +80,7 @@ export function EventsTable({
 
   return (
     <>
-      <div className="overflow-hidden rounded-2xl border bg-background/80 shadow-xs">
+      <div className="overflow-x-auto rounded-2xl border bg-background/80 shadow-xs">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
@@ -251,8 +251,10 @@ function EventRow({
         {event.date}
         <span className="text-muted-foreground/60"> · {event.time}</span>
       </TableCell>
-      <TableCell className="hidden py-2 text-xs text-muted-foreground xl:table-cell">
-        {event.location ?? "—"}
+      <TableCell className="hidden max-w-48 py-2 text-xs text-muted-foreground xl:table-cell">
+        <span className="block truncate" title={event.location ?? undefined}>
+          {event.location ?? "—"}
+        </span>
       </TableCell>
       <TableCell className="py-2">
         <StatusBadge status={event.status} />
@@ -275,17 +277,26 @@ function EventRow({
           <span className="text-muted-foreground/60"> /{event.maxCapacity}</span>
         )}
         {event.waitlistedRegistrations > 0 && (
-          <span className="text-yellow-600 ml-1">+{event.waitlistedRegistrations} waitlisted</span>
+          <span className="ml-1 text-warning-foreground dark:text-warning">
+            +{event.waitlistedRegistrations} waitlisted
+          </span>
         )}
       </TableCell>
       <TableCell className="hidden py-2 text-xs text-muted-foreground lg:table-cell">
         {event.category ?? "—"}
       </TableCell>
-      <TableCell className="sticky right-0 z-10 w-10 border-l bg-background py-2 group-hover:bg-muted/30">
+      <TableCell className="sticky right-0 z-10 w-10 border-l bg-background py-2 group-hover:bg-muted/40">
         <div className="flex justify-end">
           <DropdownMenu>
             <DropdownMenuTrigger
-              render={<Button variant="ghost" size="sm" className="h-7 w-7 p-0" />}
+              render={
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0"
+                  aria-label={`Actions for ${event.title}`}
+                />
+              }
             >
               <MoreHorizontal className="size-3.5" />
             </DropdownMenuTrigger>

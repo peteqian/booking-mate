@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Pencil, Plus, Trash2, Wrench } from "lucide-react";
 import type { EventResourceDto, ResourceDto } from "@workspace/contracts";
+import { EmptyState } from "@/components/empty-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -67,7 +68,7 @@ export function EventResourcesTab({
       </div>
 
       {assignedResources.length === 0 ? (
-        <EmptyState canManage={canManage} onAssign={openDialog} />
+        <ResourcesEmpty canManage={canManage} onAssign={openDialog} />
       ) : (
         <AssignmentList assignedResources={assignedResources} resourceById={resourceById} />
       )}
@@ -87,21 +88,21 @@ export function EventResourcesTab({
   );
 }
 
-function EmptyState({ canManage, onAssign }: { canManage: boolean; onAssign: () => void }) {
+function ResourcesEmpty({ canManage, onAssign }: { canManage: boolean; onAssign: () => void }) {
   return (
-    <div className="rounded-xl border border-dashed bg-muted/30 p-12 text-center">
-      <Wrench className="mx-auto size-8 text-muted-foreground/60" />
-      <h2 className="mt-3 text-sm font-semibold tracking-tight">No resources assigned</h2>
-      <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-        Assign instructors, locations, materials, and equipment to this event.
-      </p>
-      {canManage && (
-        <Button variant="outline" size="sm" className="mt-4" onClick={onAssign}>
-          <Plus className="size-3.5" />
-          Assign resources
-        </Button>
-      )}
-    </div>
+    <EmptyState
+      icon={<Wrench className="size-8" />}
+      title="No resources assigned"
+      description="Assign instructors, locations, materials, and equipment to this event."
+      action={
+        canManage && (
+          <Button variant="outline" size="sm" onClick={onAssign}>
+            <Plus className="size-3.5" />
+            Assign resources
+          </Button>
+        )
+      }
+    />
   );
 }
 
@@ -269,7 +270,7 @@ function AssignResourcesDialog({
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={replaceResourcesMutation.isPending}>
-            {replaceResourcesMutation.isPending ? "Saving..." : "Save"}
+            {replaceResourcesMutation.isPending ? "Saving..." : "Save resources"}
           </Button>
         </div>
       </DialogContent>

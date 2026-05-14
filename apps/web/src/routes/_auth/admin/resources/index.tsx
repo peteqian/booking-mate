@@ -15,6 +15,7 @@ import type { ResourceDto, ResourceType } from "@workspace/contracts";
 import { getCurrentOrg } from "@/lib/org";
 import { canDeleteResources, canManageResources } from "@/lib/permissions";
 import { AppShell } from "@/components/app-shell";
+import { EmptyState } from "@/components/empty-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,11 +39,13 @@ import { useArchiveResource, useUnarchiveResource } from "@/hooks/use-resources"
 import { formatCost, resourceTypeLabels, resourceTypes } from "@/lib/resource-form";
 import { CreateResourceDialog, EditResourceDialog } from "./~components/resource-dialog";
 import { DeleteResourceDialog } from "./~components/delete-resource-dialog";
+import { pageHead } from "@/lib/seo";
 
 type TabValue = "all" | ResourceType;
 
 export const Route = createFileRoute("/_auth/admin/resources/")({
   component: ResourcesPage,
+  head: () => pageHead("Resources"),
   loader: ({ context }) =>
     context.queryClient.ensureQueryData(resourcesQueryOptions({ includeArchived: true })),
 });
@@ -189,7 +192,7 @@ function ResourcesPage() {
                     <SlidersHorizontal className="size-3.5" />
                     Filter
                     {activeFilterCount > 0 && (
-                      <Badge variant="secondary" className="ml-0.5 h-4 px-1 text-[10px]">
+                      <Badge variant="secondary" className="ml-0.5 h-4 px-1 text-3xs">
                         {activeFilterCount}
                       </Badge>
                     )}
@@ -206,7 +209,7 @@ function ResourcesPage() {
                       </p>
                     </div>
                     {activeFilterCount > 0 && (
-                      <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                      <Badge variant="secondary" className="h-5 px-1.5 text-3xs">
                         {activeFilterCount} active
                       </Badge>
                     )}
@@ -305,7 +308,7 @@ function ResourcesPage() {
         {!canManage && <p className="text-xs text-muted-foreground">Viewer role — read-only</p>}
 
         {filtered.length === 0 ? (
-          <EmptyState searchActive={Boolean(search)} tab={tab} />
+          <ResourcesEmpty searchActive={Boolean(search)} tab={tab} />
         ) : (
           <ResourcesTable
             resources={filtered}
@@ -373,7 +376,7 @@ function ResourcesTable({
   };
 
   return (
-    <div className="overflow-hidden rounded-xl border bg-background">
+    <div className="overflow-x-auto rounded-xl border bg-background">
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
@@ -470,22 +473,22 @@ function ResourcesTable({
   );
 }
 
-function EmptyState({ searchActive, tab }: { searchActive: boolean; tab: TabValue }) {
+function ResourcesEmpty({ searchActive, tab }: { searchActive: boolean; tab: TabValue }) {
   return (
-    <div className="rounded-xl border border-dashed bg-muted/30 p-12 text-center">
-      <Wrench className="mx-auto size-8 text-muted-foreground/60" />
-      <h2 className="mt-3 text-sm font-semibold tracking-tight">
-        {searchActive
+    <EmptyState
+      icon={<Wrench className="size-8" />}
+      title={
+        searchActive
           ? "No matching resources"
           : tab === "all"
             ? "No resources yet"
-            : `No ${resourceTypeLabels[tab as ResourceType].toLowerCase()} resources yet`}
-      </h2>
-      <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-        {searchActive
+            : `No ${resourceTypeLabels[tab as ResourceType].toLowerCase()} resources yet`
+      }
+      description={
+        searchActive
           ? "Try a different name or description."
-          : "Resources are people, spaces, and items you assign to events."}
-      </p>
-    </div>
+          : "Resources are people, spaces, and items you assign to events."
+      }
+    />
   );
 }

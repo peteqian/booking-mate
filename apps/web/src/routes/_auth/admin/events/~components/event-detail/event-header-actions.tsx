@@ -65,7 +65,9 @@ export function EventHeaderActions({
         >
           <Copy />
         </TooltipTrigger>
-        <TooltipContent>{duplicateMutation.isPending ? "Duplicating..." : "Duplicate"}</TooltipContent>
+        <TooltipContent>
+          {duplicateMutation.isPending ? "Duplicating..." : "Duplicate"}
+        </TooltipContent>
       </Tooltip>
       <Tooltip>
         <TooltipTrigger
@@ -95,7 +97,7 @@ export function EventHeaderActions({
             }
           >
             <Save />
-            {isSubmitting || saveMutation.isPending ? "Saving..." : "Save"}
+            {isSubmitting || saveMutation.isPending ? "Saving..." : "Save changes"}
           </Button>
         )}
       />

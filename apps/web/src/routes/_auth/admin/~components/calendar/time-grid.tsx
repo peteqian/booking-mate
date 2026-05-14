@@ -28,7 +28,7 @@ export function TimeGutter() {
       {HOURS.map((hour) => (
         <div
           key={hour}
-          className="absolute right-0 -translate-y-1/2 pr-2 text-right text-[10px] font-medium tabular-nums text-muted-foreground"
+          className="absolute right-0 -translate-y-1/2 pr-2 text-right text-3xs font-medium tabular-nums text-muted-foreground"
           style={{ top: hour * SLOT_PX }}
         >
           {hour === 0 ? "" : formatHour(hour)}
@@ -126,8 +126,8 @@ export function NowIndicator({ visible }: NowIndicatorProps) {
 
   return (
     <div className="pointer-events-none absolute left-0 right-0 z-20" style={{ top }}>
-      <div className="absolute -left-1 -top-1.5 size-3 rounded-full bg-red-500 shadow" />
-      <div className="h-px bg-red-500" />
+      <div className="absolute -left-1 -top-1.5 size-3 rounded-full bg-primary shadow" />
+      <div className="h-px bg-primary" />
     </div>
   );
 }
@@ -158,7 +158,7 @@ export function AllDayPill({ instance, canManage, onClick }: AllDayPillProps) {
         onClick(event);
       }}
       className={cn(
-        "flex cursor-pointer items-center gap-1 truncate rounded-sm px-1.5 py-0.5 text-[10.5px] font-medium ring-1 ring-border/70 transition-shadow hover:shadow-sm",
+        "flex cursor-pointer items-center gap-1 truncate rounded-sm px-1.5 py-0.5 text-3xs font-medium ring-1 ring-border/70 transition-shadow hover:shadow-sm",
         tone.opacity,
         tone.italic && "italic",
         isDragSource && "opacity-40",
@@ -222,7 +222,7 @@ export function EventBlock({
         onClick(event);
       }}
       className={cn(
-        "group absolute z-10 flex cursor-pointer overflow-hidden rounded-md bg-card text-[11px] leading-tight ring-1 ring-border/70 transition-shadow hover:shadow-md",
+        "group absolute z-10 flex cursor-pointer overflow-hidden rounded-md bg-card text-2xs leading-tight ring-1 ring-border/70 transition-shadow hover:shadow-md",
         tone.opacity,
         tone.italic && "italic",
         isDragSource && "opacity-40",
@@ -250,7 +250,7 @@ export function EventBlock({
           )}
         </div>
         {!isShort && (
-          <div className="mt-0.5 truncate text-[10px] tabular-nums text-muted-foreground">
+          <div className="mt-0.5 truncate text-3xs tabular-nums text-muted-foreground">
             {shortTime(event.time)} – {endTimeString(event)}
           </div>
         )}

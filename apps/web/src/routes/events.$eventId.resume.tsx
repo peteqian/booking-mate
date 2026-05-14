@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { makeHead } from "@workspace/seo";
+import { makeAppHead } from "@/lib/seo";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/events/$eventId/resume")({
     return { slug, baseUrl, eventId: params.eventId };
   },
   head: ({ loaderData }) => {
-    return makeHead({
+    return makeAppHead({
       title: "Resume booking",
       description: "Continue your booking payment.",
       baseUrl: loaderData?.baseUrl,
@@ -30,10 +30,7 @@ export const Route = createFileRoute("/events/$eventId/resume")({
   },
 });
 
-type State =
-  | { kind: "loading" }
-  | { kind: "expired" }
-  | { kind: "error"; message: string };
+type State = { kind: "loading" } | { kind: "expired" } | { kind: "error"; message: string };
 
 function PublicEventResume() {
   const { slug } = Route.useLoaderData();

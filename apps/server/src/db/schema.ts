@@ -15,7 +15,7 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { organization, user } from "./auth-schema";
+import { attendeeUser, organization, user } from "./auth-schema";
 
 const id = () =>
   text("id")
@@ -31,9 +31,11 @@ const byteaCol = customType<{ data: Buffer; driverData: Buffer }>({
 });
 
 export const orgRole = pgEnum("org_role", ["owner", "admin", "manager", "viewer"]);
-export const orgPlan = pgEnum("org_plan", ["free", "pro"]);
+export const orgPlan = pgEnum("org_plan", ["free", "team", "enterprise"]);
 export const eventStatus = pgEnum("event_status", ["upcoming", "completed", "cancelled"]);
 export const eventVisibility = pgEnum("event_visibility", ["published", "unpublished"]);
+export const publicAssetKind = pgEnum("public_asset_kind", ["org_logo", "event_image"]);
+export const publicAssetStatus = pgEnum("public_asset_status", ["pending", "ready"]);
 export const registrationStatus = pgEnum("registration_status", [
   "pending",
   "confirmed",
@@ -143,6 +145,7 @@ export const events = pgTable(
     recurrenceInterval: integer("recurrence_interval"),
     recurrenceEndDate: text("recurrence_end_date"),
     price: bigint("price", { mode: "number" }).notNull().default(0),
+    imageUrl: text("image_url"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -152,6 +155,31 @@ export const events = pgTable(
     index("events_org_status_idx").on(table.orgId, table.status),
     index("events_org_visibility_idx").on(table.orgId, table.visibility),
     index("events_org_archived_at_idx").on(table.orgId, table.archivedAt),
+  ],
+);
+
+export const publicAssets = pgTable(
+  "public_assets",
+  {
+    id: id(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    eventId: text("event_id").references(() => events.id, { onDelete: "cascade" }),
+    kind: publicAssetKind("kind").notNull(),
+    assetRole: text("asset_role").notNull().default("cover"),
+    key: text("key").notNull(),
+    publicUrl: text("public_url").notNull(),
+    contentType: text("content_type").notNull(),
+    size: integer("size").notNull(),
+    status: publicAssetStatus("status").notNull().default("pending"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    index("public_assets_org_id_idx").on(table.orgId),
+    index("public_assets_event_id_idx").on(table.eventId),
+    uniqueIndex("public_assets_key_idx").on(table.key),
   ],
 );
 
@@ -194,12 +222,16 @@ export const attendees = pgTable(
     name: text("name").notNull(),
     email: text("email").notNull(),
     phone: text("phone"),
+    attendeeUserId: text("attendee_user_id").references(() => attendeeUser.id, {
+      onDelete: "set null",
+    }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (table) => [
     index("attendees_org_id_idx").on(table.orgId),
     uniqueIndex("attendees_org_email_idx").on(table.orgId, table.email),
+    index("attendees_user_id_idx").on(table.attendeeUserId),
   ],
 );
 

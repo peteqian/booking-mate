@@ -1,22 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { CalendarDays } from "lucide-react";
 import type { EventDto } from "@workspace/contracts";
-import { makeHead } from "@workspace/seo";
+import { makeAppHead } from "@/lib/seo";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { formatPrice, getPublicRequestInfo } from "@/lib/public";
 import { publicEventsQueryOptions, publicOrgQueryOptions } from "@/queries/public";
 import { NoSubdomainPlaceholder } from "./~components/no-subdomain";
+import { PUBLIC_ALL_CATEGORIES, PublicBrandBar } from "./~components/public-brand-bar";
 
 export const Route = createFileRoute("/events/")({
   component: PublicOrgEvents,
@@ -36,7 +28,7 @@ export const Route = createFileRoute("/events/")({
       ? `Browse upcoming events from ${orgName}.`
       : "Browse upcoming events.";
 
-    return makeHead({
+    return makeAppHead({
       title,
       description,
       baseUrl: loaderData?.baseUrl,
@@ -46,7 +38,7 @@ export const Route = createFileRoute("/events/")({
   },
 });
 
-const ALL_CATEGORIES = "__all__";
+const ALL_CATEGORIES = PUBLIC_ALL_CATEGORIES;
 
 function PublicOrgEvents() {
   const { slug } = Route.useLoaderData();
@@ -64,72 +56,65 @@ function PublicOrgEventsContent({ slug }: { slug: string }) {
   const currency = orgData.settings?.currency ?? "USD";
   const categories = orgData.settings?.categories ?? [];
 
+  const sortedEvents = useMemo(() => {
+    return [...eventsData.events].sort((a, b) => {
+      const aKey = `${a.date}T${a.time}`;
+      const bKey = `${b.date}T${b.time}`;
+      return aKey.localeCompare(bKey);
+    });
+  }, [eventsData.events]);
+
+  const hero = useMemo(() => {
+    const withImage = sortedEvents.find((e) => e.imageUrl);
+    return withImage ?? sortedEvents[0] ?? null;
+  }, [sortedEvents]);
+
   const visibleEvents = useMemo(() => {
     const term = search.trim().toLowerCase();
-    return eventsData.events.filter((event) => {
+    return sortedEvents.filter((event) => {
+      if (hero && event.id === hero.id) return false;
       if (category !== ALL_CATEGORIES && event.category !== category) return false;
       if (!term) return true;
       const haystack = `${event.title} ${event.description ?? ""}`.toLowerCase();
       return haystack.includes(term);
     });
-  }, [eventsData.events, search, category]);
+  }, [sortedEvents, hero, search, category]);
+
+  const filtered = search.trim().length > 0 || category !== ALL_CATEGORIES;
 
   return (
-    <div className="min-h-svh bg-muted/20">
-      <header className="bg-background/85 backdrop-blur supports-backdrop-filter:bg-background/75">
-        <div className="mx-auto flex max-w-5xl items-center gap-4 px-6 py-6">
-          {orgData.org.logo ? (
-            <img
-              src={orgData.org.logo}
-              alt={orgData.org.name}
-              className="h-12 w-12 rounded-xl object-cover shadow-xs ring-1 ring-border"
-            />
-          ) : null}
-          <div className="min-w-0">
-            <h1 className="font-heading text-2xl font-semibold tracking-[-0.03em]">
-              {orgData.org.name}
-            </h1>
-            {orgData.settings?.contactEmail ? (
-              <p className="text-sm text-muted-foreground">
-                Contact:{" "}
-                <a href={`mailto:${orgData.settings.contactEmail}`} className="underline">
-                  {orgData.settings.contactEmail}
-                </a>
-              </p>
-            ) : null}
-          </div>
-        </div>
-      </header>
+    <div className="min-h-svh bg-background">
+      <PublicBrandBar
+        orgName={orgData.org.name}
+        logo={orgData.org.logo}
+        contactEmail={orgData.settings?.contactEmail ?? null}
+        searchProps={{ search, setSearch, category, setCategory, categories }}
+      />
 
-      <main className="mx-auto max-w-5xl space-y-6 px-6 py-8">
-        <div className="flex flex-col gap-3 rounded-2xl border bg-background/80 p-3 shadow-xs sm:flex-row">
-          <Input
-            placeholder="Search events"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="sm:max-w-xs"
-          />
-          <Select value={category} onValueChange={(v) => setCategory(v ?? ALL_CATEGORIES)}>
-            <SelectTrigger className="sm:w-56">
-              <SelectValue placeholder="All categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_CATEGORIES}>All categories</SelectItem>
-              {categories.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {hero ? <HeroEvent event={hero} currency={currency} /> : null}
+
+      <main className="mx-auto max-w-7xl px-6 py-12">
+        <div className="mb-6 flex items-end justify-between">
+          <h2 className="font-heading text-2xl font-semibold uppercase tracking-tight sm:text-3xl">
+            {hero ? "More events" : "Upcoming events"}
+          </h2>
+          <span className="text-sm text-muted-foreground">
+            {visibleEvents.length} {visibleEvents.length === 1 ? "event" : "events"}
+          </span>
         </div>
 
         {visibleEvents.length === 0 ? (
           <Alert>
-            <AlertDescription>No events match your filters. Check back soon.</AlertDescription>
+            <AlertDescription>
+              {filtered
+                ? "No events match your filters."
+                : hero
+                  ? "No other events scheduled. Check back soon."
+                  : "No events scheduled. Check back soon."}
+            </AlertDescription>
           </Alert>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
             {visibleEvents.map((event) => (
               <PublicEventCard key={event.id} event={event} currency={currency} />
             ))}
@@ -140,42 +125,129 @@ function PublicOrgEventsContent({ slug }: { slug: string }) {
   );
 }
 
+function HeroEvent({ event, currency }: { event: EventDto; currency: string }) {
+  const dateLabel = formatDate(event.date);
+  const timeLabel = formatTime(event.time);
+  const priceLabel = event.price > 0 ? `Tickets from ${formatPrice(event.price, currency)}` : "Get tickets";
+
+  return (
+    <section className="relative w-full overflow-hidden bg-muted">
+      <div className="relative mx-auto h-[440px] max-w-7xl">
+        {event.imageUrl ? (
+          <img
+            src={event.imageUrl}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/80 via-primary/60 to-primary/40" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
+
+        <div className="relative flex h-full flex-col justify-end px-8 pb-12 sm:px-12 sm:pb-14">
+          <div className="max-w-2xl text-white">
+            {event.category ? (
+              <div className="mb-3 inline-block bg-primary px-3 py-1 text-2xs font-semibold uppercase tracking-wider text-primary-foreground">
+                {event.category}
+              </div>
+            ) : null}
+            <h1 className="font-heading text-4xl font-semibold uppercase leading-[1.05] tracking-tight sm:text-6xl">
+              {event.title}
+            </h1>
+            <p className="mt-4 text-base text-white/90 sm:text-lg">
+              {dateLabel} · {timeLabel}
+              {event.location ? ` · ${event.location}` : ""}
+            </p>
+            <Link
+              to="/events/$eventId"
+              params={{ eventId: event.id }}
+              className="mt-6 inline-flex items-center rounded-md bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              {priceLabel}
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function PublicEventCard({ event, currency }: { event: EventDto; currency: string }) {
   const remaining =
     event.maxCapacity === null
       ? null
       : Math.max(0, event.maxCapacity - event.confirmedRegistrations);
   const full = remaining !== null && remaining === 0;
+  const low = remaining !== null && remaining > 0 && remaining <= 5;
+  const dateLabel = formatDate(event.date);
+  const timeLabel = formatTime(event.time);
+  const priceLabel = event.price > 0 ? formatPrice(event.price, currency) : "Free";
+
+  const kicker = full ? "Waitlist only" : low ? `Only ${remaining} left` : event.category ?? event.location;
+  const kickerUrgent = full || low;
 
   return (
-    <Link to="/events/$eventId" params={{ eventId: event.id }} className="block focus:outline-none">
-      <Card className="h-full transition hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-md">
-        <CardHeader>
-          <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-lg leading-tight tracking-[-0.02em]">
-              {event.title}
-            </CardTitle>
-            {event.category ? <Badge variant="secondary">{event.category}</Badge> : null}
+    <Link
+      to="/events/$eventId"
+      params={{ eventId: event.id }}
+      className="group block focus:outline-none"
+    >
+      <div className="aspect-[16/10] overflow-hidden rounded-md bg-muted">
+        {event.imageUrl ? (
+          <img
+            src={event.imageUrl}
+            alt=""
+            className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-foreground/30">
+            <CalendarDays className="size-12" />
           </div>
-          {event.description ? (
-            <CardDescription className="line-clamp-2">{event.description}</CardDescription>
-          ) : null}
-        </CardHeader>
-        <CardContent className="space-y-1 text-sm text-muted-foreground">
-          <div>
-            {event.date} · {event.time} · {event.duration} min
+        )}
+      </div>
+
+      <div className="mt-4 space-y-2">
+        {kicker ? (
+          <div
+            className={
+              kickerUrgent
+                ? "text-2xs font-semibold uppercase tracking-wider text-primary"
+                : "text-2xs font-semibold uppercase tracking-wider text-muted-foreground"
+            }
+          >
+            {kicker}
           </div>
-          {event.location ? <div>{event.location}</div> : null}
-          <div className="flex items-center justify-between pt-2">
-            <span className="font-medium text-foreground">
-              {event.price > 0 ? formatPrice(event.price, currency) : "Free"}
-            </span>
-            {remaining !== null ? (
-              <span>{full ? "Waitlist only" : `${remaining} spots left`}</span>
-            ) : null}
-          </div>
-        </CardContent>
-      </Card>
+        ) : null}
+        <h3 className="font-heading text-xl font-semibold uppercase leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary line-clamp-2">
+          {event.title}
+        </h3>
+        <div className="text-sm font-semibold text-foreground">
+          {dateLabel} · {timeLabel}
+        </div>
+        {event.location && !kickerUrgent && kicker !== event.location ? (
+          <div className="text-sm text-muted-foreground">{event.location}</div>
+        ) : null}
+        <div className="pt-1 text-sm font-semibold text-primary">{priceLabel}</div>
+      </div>
     </Link>
   );
+}
+
+function formatDate(date: string) {
+  const d = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return date;
+  return d.toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatTime(time: string) {
+  const [h, m] = time.split(":").map((n) => Number.parseInt(n, 10));
+  if (Number.isNaN(h) || Number.isNaN(m)) return time;
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 }

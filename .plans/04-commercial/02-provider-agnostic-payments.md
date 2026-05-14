@@ -16,7 +16,7 @@ Included:
 
 ## Source-of-truth Rule
 
-- Booking Mate owns the catalog. `Event` row is the product.
+- Buching owns the catalog. `Event` row is the product.
 - Tenants do **not** create products in their merchant dashboard.
 - At checkout time, the adapter sends the provider a dynamic ad-hoc line item built from the `Event` row. Verified viable on Stripe (`price_data` + inline `product_data`), Square (`order.line_items` with `base_price_money`, or `quick_pay`), PayPal Orders v2 (`purchase_units[].items[]`).
 - Provider-side catalog/POS sync is out of scope for v1.
@@ -90,7 +90,7 @@ Always include `tenantId`, `eventId`, `bookingId`, `paymentId`.
 
 ## Webhook Reconciliation
 
-- Webhook endpoint lives on the Booking Mate backend, never on tenant domains.
+- Webhook endpoint lives on the Buching backend, never on tenant domains.
 - Verify signatures server-side per provider (see provider plans).
 - Confirm payment on the **money-received** event, not the approval event:
   - Stripe: `checkout.session.completed` (with payment_status check) or `payment_intent.succeeded`.

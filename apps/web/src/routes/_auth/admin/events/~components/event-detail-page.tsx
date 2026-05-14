@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
+import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -140,7 +141,13 @@ export function EventDetailPage({
           </TabsList>
 
           <TabsContent value="details" className="mt-6 space-y-4">
-            <EventDetailsForm form={form} canManage={canManage} />
+            <EventDetailsForm
+              eventId={eventId}
+              detailImages={event.detailImages}
+              form={form}
+              canManage={canManage}
+              onError={setError}
+            />
           </TabsContent>
 
           <TabsContent value="registrations" className="mt-6">
@@ -158,18 +165,19 @@ export function EventDetailPage({
             ) : registrations.length === 0 ? (
               <div className="space-y-4">
                 <RegistrationSummary event={event} registrations={registrations} />
-                <div className="rounded-xl border border-dashed bg-muted/30 p-10 text-center">
-                  <h2 className="text-lg font-semibold tracking-tight">No registrations yet</h2>
-                  <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
-                    Registrations will appear here when attendees sign up.
-                  </p>
-                  {canManage && (
-                    <Button className="mt-4 gap-1" onClick={() => setAddRegOpen(true)}>
-                      <Plus className="size-3.5" />
-                      Add
-                    </Button>
-                  )}
-                </div>
+                <EmptyState
+                  size="compact"
+                  title="No registrations yet"
+                  description="Registrations will appear here when attendees sign up."
+                  action={
+                    canManage && (
+                      <Button className="gap-1" onClick={() => setAddRegOpen(true)}>
+                        <Plus className="size-3.5" />
+                        Add
+                      </Button>
+                    )
+                  }
+                />
               </div>
             ) : (
               <div className="space-y-4">

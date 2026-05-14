@@ -12,6 +12,7 @@ import {
   paymentProvidersQueryOptions,
   paymentsKeys,
 } from "@/queries/payments";
+import { BUSINESS_NAME } from "@/lib/branding";
 
 export function PaymentsTab() {
   const providersQuery = useQuery(paymentProvidersQueryOptions);
@@ -57,7 +58,7 @@ export function PaymentsTab() {
           <CardTitle>Payment providers</CardTitle>
           <CardDescription>
             Connect your provider account to accept paid bookings. Customers pay you directly;
-            booking-mate forwards the checkout via Connect.
+            {BUSINESS_NAME} forwards the checkout via Connect.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">

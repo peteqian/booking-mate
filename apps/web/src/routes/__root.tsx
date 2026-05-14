@@ -1,6 +1,9 @@
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import type { QueryClient } from "@tanstack/react-query";
-import { makeHead } from "@workspace/seo";
+import { makeAppHead } from "@/lib/seo";
+import { ApiError } from "@/lib/api";
+import { BUSINESS_NAME } from "@/lib/branding";
+import { Button } from "@/components/ui/button";
 import { getPublicOrigin } from "@/lib/public";
 import appCss from "@/styles/globals.css?url";
 
@@ -24,8 +27,9 @@ const themeInitScript = `
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   head: () => {
-    const seo = makeHead({
-      title: "Booking Mate",
+    const seo = makeAppHead({
+      title: BUSINESS_NAME,
+      siteName: BUSINESS_NAME,
       baseUrl: getPublicOrigin(),
       path: "/",
     });
@@ -48,19 +52,26 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       <p className="text-muted-foreground">The page you requested does not exist.</p>
     </div>
   ),
-  errorComponent: ({ error, reset }) => (
-    <div className="flex min-h-svh items-center justify-center p-6">
-      <div className="max-w-md space-y-3 text-center">
-        <h1 className="text-xl font-semibold">Something went wrong</h1>
-        <p className="text-sm text-muted-foreground">
-          {error instanceof Error ? error.message : "Unexpected error."}
-        </p>
-        <button onClick={reset} className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted">
-          Try again
-        </button>
+  errorComponent: ({ error, reset }) => {
+    const userMessage =
+      error instanceof ApiError
+        ? error.message
+        : "An unexpected error occurred. Please try again, or contact support if it keeps happening.";
+    if (!(error instanceof ApiError) && import.meta.env.DEV) {
+      console.error("[root errorComponent]", error);
+    }
+    return (
+      <div className="flex min-h-svh items-center justify-center p-6">
+        <div className="max-w-md space-y-4 text-center">
+          <h1 className="text-xl font-semibold">Something went wrong</h1>
+          <p className="text-sm text-muted-foreground">{userMessage}</p>
+          <Button variant="outline" size="sm" onClick={reset}>
+            Try again
+          </Button>
+        </div>
       </div>
-    </div>
-  ),
+    );
+  },
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {

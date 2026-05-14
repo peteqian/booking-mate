@@ -4,7 +4,7 @@
 
 PayPal is a v1 payment provider alongside Stripe Connect and Square.
 
-Tenants connect their own PayPal merchant account via PayPal's Partner Referrals (Multiparty) flow. Booking Mate creates PayPal Orders with dynamic line items at checkout time. Tenants do **not** create PayPal catalog products.
+Tenants connect their own PayPal merchant account via PayPal's Partner Referrals (Multiparty) flow. Buching creates PayPal Orders with dynamic line items at checkout time. Tenants do **not** create PayPal catalog products.
 
 ## PayPal Concepts To Track Per Tenant
 
@@ -73,13 +73,13 @@ PayPal expects decimal strings, not minor units. Adapter converts at the boundar
 
 ## Platform Fees
 
-- Use `purchase_units[].payment_instruction.platform_fees` to collect Booking Mate's cut.
+- Use `purchase_units[].payment_instruction.platform_fees` to collect Buching's cut.
 - Requires the seller's onboarding to grant the partner-fee capability.
 - Fee percentage stored on the org's plan.
 
 ## Webhooks
 
-- Single Booking Mate endpoint: `POST /webhooks/paypal`.
+- Single Buching endpoint: `POST /webhooks/paypal`.
 - Verify webhook signature by calling PayPal's `/v1/notifications/verify-webhook-signature` with the request headers, body, and `PAYPAL_WEBHOOK_ID`. Reject on `SUCCESS` ≠ `verification_status`.
 - Persist `(provider, providerEventId)` for idempotent processing.
 - Handle (with mapping to normalized events):

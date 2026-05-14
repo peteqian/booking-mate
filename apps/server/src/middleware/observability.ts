@@ -2,8 +2,9 @@ import { SpanStatusCode, trace } from "@opentelemetry/api";
 import type { MiddlewareHandler } from "hono";
 import { logger as rootLogger } from "../observability/logger";
 import { als } from "../observability/request-context";
+import { BUSINESS_SLUG } from "../branding";
 
-const tracer = trace.getTracer("booking-mate-server");
+const tracer = trace.getTracer(`${BUSINESS_SLUG}-server`);
 
 const PLATFORM_HOST_SUFFIXES = (
   process.env.PLATFORM_HOST_SUFFIXES ?? ".lvh.me,.localhost,localhost"

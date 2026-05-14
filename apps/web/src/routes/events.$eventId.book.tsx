@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { makeHead } from "@workspace/seo";
+import { makeAppHead } from "@/lib/seo";
 import { ApiError } from "@/lib/api";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/events/$eventId/book")({
   },
   head: ({ loaderData, params }) => {
     const event = loaderData?.eventData?.event;
-    return makeHead({
+    return makeAppHead({
       title: event ? `Book ${event.title}` : "Book event",
       description: event?.description ?? "Enter your details to reserve a spot.",
       baseUrl: loaderData?.baseUrl,

@@ -52,7 +52,7 @@ export function DayView({
     <div>
       {allDay.length > 0 && (
         <div className="sticky top-0 z-20 flex items-center gap-1 border-b bg-card px-3 py-1.5">
-          <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <span className="text-3xs font-semibold uppercase tracking-wider text-muted-foreground">
             all-day
           </span>
           <div className="flex flex-1 flex-wrap gap-1">

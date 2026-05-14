@@ -3,6 +3,8 @@ import type { OrgRole } from "@workspace/contracts";
 
 export const statement = {
   organization: ["create", "update", "delete", "invite", "remove", "transfer"],
+  invitation: ["create", "cancel"],
+  member: ["create", "update", "delete"],
   dashboard: ["read"],
   event: ["read", "create", "update", "delete", "duplicate"],
   resource: ["read", "create", "update", "delete"],
@@ -17,6 +19,8 @@ export const ac = createAccessControl(statement);
 
 export const owner = ac.newRole({
   organization: ["create", "update", "delete", "invite", "remove", "transfer"],
+  invitation: ["create", "cancel"],
+  member: ["create", "update", "delete"],
   dashboard: ["read"],
   event: ["read", "create", "update", "delete", "duplicate"],
   resource: ["read", "create", "update", "delete"],
@@ -28,7 +32,7 @@ export const owner = ac.newRole({
 });
 
 export const admin = ac.newRole({
-  organization: ["update", "invite", "remove"],
+  organization: ["update"],
   dashboard: ["read"],
   event: ["read", "create", "update", "delete", "duplicate"],
   resource: ["read", "create", "update", "delete"],

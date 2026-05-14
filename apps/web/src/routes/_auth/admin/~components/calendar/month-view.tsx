@@ -82,7 +82,7 @@ export function MonthView({
         {DAY_NAMES.map((name) => (
           <div
             key={name}
-            className="py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground"
+            className="py-1.5 text-center text-3xs font-semibold uppercase tracking-[0.08em] text-muted-foreground"
           >
             {name}
           </div>
@@ -143,7 +143,7 @@ function DayCell({
       <div className="flex items-center justify-between">
         <span
           className={cn(
-            "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] font-semibold tabular-nums",
+            "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-2xs font-semibold tabular-nums",
             isToday
               ? "bg-primary text-primary-foreground shadow-sm"
               : isSelected
@@ -154,7 +154,7 @@ function DayCell({
           {dayNumber}
         </span>
         {events.length > 0 && (
-          <span className="text-[10px] font-medium text-muted-foreground tabular-nums opacity-0 transition-opacity group-hover/cell:opacity-100">
+          <span className="text-3xs font-medium text-muted-foreground tabular-nums opacity-0 transition-opacity group-hover/cell:opacity-100">
             {events.length}
           </span>
         )}
@@ -169,7 +169,7 @@ function DayCell({
           />
         ))}
         {events.length > MAX_VISIBLE && (
-          <div className="px-1 text-[10px] font-medium text-muted-foreground">
+          <div className="px-1 text-3xs font-medium text-muted-foreground">
             +{events.length - MAX_VISIBLE} more
           </div>
         )}
@@ -204,7 +204,7 @@ function MonthEventChip({ instance, canManage, onEventClick }: MonthEventChipPro
         onEventClick(event);
       }}
       className={cn(
-        "flex items-center gap-1 rounded-sm bg-muted/60 px-1 py-0.5 text-[10.5px] leading-tight transition-colors hover:bg-muted",
+        "flex items-center gap-1 rounded-sm bg-muted/60 px-1 py-0.5 text-3xs leading-tight transition-colors hover:bg-muted",
         tone.opacity,
         tone.italic && "italic",
         isDragSource && "opacity-50",

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PublicAssetUpload } from "@/components/public-asset-upload";
 import {
   Select,
   SelectContent,
@@ -12,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { clearOrgLogo } from "@/lib/assets";
 import { updateOrgSettings } from "@/lib/org";
 import { getOrgPublicUrl } from "@/lib/public";
 import { currentOrgQueryOptions } from "@/queries/auth";
@@ -24,6 +26,7 @@ export function GeneralTab({ orgSlug }: { orgSlug: string }) {
 
   const [contactEmail, setContactEmail] = useState("");
   const [currency, setCurrency] = useState("USD");
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const publicBookingUrl = getOrgPublicUrl(orgSlug);
@@ -34,13 +37,28 @@ export function GeneralTab({ orgSlug }: { orgSlug: string }) {
     setCurrency(settingsQuery.data.settings.currency);
   }, [settingsQuery.data]);
 
+  useEffect(() => {
+    setLogoUrl(orgQuery.data?.org.logo ?? null);
+  }, [orgQuery.data]);
+
   const mutation = useMutation({
     mutationFn: (input: { contactEmail: string | null; currency: string }) =>
       updateOrgSettings(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: orgKeys.settings() });
     },
-    onError: (err) => setError(err instanceof Error ? err.message : "Save failed"),
+    onError: (err) =>
+      setError(err instanceof Error ? err.message : "Couldn't save settings. Try again."),
+  });
+
+  const clearLogoMutation = useMutation({
+    mutationFn: clearOrgLogo,
+    onSuccess: async () => {
+      setLogoUrl(null);
+      await queryClient.invalidateQueries({ queryKey: currentOrgQueryOptions.queryKey });
+    },
+    onError: (err) =>
+      setError(err instanceof Error ? err.message : "Couldn't remove logo. Try again."),
   });
 
   const submit = (e: React.FormEvent) => {
@@ -56,6 +74,16 @@ export function GeneralTab({ orgSlug }: { orgSlug: string }) {
     await navigator.clipboard.writeText(publicBookingUrl);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1500);
+  };
+
+  const updateLogo = (url: string | null) => {
+    if (url) {
+      setLogoUrl(url);
+      void queryClient.invalidateQueries({ queryKey: currentOrgQueryOptions.queryKey });
+      return;
+    }
+
+    clearLogoMutation.mutate();
   };
 
   return (
@@ -78,6 +106,15 @@ export function GeneralTab({ orgSlug }: { orgSlug: string }) {
               <p className="text-sm text-muted-foreground">{orgSlug}</p>
             </div>
           </div>
+
+          <PublicAssetUpload
+            label="Logo"
+            kind="org_logo"
+            value={logoUrl}
+            disabled={clearLogoMutation.isPending}
+            onChange={updateLogo}
+            onError={setError}
+          />
 
           <div className="space-y-2">
             <Label>Public booking URL</Label>

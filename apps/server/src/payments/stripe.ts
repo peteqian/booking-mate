@@ -40,6 +40,20 @@ function moneyToStripeAmount(money: Money): number {
   return money.amount;
 }
 
+function platformFeePercent(): number {
+  const raw = process.env.STRIPE_PLATFORM_FEE_PERCENT;
+  if (!raw) return 0;
+  const pct = Number(raw);
+  if (!Number.isFinite(pct) || pct <= 0) return 0;
+  return Math.min(pct, 100);
+}
+
+function computeApplicationFee(amountMinor: number): number | null {
+  const pct = platformFeePercent();
+  if (pct === 0 || amountMinor <= 0) return null;
+  return Math.round((amountMinor * pct) / 100);
+}
+
 export function createStripeAdapter(): PaymentProviderAdapter {
   return {
     provider: "stripe",
@@ -93,6 +107,8 @@ export function createStripeAdapter(): PaymentProviderAdapter {
         eventId: input.eventId,
         orgId: input.orgId,
       };
+      const amountMinor = moneyToStripeAmount(input.amount);
+      const appFee = computeApplicationFee(amountMinor);
       const session = await stripe.checkout.sessions.create(
         {
           mode: "payment",
@@ -101,7 +117,7 @@ export function createStripeAdapter(): PaymentProviderAdapter {
               quantity: 1,
               price_data: {
                 currency: input.amount.currency.toLowerCase(),
-                unit_amount: moneyToStripeAmount(input.amount),
+                unit_amount: amountMinor,
                 product_data: {
                   name: input.title,
                   ...(input.description ? { description: input.description } : {}),
@@ -117,6 +133,7 @@ export function createStripeAdapter(): PaymentProviderAdapter {
           metadata: sharedMetadata,
           payment_intent_data: {
             metadata: sharedMetadata,
+            ...(appFee !== null ? { application_fee_amount: appFee } : {}),
           },
         },
         {

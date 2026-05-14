@@ -151,7 +151,7 @@ export function EventListPanel({
             variant="ghost"
             size="sm"
             onClick={onClearDate}
-            className="h-6 gap-1 px-1.5 text-[11px] text-muted-foreground"
+            className="h-6 gap-1 px-1.5 text-2xs text-muted-foreground"
           >
             <X className="size-3" />
             Clear
@@ -203,7 +203,7 @@ function Section({
     <div className="mb-3 last:mb-0">
       <div
         className={cn(
-          "flex items-center gap-2 pt-1.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.08em]",
+          "flex items-center gap-2 pt-1.5 pb-1 text-3xs font-semibold uppercase tracking-[0.08em]",
           tone === "accent" ? "text-primary" : "text-muted-foreground",
           muted && "opacity-70",
         )}
@@ -220,7 +220,7 @@ function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center gap-1 py-8 text-center">
       <p className="text-xs font-medium">No events</p>
-      <p className="text-[11px] text-muted-foreground">
+      <p className="text-2xs text-muted-foreground">
         Adjust filters, or open the New tab to add one.
       </p>
     </div>
@@ -270,7 +270,7 @@ function EventRow({ event }: { event: EventDto }) {
             </p>
             {event.recurring && <Repeat className="size-3 shrink-0 text-muted-foreground" />}
           </div>
-          <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <div className="mt-0.5 flex items-center gap-1.5 text-2xs text-muted-foreground">
             <Clock className="size-3" />
             <span>
               {shortTime(event.time)} – {endTimeString(event)}

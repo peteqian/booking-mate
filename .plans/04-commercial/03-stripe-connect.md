@@ -4,14 +4,14 @@
 
 Stripe Connect is the first payment provider.
 
-Organizations connect their own Stripe accounts. Booking Mate creates checkout sessions on behalf of connected accounts for paid event registrations.
+Organizations connect their own Stripe accounts. Buching creates checkout sessions on behalf of connected accounts for paid event registrations.
 
 Tenants do **not** create Stripe Products or Prices. Each checkout session uses inline `price_data` + `product_data` built from the `Event` row at checkout time.
 
 ## Connect Flavor
 
 - Use **Stripe Connect Standard** for v1.
-- Reasoning: tenant owns merchant of record, manages their own dashboard, handles their own disputes/payouts/tax. Lowest compliance burden on Booking Mate.
+- Reasoning: tenant owns merchant of record, manages their own dashboard, handles their own disputes/payouts/tax. Lowest compliance burden on Buching.
 - Revisit Express/Custom only if onboarding UX or platform-controlled payouts become a requirement.
 
 ## Environment
@@ -46,12 +46,12 @@ Tenants do **not** create Stripe Products or Prices. Each checkout session uses 
 
 ## Platform Fees
 
-- Optional `application_fee_amount` on the Checkout Session captures Booking Mate's platform fee from the connected account's payment.
+- Optional `application_fee_amount` on the Checkout Session captures Buching's platform fee from the connected account's payment.
 - Fee percentage stored on the org's plan, not hardcoded in the adapter.
 
 ## Webhooks
 
-- Endpoint lives on Booking Mate backend; verify `Stripe-Signature` header against `STRIPE_WEBHOOK_SECRET`.
+- Endpoint lives on Buching backend; verify `Stripe-Signature` header against `STRIPE_WEBHOOK_SECRET`.
 - Persist `(provider, providerEventId)` for idempotent processing.
 - Handle (with mapping to normalized events):
   - `checkout.session.completed` (when `payment_status === 'paid'`) -> `payment.completed`.

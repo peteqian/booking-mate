@@ -24,6 +24,7 @@ export const eventFormSchema = z.object({
   recurrenceInterval: z.string().regex(/^\d*$/, "Interval must be a whole number"),
   recurrenceDays: z.string(),
   recurrenceEndDate: z.string(),
+  imageUrl: z.string(),
 });
 
 export type EventFormState = z.infer<typeof eventFormSchema>;
@@ -49,6 +50,7 @@ export const emptyEventForm: EventFormState = {
   recurrenceInterval: "",
   recurrenceDays: "",
   recurrenceEndDate: "",
+  imageUrl: "",
 };
 
 function pad(value: number) {
@@ -91,6 +93,7 @@ export function eventToForm(event: EventDto): EventFormState {
     recurrenceInterval: event.recurrenceInterval === null ? "" : String(event.recurrenceInterval),
     recurrenceDays: event.recurrenceDays.join(", "),
     recurrenceEndDate: event.recurrenceEndDate ?? "",
+    imageUrl: event.imageUrl ?? "",
   };
 }
 
@@ -122,6 +125,7 @@ export function formToEventRequest(form: EventFormState): CreateEventRequest {
       .map((day) => day.trim())
       .filter(Boolean),
     recurrenceEndDate: form.recurrenceEndDate || null,
+    imageUrl: form.imageUrl.trim() || null,
   };
 }
 

@@ -4,9 +4,13 @@ import { apiError } from "./errors";
 import { isRecord, readJson, stringOrNull } from "./validation";
 import { logEvent } from "../observability/events";
 import { enrichLogger, getLogger } from "../observability/request-context";
+import { attendeeAuth } from "../auth/attendee";
+import { requireAttendee } from "../middleware/auth";
 import {
+  cancelOwnRegistration,
   getPublicEvent,
   getPublicOrg,
+  listMyRegistrations,
   listPublicEvents,
   registerForPublicEvent,
 } from "../services/public";
@@ -27,6 +31,17 @@ function parsePublicRegistration(input: unknown): PublicRegistrationRequest | st
 }
 
 export const publicRoutes = new Hono()
+  .on(["POST", "GET"], "/auth/*", (c) => attendeeAuth.handler(c.req.raw))
+  .get("/me/registrations", requireAttendee, async (c) => {
+    const rows = await listMyRegistrations(c.var.attendeeUser.email);
+    return c.json({ registrations: rows });
+  })
+  .post("/me/registrations/:id/cancel", requireAttendee, async (c) => {
+    const result = await cancelOwnRegistration(c.var.attendeeUser.email, c.req.param("id"));
+    if (result === "not_found") return apiError(c, 404, "not_found", "Registration not found");
+    if (result === "forbidden") return apiError(c, 403, "forbidden", "Not your registration");
+    return c.json({ registration: result });
+  })
   .use("/orgs/:slug/*", async (c, next) => {
     enrichLogger({ orgSlug: c.req.param("slug"), source: "public" });
     await next();
@@ -67,11 +82,16 @@ export const publicRoutes = new Hono()
 
     const reqUrl = new URL(c.req.url);
     const publicOrigin = `${reqUrl.protocol}//${reqUrl.host}`;
+    const attendeeSession = await attendeeAuth.api
+      .getSession({ headers: c.req.raw.headers })
+      .catch(() => null);
+    const attendeeUserId = attendeeSession?.user.id ?? null;
     const outcome = await registerForPublicEvent(
       c.req.param("slug"),
       eventId,
       input,
       publicOrigin,
+      attendeeUserId,
     );
     if (outcome === "org_not_found") {
       getLogger().warn("tenant.notFound");
@@ -171,10 +191,7 @@ export const publicRoutes = new Hono()
       .select()
       .from(registrations)
       .where(
-        and(
-          eq(registrations.id, payload.registrationId),
-          eq(registrations.orgId, orgRows[0].id),
-        ),
+        and(eq(registrations.id, payload.registrationId), eq(registrations.orgId, orgRows[0].id)),
       )
       .limit(1);
     const reg = regRows[0];

@@ -2,9 +2,11 @@ import "./observability/otel";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { auth } from "./auth";
+import { BUSINESS_SLUG } from "./branding";
 import { observability } from "./middleware/observability";
 import { logger } from "./observability/logger";
 import type { HealthResponse, RootResponse } from "@workspace/contracts";
+import { assetRoutes } from "./api/assets";
 import { attendeeRoutes } from "./api/attendees";
 import { eventRoutes } from "./api/events";
 import { orgRoutes } from "./api/org";
@@ -53,7 +55,7 @@ app.use(
   }),
 );
 
-app.get("/", (c) => c.json<RootResponse>({ ok: true, service: "booking-mate-server" }));
+app.get("/", (c) => c.json<RootResponse>({ ok: true, service: `${BUSINESS_SLUG}-server` }));
 
 app.get("/health", (c) => c.json<HealthResponse>({ status: "ok" }));
 
@@ -61,6 +63,7 @@ app.get("/health", (c) => c.json<HealthResponse>({ status: "ok" }));
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
 app.route("/api/org", orgRoutes);
+app.route("/api/assets", assetRoutes);
 app.route("/api/resources", resourceRoutes);
 app.route("/api/events", eventRoutes);
 app.route("/api/attendees", attendeeRoutes);

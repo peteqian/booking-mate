@@ -1,6 +1,6 @@
 # Support
 
-Internal runbooks for triaging customer issues. Audience: Booking Mate support staff and on-call engineers. Not for public publishing.
+Internal runbooks for triaging customer issues. Audience: Buching support staff and on-call engineers. Not for public publishing.
 
 ## Planned
 

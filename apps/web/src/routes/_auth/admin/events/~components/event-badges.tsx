@@ -6,16 +6,16 @@ export function StatusBadge({ status }: { status: EventStatus }) {
     upcoming: {
       variant: "default",
       className:
-        "h-5 px-1.5 text-[10px] capitalize bg-info text-info-foreground hover:bg-info/90 border-transparent",
+        "h-5 px-1.5 text-3xs capitalize bg-info text-info-foreground hover:bg-info/90 border-transparent",
     },
     completed: {
       variant: "default",
       className:
-        "h-5 px-1.5 text-[10px] capitalize bg-success text-success-foreground hover:bg-success/90 border-transparent",
+        "h-5 px-1.5 text-3xs capitalize bg-success text-success-foreground hover:bg-success/90 border-transparent",
     },
     cancelled: {
       variant: "destructive",
-      className: "h-5 px-1.5 text-[10px] capitalize",
+      className: "h-5 px-1.5 text-3xs capitalize",
     },
   };
   const { variant, className } = styles[status];
@@ -35,7 +35,7 @@ export function VisibilityBadge({ visibility }: { visibility: EventVisibility })
     published: "success",
   };
   return (
-    <Badge variant={variants[visibility]} className="h-5 px-1.5 text-[10px] capitalize">
+    <Badge variant={variants[visibility]} className="h-5 px-1.5 text-3xs capitalize">
       {visibility}
     </Badge>
   );

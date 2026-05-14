@@ -330,7 +330,7 @@ function ContactRow({
       <div className="flex min-w-0 items-center gap-2">
         <span className="text-muted-foreground">{icon}</span>
         <div className="min-w-0">
-          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
+          <p className="text-3xs uppercase tracking-wide text-muted-foreground">{label}</p>
           <p className="truncate text-sm">{value}</p>
         </div>
       </div>
@@ -344,7 +344,7 @@ function ContactRow({
           aria-label={`Copy ${label.toLowerCase()}`}
           title={`Copy ${label.toLowerCase()}`}
         >
-          {copied ? <Check className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5" />}
+          {copied ? <Check className="size-3.5 text-success" /> : <Copy className="size-3.5" />}
         </Button>
         <Button
           render={<a href={actionHref} />}

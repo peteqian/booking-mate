@@ -17,11 +17,13 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { pageHead } from "@/lib/seo";
 
 const INVITE_ROLES: OrgRole[] = ["admin", "manager", "viewer"];
 
 export const Route = createFileRoute("/_auth/onboarding")({
   component: Onboarding,
+  head: () => pageHead("Onboarding"),
   beforeLoad: async ({ context }) => {
     try {
       await context.queryClient.ensureQueryData(currentOrgQueryOptions);

@@ -48,12 +48,17 @@ export function MembersTab({ role }: { role: OrgRole }) {
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!orgId) {
+      setError("Organization not loaded");
+      return;
+    }
     setLoading(true);
     setError("");
 
     const result = await authClient.organization.inviteMember({
       email: inviteEmail,
       role: inviteRole as "owner" | "admin" | "member",
+      organizationId: orgId,
     });
 
     if (result.error) {

@@ -4,9 +4,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { authKeys, sessionQueryOptions } from "@/queries/auth";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/invite/$invitationId")({
   component: Invite,
+  head: () => pageHead("Accept invitation"),
   beforeLoad: async ({ context }) => {
     const session = await context.queryClient.ensureQueryData(sessionQueryOptions);
     if (!session) {
@@ -21,6 +23,7 @@ function Invite() {
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [blocked, setBlocked] = useState(false);
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
@@ -31,6 +34,7 @@ function Invite() {
     const orgs = await authClient.organization.list();
     if (orgs.data && orgs.data.length > 0) {
       setError("You already belong to an organization.");
+      setBlocked(true);
     }
   };
 
@@ -59,7 +63,7 @@ function Invite() {
     return (
       <div className="flex min-h-svh items-center justify-center p-6">
         <div className="text-center space-y-4">
-          <h1 className="text-2xl font-bold text-green-600">Invitation accepted!</h1>
+          <h1 className="text-2xl font-bold text-success">Invitation accepted!</h1>
           <p>Redirecting to your organization...</p>
         </div>
       </div>
@@ -75,14 +79,17 @@ function Invite() {
         </div>
 
         {error && (
-          <div className="rounded-md bg-red-50 p-4">
-            <p className="text-sm text-red-600">{error}</p>
+          <div
+            role="alert"
+            className="rounded-md border border-destructive/20 bg-destructive/10 p-4"
+          >
+            <p className="text-sm text-destructive">{error}</p>
           </div>
         )}
 
-        {!error && (
+        {!blocked && (
           <Button onClick={handleAccept} className="w-full" disabled={loading}>
-            {loading ? "Accepting..." : "Accept Invitation"}
+            {loading ? "Accepting..." : error ? "Try again" : "Accept Invitation"}
           </Button>
         )}
       </div>

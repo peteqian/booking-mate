@@ -1,10 +1,18 @@
-import { and, eq, isNotNull, or, type SQL } from "drizzle-orm";
+import { and, eq, isNotNull, ne, or, type SQL } from "drizzle-orm";
 import { isPaymentProvider } from "@workspace/contracts";
 import { db } from "../../db";
-import { paymentRefunds, registrations, webhookEvents } from "../../db/schema";
+import {
+  attendees,
+  events as eventsTable,
+  organization,
+  paymentRefunds,
+  registrations,
+  webhookEvents,
+} from "../../db/schema";
 import { getLogger } from "../../observability/request-context";
 import { getAdapter, isAdapterAvailable } from "../../payments/registry";
 import { InvalidSignatureError, type NormalizedPaymentEvent } from "../../payments/adapter";
+import { sendBookingConfirmationEmail } from "../registrations/email";
 
 export type WebhookOutcome =
   | { type: "ok" }
@@ -13,6 +21,17 @@ export type WebhookOutcome =
   | { type: "invalid_signature" }
   | { type: "unknown_provider" }
   | { type: "provider_not_configured" };
+
+type ConfirmationEmail = {
+  to: string;
+  attendeeName: string;
+  eventTitle: string;
+  orgName: string;
+  eventDate: string;
+  eventTime: string;
+  location: string | null;
+  registrationId: string;
+};
 
 export async function handleWebhook(input: {
   provider: string;
@@ -54,45 +73,54 @@ export async function handleWebhook(input: {
       .returning({ id: webhookEvents.id });
 
     if (inserted.length === 0) {
-      return "duplicate" as const;
+      return { type: "duplicate" as const, confirmation: null };
     }
 
-    await applyEvent(tx, input.provider, normalized);
-    return "ok" as const;
+    const confirmation = await applyEvent(tx, input.provider, normalized);
+    return { type: "ok" as const, confirmation };
   });
 
-  return result === "duplicate" ? { type: "duplicate" } : { type: "ok" };
+  if (result.type === "duplicate") return { type: "duplicate" };
+
+  if (result.confirmation) {
+    await sendBookingConfirmationEmail(result.confirmation);
+  }
+
+  return { type: "ok" };
 }
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-async function applyEvent(tx: Tx, provider: string, event: NormalizedPaymentEvent): Promise<void> {
+async function applyEvent(
+  tx: Tx,
+  provider: string,
+  event: NormalizedPaymentEvent,
+): Promise<ConfirmationEmail | null> {
   switch (event.type) {
     case "payment.completed":
-      await markPaid(tx, event);
-      break;
+      return await markPaid(tx, event);
     case "payment.expired":
       await markStatus(tx, event, { paymentStatus: "expired", status: "cancelled" });
-      break;
+      return null;
     case "payment.failed":
       await markStatus(tx, event, { paymentStatus: "failed", status: "cancelled" });
-      break;
+      return null;
     case "payment.refunded":
       await applyRefund(tx, provider, event);
-      break;
+      return null;
   }
 }
 
 async function markPaid(
   tx: Tx,
   event: Extract<NormalizedPaymentEvent, { type: "payment.completed" }>,
-) {
+): Promise<ConfirmationEmail | null> {
   const where = matchRegistration(event);
   if (!where) {
     logMatchMiss(event);
-    return;
+    return null;
   }
-  await tx
+  const rows = await tx
     .update(registrations)
     .set({
       paymentStatus: "paid",
@@ -100,7 +128,36 @@ async function markPaid(
       ...(event.paymentIntentId ? { paymentIntentId: event.paymentIntentId } : {}),
       updatedAt: new Date(),
     })
-    .where(where);
+    .where(and(where, ne(registrations.paymentStatus, "paid")))
+    .returning({ id: registrations.id });
+
+  const registration = rows[0];
+  if (!registration) return null;
+
+  const detailRows = await tx
+    .select({
+      to: attendees.email,
+      attendeeName: attendees.name,
+      eventTitle: eventsTable.title,
+      orgName: organization.name,
+      eventDate: eventsTable.date,
+      eventTime: eventsTable.time,
+      location: eventsTable.location,
+    })
+    .from(registrations)
+    .innerJoin(attendees, eq(registrations.attendeeId, attendees.id))
+    .innerJoin(eventsTable, eq(registrations.eventId, eventsTable.id))
+    .innerJoin(organization, eq(registrations.orgId, organization.id))
+    .where(eq(registrations.id, registration.id))
+    .limit(1);
+
+  const details = detailRows[0];
+  if (!details) return null;
+
+  return {
+    ...details,
+    registrationId: registration.id,
+  };
 }
 
 async function markStatus(

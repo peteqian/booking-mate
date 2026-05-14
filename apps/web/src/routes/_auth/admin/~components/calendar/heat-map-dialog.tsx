@@ -77,10 +77,10 @@ function Legend() {
       <span className="text-sm text-muted-foreground">Less</span>
       <div className="flex gap-1">
         <div className="size-4 rounded-sm bg-muted" />
-        <div className="size-4 rounded-sm bg-emerald-300" />
-        <div className="size-4 rounded-sm bg-emerald-400" />
-        <div className="size-4 rounded-sm bg-emerald-500" />
-        <div className="size-4 rounded-sm bg-emerald-600" />
+        <div className="size-4 rounded-sm bg-success/25" />
+        <div className="size-4 rounded-sm bg-success/50" />
+        <div className="size-4 rounded-sm bg-success/75" />
+        <div className="size-4 rounded-sm bg-success" />
       </div>
       <span className="text-sm text-muted-foreground">More</span>
     </div>
@@ -124,8 +124,8 @@ function MonthHeatMap({ year, monthIndex, counts, maxCount }: MonthHeatMapProps)
 function intensityClass(count: number, maxCount: number): string {
   if (count === 0) return "bg-muted";
   const intensity = count / maxCount;
-  if (intensity > 0.75) return "bg-emerald-600";
-  if (intensity > 0.5) return "bg-emerald-500";
-  if (intensity > 0.25) return "bg-emerald-400";
-  return "bg-emerald-300";
+  if (intensity > 0.75) return "bg-success";
+  if (intensity > 0.5) return "bg-success/75";
+  if (intensity > 0.25) return "bg-success/50";
+  return "bg-success/25";
 }

@@ -73,6 +73,38 @@ export const member = authSchema.table("member", {
   createdAt: timestamp("created_at").notNull(),
 });
 
+export const attendeeUser = authSchema.table("attendee_user", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  name: text("name"),
+  emailVerified: boolean("email_verified").notNull().default(false),
+  image: text("image"),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+});
+
+export const attendeeSession = authSchema.table("attendee_session", {
+  id: text("id").primaryKey(),
+  expiresAt: timestamp("expires_at").notNull(),
+  token: text("token").notNull().unique(),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  userId: text("user_id")
+    .notNull()
+    .references(() => attendeeUser.id, { onDelete: "cascade" }),
+});
+
+export const attendeeVerification = authSchema.table("attendee_verification", {
+  id: text("id").primaryKey(),
+  identifier: text("identifier").notNull(),
+  value: text("value").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at"),
+  updatedAt: timestamp("updated_at"),
+});
+
 export const invitation = authSchema.table("invitation", {
   id: text("id").primaryKey(),
   organizationId: text("organization_id")
@@ -85,4 +117,5 @@ export const invitation = authSchema.table("invitation", {
   inviterId: text("inviter_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });

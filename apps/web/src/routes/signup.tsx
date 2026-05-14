@@ -15,9 +15,11 @@ import {
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/signup")({
   component: Signup,
+  head: () => pageHead("Sign up"),
   beforeLoad: async ({ context }) => {
     const session = await context.queryClient.ensureQueryData(sessionQueryOptions);
     if (session) {

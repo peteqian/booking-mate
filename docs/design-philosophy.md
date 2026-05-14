@@ -2,7 +2,7 @@
 
 ## Product Aesthetic
 
-Booking Mate should use a restrained enterprise workspace aesthetic built on the shadcn-style design system primitives.
+Buching should use a restrained enterprise workspace aesthetic built on the shadcn-style design system primitives.
 
 - Use the design system color tokens intentionally, with stronger color reserved for status, feedback, and important emphasis.
 - Favor calm, operational, trustworthy screens over playful or decorative ones.

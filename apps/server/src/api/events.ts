@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { and, count, eq, gte } from "drizzle-orm";
 import type {
   CreateEventRequest,
   EventStatus,
@@ -10,6 +11,8 @@ import { apiError } from "./errors";
 import type { ApiEnv } from "./types";
 import { integerOrNull, isRecord, readJson, stringOrNull } from "./validation";
 import { requireAuth, requireOrg, requireRole } from "../middleware/auth";
+import { db } from "../db";
+import { events as eventsTable } from "../db/schema";
 import {
   createEvent,
   deleteEvent,
@@ -21,6 +24,26 @@ import {
   updateEvent,
 } from "../services/events";
 import { listRegistrationsByEvent } from "../services/registrations";
+
+const FREE_EVENTS_PER_MONTH = 1;
+
+async function enforceFreeEventCap(c: { var: { orgId: string; org: { plan: string } } }) {
+  if (c.var.org.plan !== "free") return null;
+  const monthStart = new Date();
+  monthStart.setUTCDate(1);
+  monthStart.setUTCHours(0, 0, 0, 0);
+  const rows = await db
+    .select({ n: count() })
+    .from(eventsTable)
+    .where(and(eq(eventsTable.orgId, c.var.orgId), gte(eventsTable.createdAt, monthStart)));
+  if ((rows[0]?.n ?? 0) >= FREE_EVENTS_PER_MONTH) {
+    return {
+      error: "event_cap_exceeded" as const,
+      limit: FREE_EVENTS_PER_MONTH,
+    };
+  }
+  return null;
+}
 
 const eventStatuses = ["upcoming", "completed", "cancelled"] as const;
 const eventVisibilities = ["published", "unpublished"] as const;
@@ -53,6 +76,7 @@ function parseEvent(
     "notes",
     "category",
     "location",
+    "imageUrl",
     "recurrenceFrequency",
     "recurrenceEndDate",
   ] as const) {
@@ -188,6 +212,8 @@ export const eventRoutes = new Hono<ApiEnv>()
   .post("/", requireRole("manager"), async (c) => {
     const input = parseEvent(await readJson(c), false);
     if (typeof input === "string") return apiError(c, 400, "invalid_event", input);
+    const cap = await enforceFreeEventCap(c);
+    if (cap) return apiError(c, 402, cap.error, `Free plan allows ${cap.limit} event per month`);
     return c.json({ event: await createEvent(c.var.orgId, c.var.user.id, input) }, 201);
   })
   .get("/:eventId", async (c) => {
@@ -208,6 +234,8 @@ export const eventRoutes = new Hono<ApiEnv>()
     return c.json({ deleted: true });
   })
   .post("/:eventId/duplicate", requireRole("manager"), async (c) => {
+    const cap = await enforceFreeEventCap(c);
+    if (cap) return apiError(c, 402, cap.error, `Free plan allows ${cap.limit} event per month`);
     const event = await duplicateEvent(c.var.orgId, c.var.user.id, c.req.param("eventId"));
     if (!event) return apiError(c, 404, "event_not_found", "Event not found");
     return c.json({ event }, 201);
